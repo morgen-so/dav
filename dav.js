@@ -1288,7 +1288,9 @@ var basicSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0
 }));
 
 var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(calendar, options) {
-  var req, result;
+  var _calendar$objects;
+
+  var req, result, newObjects, deletedObjects;
   return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
     while (1) switch (context$1$0.prev = context$1$0.next) {
       case 0:
@@ -1304,8 +1306,9 @@ var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$
 
       case 3:
         result = context$1$0.sent;
+        newObjects = [];
+        deletedObjects = [];
 
-        // TODO(gareth): Handle creations and deletions.
         result.responses.forEach(function (response) {
           // Find the calendar object that this response corresponds with.
           var calendarObject = calendar.objects.filter(function (object) {
@@ -1313,22 +1316,47 @@ var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$
           })[0];
 
           if (!calendarObject) {
-            return;
+            // New
+            newObjects.push(new _model.CalendarObject({
+              data: response,
+              calendar: calendar,
+              url: _url2['default'].resolve(calendar.account.rootUrl, response.href),
+              etag: response.props.getetag,
+              calendarData: response.props.calendarData
+            }));
+          } else if (response.props.calendarData == null) {
+            // Deletion
+            deletedObjects.push(response.href);
+          } else {
+            // Update (perform in place)
+            calendarObject.etag = response.props.getetag;
+            calendarObject.calendarData = response.props.calendarData;
           }
-
-          calendarObject.etag = response.props.getetag;
-          calendarObject.calendarData = response.props.calendarData;
         });
 
+        // Apply deleted
+        calendar.objects = calendar.objects.filter(function (object) {
+          return deletedObjects.some(function (del) {
+            return (0, _fuzzy_url_equals2['default'])(object.url, del);
+          });
+        });
+        // Apply new
+        (_calendar$objects = calendar.objects).push.apply(_calendar$objects, newObjects);
+
+        // Update token
         calendar.syncToken = result.syncToken;
         return context$1$0.abrupt('return', calendar);
 
-      case 7:
+      case 11:
       case 'end':
         return context$1$0.stop();
     }
   }, callee$0$0, this);
 }));
+
+// TODO(gareth): Handle creations and deletions.
+// Results contains new, modified or deleted objects.
+// Deleted objects have a 'null' calendarData.
 },{"./debug":6,"./fuzzy_url_equals":7,"./model":9,"./namespace":10,"./request":12,"./webdav":22,"co":24,"url":29}],3:[function(require,module,exports){
 /**
  * @fileoverview Camelcase something.
@@ -7268,7 +7296,7 @@ module.exports={
     "chai": "^3.2.0",
     "doctoc": "^0.15.0",
     "mocha": "^2.3.2",
-    "nock": "^2.10.0",
+    "nock": "^2.18.2",
     "sinon": "^1.16.1",
     "tcp-port-used": "^0.1.2",
     "uglify-js": "^2.4.24"
