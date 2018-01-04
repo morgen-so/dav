@@ -1336,7 +1336,7 @@ var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$
 
         // Apply deleted
         calendar.objects = calendar.objects.filter(function (object) {
-          return deletedObjects.some(function (del) {
+          return !deletedObjects.some(function (del) {
             return (0, _fuzzy_url_equals2['default'])(object.url, del);
           });
         });
@@ -1354,9 +1354,8 @@ var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$
   }, callee$0$0, this);
 }));
 
-// TODO(gareth): Handle creations and deletions.
 // Results contains new, modified or deleted objects.
-// Deleted objects have a 'null' calendarData.
+// Detect deleted objects as objects with 'null' calendarData.
 },{"./debug":6,"./fuzzy_url_equals":7,"./model":9,"./namespace":10,"./request":12,"./webdav":22,"co":24,"url":29}],3:[function(require,module,exports){
 /**
  * @fileoverview Camelcase something.

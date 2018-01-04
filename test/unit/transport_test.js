@@ -75,7 +75,7 @@ suite('Basic#send', function() {
   }));
 });
 
-suite('OAuth2#send', function() {
+suite.skip('OAuth2#send', function() {
   let xhr, req, credentials;
 
   setup(function() {
