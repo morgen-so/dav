@@ -3308,7 +3308,7 @@ var isCollectionDirty = _co2['default'].wrap(regeneratorRuntime.mark(function ca
           depth: 0
         });
         context$1$0.next = 7;
-        return options.xhr.send(req, collection.account.homeUrl, {
+        return options.xhr.send(req, collection.url, {
           sandbox: options.sandbox
         });
 
