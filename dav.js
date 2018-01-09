@@ -1007,10 +1007,8 @@ var listCalendars = _co2['default'].wrap(regeneratorRuntime.mark(function callee
         debug('Found ' + responses.length + ' calendars.');
         cals = responses.filter(function (res) {
           // We only want the calendar if it contains iCalendar objects.
-          var components = res.props.supportedCalendarComponentSet || [];
-          return components.reduce(function (hasObjs, component) {
-            return hasObjs || ICAL_OBJS.has(component);
-          }, false);
+          var resourcetype = res.props.resourcetype || [];
+          return resourcetype.indexOf('calendar') !== -1;
         }).map(function (res) {
           debug('Found calendar ' + res.props.displayname + ',\n             props: ' + JSON.stringify(res.props));
           return new _model.Calendar({
