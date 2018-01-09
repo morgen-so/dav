@@ -3298,9 +3298,10 @@ var isCollectionDirty = _co2['default'].wrap(regeneratorRuntime.mark(function ca
         }
 
         debug('Missing ctag.');
-        return context$1$0.abrupt('return', false);
+        return context$1$0.abrupt('return', true);
 
       case 3:
+        // of course, if ctag is missing the collection needs sync
 
         debug('Fetch remote getctag prop.');
         req = request.propfind({
