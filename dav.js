@@ -3239,7 +3239,7 @@ function syncCollection(collection, options) {
   var syncMethod = undefined;
   if ('syncMethod' in options) {
     syncMethod = options.syncMethod;
-  } else if (collection.reports && collection.reports.indexOf('syncCollection') !== -1) {
+  } else if (collection.reports && collection.reports.indexOf('sync-collection') !== -1) {
     syncMethod = 'webdav';
   } else {
     syncMethod = 'basic';
