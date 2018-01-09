@@ -1295,7 +1295,8 @@ var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$
         req = request.syncCollection({
           props: [{ name: 'getetag', namespace: ns.DAV }, { name: 'calendar-data', namespace: ns.CALDAV }],
           syncLevel: 1,
-          syncToken: calendar.syncToken
+          syncToken: calendar.syncToken,
+          depth: 1
         });
         context$1$0.next = 3;
         return options.xhr.send(req, calendar.url, {
