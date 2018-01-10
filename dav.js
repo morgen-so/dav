@@ -1402,6 +1402,8 @@ var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$
         result = context$1$0.sent;
         deletedHrefs = result.responses.filter(function (res) {
           return res.status && res.status.indexOf('404') > -1;
+        }).map(function (res) {
+          return res.href;
         });
         newUpdatedHrefs = result.responses.filter(function (res) {
           return !res.status || res.status.indexOf('404') === -1;
@@ -2417,10 +2419,6 @@ var traverse = {
   },
 
   href: function href(node) {
-    return decodeURIComponent(childNodes(node)[0].nodeValue);
-  },
-
-  status: function status(node) {
     return decodeURIComponent(childNodes(node)[0].nodeValue);
   },
 
@@ -3605,7 +3603,6 @@ var XMLHttpRequest = (function () {
       request.send(data);
       return new Promise(function (resolve, reject) {
         request.onreadystatechange = function () {
-          debug(request.responseText);
           if (request.readyState !== 4 /* done */) {
               return;
             }
