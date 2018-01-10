@@ -2422,6 +2422,10 @@ var traverse = {
     return decodeURIComponent(childNodes(node)[0].nodeValue);
   },
 
+  status: function status(node) {
+    return decodeURIComponent(childNodes(node)[0].nodeValue);
+  },
+
   currentUserPrincipal: function currentUserPrincipal(node) {
     return complex(node, { href: false }, 'href');
   }
