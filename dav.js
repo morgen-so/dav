@@ -938,7 +938,7 @@ exports.createAccount = _co2['default'].wrap(regeneratorRuntime.mark(function ca
 }));
 
 // http redirect.
-},{"./calendars":2,"./contacts":5,"./debug":6,"./fuzzy_url_equals":7,"./model":9,"./namespace":10,"./request":12,"co":24,"url":29}],2:[function(require,module,exports){
+},{"./calendars":2,"./contacts":5,"./debug":6,"./fuzzy_url_equals":7,"./model":9,"./namespace":10,"./request":12,"co":26,"url":31}],2:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -1110,11 +1110,55 @@ function deleteCalendarObject(calendarObject, options) {
  *   (dav.Transport) xhr - request sender.
  */
 var listCalendarObjects = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(calendar, options) {
+  var results;
+  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
+    while (1) switch (context$1$0.prev = context$1$0.next) {
+      case 0:
+        debug('Listing objects on calendar ' + calendar.url + ' which belongs to\n         ' + calendar.account.credentials.username);
+
+        context$1$0.next = 3;
+        return listCalendarObjectsEtags(calendar, options);
+
+      case 3:
+        results = context$1$0.sent;
+
+        options.hrefs = results.map(function (res) {
+          return res.href;
+        });
+
+        debug('Got the following etags:');
+        debug(options.hrefs);
+
+        // First query to get list of etags
+        context$1$0.next = 9;
+        return multigetCalendarObjects(calendar, options);
+
+      case 9:
+        return context$1$0.abrupt('return', context$1$0.sent);
+
+      case 10:
+      case 'end':
+        return context$1$0.stop();
+    }
+  }, callee$0$0, this);
+}));
+
+exports.listCalendarObjects = listCalendarObjects;
+/**
+ * @param {dav.Calendar} calendar the calendar to fetch etags for.
+ *
+ * Options:
+ *
+ *   (Array.<Object>) filters - optional caldav filters.
+ *   (dav.Sandbox) sandbox - optional request sandbox.
+ *   (dav.Transport) xhr - request sender.
+ */
+var listCalendarObjectsEtags = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(calendar, options) {
   var filters, req, responses;
   return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
     while (1) switch (context$1$0.prev = context$1$0.next) {
       case 0:
-        debug('Doing REPORT on calendar ' + calendar.url + ' which belongs to\n         ' + calendar.account.credentials.username);
+        debug('Getting etags on calendar ' + calendar.url + ' which belongs to\n         ' + calendar.account.credentials.username);
 
         filters = options.filters || [{
           type: 'comp-filter',
@@ -1126,7 +1170,7 @@ var listCalendarObjects = _co2['default'].wrap(regeneratorRuntime.mark(function 
         }];
         req = request.calendarQuery({
           depth: 1,
-          props: [{ name: 'getetag', namespace: ns.DAV }, { name: 'calendar-data', namespace: ns.CALDAV }],
+          props: [{ name: 'getetag', namespace: ns.DAV }],
           filters: filters
         });
         context$1$0.next = 5;
@@ -1137,14 +1181,8 @@ var listCalendarObjects = _co2['default'].wrap(regeneratorRuntime.mark(function 
       case 5:
         responses = context$1$0.sent;
         return context$1$0.abrupt('return', responses.map(function (res) {
-          debug('Found calendar object with url ' + res.href);
-          return new _model.CalendarObject({
-            data: res,
-            calendar: calendar,
-            url: _url2['default'].resolve(calendar.account.rootUrl, res.href),
-            etag: res.props.getetag,
-            calendarData: res.props.calendarData
-          });
+          debug('Found calendar object (etag only) with url ' + res.href);
+          return { href: res.href, etag: res.props.getetag };
         }));
 
       case 7:
@@ -1154,7 +1192,64 @@ var listCalendarObjects = _co2['default'].wrap(regeneratorRuntime.mark(function 
   }, callee$0$0, this);
 }));
 
-exports.listCalendarObjects = listCalendarObjects;
+exports.listCalendarObjectsEtags = listCalendarObjectsEtags;
+/**
+ * @param {dav.Calendar} calendar the calendar to fetch objects for.
+ *
+ * Options:
+ *
+ *   (Array.<Object>) hrefs - hrefs of objects to retrieve.
+ *   (dav.Sandbox) sandbox - optional request sandbox.
+ *   (dav.Transport) xhr - request sender.
+ */
+var multigetCalendarObjects = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(calendar, options) {
+  var hrefs, req, responses;
+  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
+    while (1) switch (context$1$0.prev = context$1$0.next) {
+      case 0:
+        debug('Doing multiget on calendar ' + calendar.url + ' which belongs to\n         ' + calendar.account.credentials.username);
+
+        hrefs = options.hrefs || [];
+
+        if (hrefs.length) {
+          context$1$0.next = 4;
+          break;
+        }
+
+        return context$1$0.abrupt('return', []);
+
+      case 4:
+        req = request.calendarMultiget({
+          depth: 1,
+          props: [{ name: 'getetag', namespace: ns.DAV }, { name: 'calendar-data', namespace: ns.CALDAV }],
+          hrefs: hrefs
+        });
+        context$1$0.next = 7;
+        return options.xhr.send(req, calendar.url, {
+          sandbox: options.sandbox
+        });
+
+      case 7:
+        responses = context$1$0.sent;
+        return context$1$0.abrupt('return', responses.map(function (res) {
+          //debug(`Found calendar object with url ${res.href}`);
+          return new _model.CalendarObject({
+            data: res,
+            calendar: calendar,
+            url: _url2['default'].resolve(calendar.account.rootUrl, res.href),
+            etag: res.props.getetag,
+            calendarData: res.props.calendarData
+          });
+        }));
+
+      case 9:
+      case 'end':
+        return context$1$0.stop();
+    }
+  }, callee$0$0, this);
+}));
+
+exports.multigetCalendarObjects = multigetCalendarObjects;
 /**
  * @param {dav.Calendar} calendar the calendar to fetch updates to.
  * @return {Promise} promise will resolve with updated calendar object.
@@ -1286,14 +1381,14 @@ var basicSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0
 }));
 
 var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(calendar, options) {
-  var _calendar$objects;
-
-  var req, result, newObjects, deletedObjects;
+  var req, result, deletedHrefs, newUpdatedHrefs, results;
   return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
     while (1) switch (context$1$0.prev = context$1$0.next) {
       case 0:
         req = request.syncCollection({
-          props: [{ name: 'getetag', namespace: ns.DAV }, { name: 'calendar-data', namespace: ns.CALDAV }],
+          props: [{ name: 'getetag', namespace: ns.DAV }],
+
+          //{ name: 'calendar-data', namespace: ns.CALDAV }
           syncLevel: 1,
           syncToken: calendar.syncToken,
           depth: 1
@@ -1305,10 +1400,30 @@ var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$
 
       case 3:
         result = context$1$0.sent;
-        newObjects = [];
-        deletedObjects = [];
+        deletedHrefs = result.responses.filter(function (res) {
+          return res.status && res.status.indexOf('404') > -1;
+        });
+        newUpdatedHrefs = result.responses.filter(function (res) {
+          return !res.status || res.status.indexOf('404') === -1;
+        }).map(function (res) {
+          return res.href;
+        });
 
-        result.responses.forEach(function (response) {
+        req = request.calendarMultiget({
+          props: [{ name: 'getetag', namespace: ns.DAV }, { name: 'calendar-data', namespace: ns.CALDAV }],
+          depth: 1,
+          hrefs: newUpdatedHrefs
+        });
+
+        context$1$0.next = 9;
+        return options.xhr.send(req, calendar.url, {
+          sandbox: options.sandbox
+        });
+
+      case 9:
+        results = context$1$0.sent;
+
+        results.forEach(function (response) {
           // Find the calendar object that this response corresponds with.
           var calendarObject = calendar.objects.filter(function (object) {
             return (0, _fuzzy_url_equals2['default'])(object.url, response.href);
@@ -1316,16 +1431,13 @@ var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$
 
           if (!calendarObject) {
             // New
-            newObjects.push(new _model.CalendarObject({
+            calendar.objects.push(new _model.CalendarObject({
               data: response,
               calendar: calendar,
               url: _url2['default'].resolve(calendar.account.rootUrl, response.href),
               etag: response.props.getetag,
               calendarData: response.props.calendarData
             }));
-          } else if (response.props.calendarData == null) {
-            // Deletion
-            deletedObjects.push(response.href);
           } else {
             // Update (perform in place)
             calendarObject.etag = response.props.getetag;
@@ -1335,27 +1447,27 @@ var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$
 
         // Apply deleted
         calendar.objects = calendar.objects.filter(function (object) {
-          return !deletedObjects.some(function (del) {
+          return !deletedHrefs.some(function (del) {
             return (0, _fuzzy_url_equals2['default'])(object.url, del);
           });
         });
-        // Apply new
-        (_calendar$objects = calendar.objects).push.apply(_calendar$objects, newObjects);
 
         // Update token
         calendar.syncToken = result.syncToken;
         return context$1$0.abrupt('return', calendar);
 
-      case 11:
+      case 14:
       case 'end':
         return context$1$0.stop();
     }
   }, callee$0$0, this);
 }));
 
+// First query to get list of etags
+
 // Results contains new, modified or deleted objects.
 // Detect deleted objects as objects with 'null' calendarData.
-},{"./debug":6,"./fuzzy_url_equals":7,"./model":9,"./namespace":10,"./request":12,"./webdav":22,"co":24,"url":29}],3:[function(require,module,exports){
+},{"./debug":6,"./fuzzy_url_equals":7,"./model":9,"./namespace":10,"./request":12,"./webdav":24,"co":26,"url":31}],3:[function(require,module,exports){
 /**
  * @fileoverview Camelcase something.
  */
@@ -1547,7 +1659,7 @@ var Client = (function () {
 })();
 
 exports.Client = Client;
-},{"./accounts":1,"./calendars":2,"./contacts":5,"url":29}],5:[function(require,module,exports){
+},{"./accounts":1,"./calendars":2,"./contacts":5,"url":31}],5:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -1906,7 +2018,7 @@ var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$
     }
   }, callee$0$0, this);
 }));
-},{"./debug":6,"./fuzzy_url_equals":7,"./model":9,"./namespace":10,"./request":12,"./webdav":22,"co":24,"url":29}],6:[function(require,module,exports){
+},{"./debug":6,"./fuzzy_url_equals":7,"./model":9,"./namespace":10,"./request":12,"./webdav":24,"co":26,"url":31}],6:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2035,7 +2147,7 @@ exports.debug = _debug2['default'];
 exports.ns = ns;
 exports.request = request;
 exports.transport = transport;
-},{"../package":33,"./accounts":1,"./calendars":2,"./client":4,"./contacts":5,"./debug":6,"./model":9,"./namespace":10,"./request":12,"./sandbox":13,"./transport":21}],9:[function(require,module,exports){
+},{"../package":35,"./accounts":1,"./calendars":2,"./client":4,"./contacts":5,"./debug":6,"./model":9,"./namespace":10,"./request":12,"./sandbox":13,"./transport":23}],9:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -2251,7 +2363,7 @@ var traverse = {
 
   // { propstat: [x, y, z] }
   response: function response(node) {
-    return complex(node, { propstat: true, href: false });
+    return complex(node, { propstat: true, href: false, status: false });
   },
 
   // { prop: x }
@@ -2305,6 +2417,10 @@ var traverse = {
   },
 
   href: function href(node) {
+    return decodeURIComponent(childNodes(node)[0].nodeValue);
+  },
+
+  status: function status(node) {
     return decodeURIComponent(childNodes(node)[0].nodeValue);
   },
 
@@ -2401,7 +2517,7 @@ function children(node, localName) {
 function child(node, localName) {
   return children(node, localName)[0];
 }
-},{"./camelize":3,"./debug":6,"xmldom":30}],12:[function(require,module,exports){
+},{"./camelize":3,"./debug":6,"xmldom":32}],12:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -2410,6 +2526,7 @@ Object.defineProperty(exports, '__esModule', {
 exports.addressBookQuery = addressBookQuery;
 exports.basic = basic;
 exports.calendarQuery = calendarQuery;
+exports.calendarMultiget = calendarMultiget;
 exports.collectionQuery = collectionQuery;
 exports.propfind = propfind;
 exports.syncCollection = syncCollection;
@@ -2477,6 +2594,23 @@ function calendarQuery(options) {
   });
 }
 
+/**
+ * Options:
+ *
+ *   (String) depth - optional value for Depth header.
+ *   (Array.<Object>) props - list of props to request.
+ *   (Array.String) hrefs - list of hrefs to request.
+ */
+
+function calendarMultiget(options) {
+  return collectionQuery(template.calendarMultiget({
+    props: options.props || [],
+    hrefs: options.hrefs || []
+  }), {
+    depth: options.depth
+  });
+}
+
 function collectionQuery(requestData, options) {
   function transformRequest(xhr) {
     setRequestHeaders(xhr, options);
@@ -2484,7 +2618,7 @@ function collectionQuery(requestData, options) {
 
   function transformResponse(xhr) {
     return (0, _parser.multistatus)(xhr.responseText).response.map(function (res) {
-      return { href: res.href, props: getProps(res.propstat) };
+      return { href: res.href, props: getProps(res.propstat), status: res.status };
     });
   }
 
@@ -2512,7 +2646,7 @@ function propfind(options) {
 
   function transformResponse(xhr) {
     var responses = (0, _parser.multistatus)(xhr.responseText).response.map(function (res) {
-      return { href: res.href, props: getProps(res.propstat) };
+      return { href: res.href, props: getProps(res.propstat), status: res.status };
     });
 
     if (!options.mergeResponses) {
@@ -2560,7 +2694,7 @@ function syncCollection(options) {
   function transformResponse(xhr) {
     var object = (0, _parser.multistatus)(xhr.responseText);
     var responses = object.response.map(function (res) {
-      return { href: res.href, props: getProps(res.propstat) };
+      return { href: res.href, props: getProps(res.propstat), status: res.status };
     });
 
     return { responses: responses, syncToken: object.syncToken };
@@ -2620,15 +2754,15 @@ function getProps(propstats) {
 function setRequestHeaders(request, options) {
   request.setRequestHeader('Content-Type', 'application/xml;charset=utf-8');
 
-  if ('depth' in options) {
+  if ('depth' in options && options.depth != null) {
     request.setRequestHeader('Depth', options.depth);
   }
 
-  if ('etag' in options) {
+  if ('etag' in options && options.etag != null) {
     request.setRequestHeader('If-Match', options.etag);
   }
 }
-},{"./parser":11,"./template":17}],13:[function(require,module,exports){
+},{"./parser":11,"./template":19}],13:[function(require,module,exports){
 /**
  * @fileoverview Group requests together and then abort as a group.
  *
@@ -2706,7 +2840,30 @@ function addressBookQuery(object) {
 }
 
 module.exports = exports['default'];
-},{"./prop":18}],15:[function(require,module,exports){
+},{"./prop":20}],15:[function(require,module,exports){
+'use strict';
+
+Object.defineProperty(exports, '__esModule', {
+  value: true
+});
+exports['default'] = calendarMultiget;
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+
+var _prop = require('./prop');
+
+var _prop2 = _interopRequireDefault(_prop);
+
+var _href = require('./href');
+
+var _href2 = _interopRequireDefault(_href);
+
+function calendarMultiget(object) {
+  return '<c:calendar-multiget xmlns:d="DAV:"\n                               xmlns:c="urn:ietf:params:xml:ns:caldav">\n    <d:prop>\n      ' + object.props.map(_prop2['default']) + '\n    </d:prop>\n    ' + object.hrefs.map(_href2['default']) + '\n  </c:calendar-multiget>';
+}
+
+module.exports = exports['default'];
+},{"./href":18,"./prop":20}],16:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -2729,7 +2886,7 @@ function calendarQuery(object) {
 }
 
 module.exports = exports['default'];
-},{"./filter":16,"./prop":18}],16:[function(require,module,exports){
+},{"./filter":17,"./prop":20}],17:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -2759,14 +2916,28 @@ function formatAttrs(attrs) {
   }).join(' ');
 }
 module.exports = exports['default'];
-},{}],17:[function(require,module,exports){
+},{}],18:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+	value: true
+});
+exports["default"] = href;
+
+function href(item) {
+	return "<d:href>" + item + "</d:href>";
+}
+
+module.exports = exports["default"];
+},{}],19:[function(require,module,exports){
 'use strict';
 
 exports.addressBookQuery = require('./address_book_query');
 exports.calendarQuery = require('./calendar_query');
+exports.calendarMultiget = require('./calendar_multiget');
 exports.propfind = require('./propfind');
 exports.syncCollection = require('./sync_collection');
-},{"./address_book_query":14,"./calendar_query":15,"./propfind":19,"./sync_collection":20}],18:[function(require,module,exports){
+},{"./address_book_query":14,"./calendar_multiget":15,"./calendar_query":16,"./propfind":21,"./sync_collection":22}],20:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -2835,7 +3006,7 @@ function xmlnsPrefix(namespace) {
   }
 }
 module.exports = exports['default'];
-},{"../namespace":10}],19:[function(require,module,exports){
+},{"../namespace":10}],21:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -2854,7 +3025,7 @@ function propfind(object) {
 }
 
 module.exports = exports['default'];
-},{"./prop":18}],20:[function(require,module,exports){
+},{"./prop":20}],22:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -2873,7 +3044,7 @@ function syncCollection(object) {
 }
 
 module.exports = exports['default'];
-},{"./prop":18}],21:[function(require,module,exports){
+},{"./prop":20}],23:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -3183,7 +3354,7 @@ var refreshAccessToken = _co2['default'].wrap(regeneratorRuntime.mark(function c
     }
   }, callee$0$0, this);
 }));
-},{"./xmlhttprequest":23,"co":24,"querystring":28}],22:[function(require,module,exports){
+},{"./xmlhttprequest":25,"co":26,"querystring":30}],24:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -3338,7 +3509,7 @@ var isCollectionDirty = _co2['default'].wrap(regeneratorRuntime.mark(function ca
   }, callee$0$0, this);
 }));
 exports.isCollectionDirty = isCollectionDirty;
-},{"./debug":6,"./fuzzy_url_equals":7,"./namespace":10,"./request":12,"co":24}],23:[function(require,module,exports){
+},{"./debug":6,"./fuzzy_url_equals":7,"./namespace":10,"./request":12,"co":26}],25:[function(require,module,exports){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', {
@@ -3434,6 +3605,7 @@ var XMLHttpRequest = (function () {
       request.send(data);
       return new Promise(function (resolve, reject) {
         request.onreadystatechange = function () {
+          debug(request.responseText);
           if (request.readyState !== 4 /* done */) {
               return;
             }
@@ -3462,7 +3634,7 @@ var XMLHttpRequest = (function () {
 
 exports['default'] = XMLHttpRequest;
 module.exports = exports['default'];
-},{"./debug":6}],24:[function(require,module,exports){
+},{"./debug":6}],26:[function(require,module,exports){
 
 /**
  * slice() reference.
@@ -3701,7 +3873,7 @@ function isObject(val) {
   return Object == val.constructor;
 }
 
-},{}],25:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 (function (global){
 /*! https://mths.be/punycode v1.4.1 by @mathias */
 ;(function(root) {
@@ -4238,7 +4410,7 @@ function isObject(val) {
 }(this));
 
 }).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],26:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4324,7 +4496,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],27:[function(require,module,exports){
+},{}],29:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4411,13 +4583,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],28:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":26,"./encode":27}],29:[function(require,module,exports){
+},{"./decode":28,"./encode":29}],31:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5126,7 +5298,7 @@ function isNullOrUndefined(arg) {
   return  arg == null;
 }
 
-},{"punycode":25,"querystring":28}],30:[function(require,module,exports){
+},{"punycode":27,"querystring":30}],32:[function(require,module,exports){
 function DOMParser(options){
 	this.options = options ||{locator:{}};
 	
@@ -5379,7 +5551,7 @@ function appendElement (hander,node) {
 	exports.DOMParser = DOMParser;
 //}
 
-},{"./dom":31,"./sax":32}],31:[function(require,module,exports){
+},{"./dom":33,"./sax":34}],33:[function(require,module,exports){
 /*
  * DOM Level 2
  * Object DOMException
@@ -6625,7 +6797,7 @@ try{
 	exports.XMLSerializer = XMLSerializer;
 //}
 
-},{}],32:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 //[4]   	NameStartChar	   ::=   	":" | [A-Z] | "_" | [a-z] | [#xC0-#xD6] | [#xD8-#xF6] | [#xF8-#x2FF] | [#x370-#x37D] | [#x37F-#x1FFF] | [#x200C-#x200D] | [#x2070-#x218F] | [#x2C00-#x2FEF] | [#x3001-#xD7FF] | [#xF900-#xFDCF] | [#xFDF0-#xFFFD] | [#x10000-#xEFFFF]
 //[4a]   	NameChar	   ::=   	NameStartChar | "-" | "." | [0-9] | #xB7 | [#x0300-#x036F] | [#x203F-#x2040]
 //[5]   	Name	   ::=   	NameStartChar (NameChar)*
@@ -7260,7 +7432,7 @@ function split(source,start){
 exports.XMLReader = XMLReader;
 
 
-},{}],33:[function(require,module,exports){
+},{}],35:[function(require,module,exports){
 module.exports={
   "name": "dav",
   "version": "1.7.8",
@@ -7295,7 +7467,7 @@ module.exports={
     "chai": "^3.2.0",
     "doctoc": "^0.15.0",
     "mocha": "^2.3.2",
-    "nock": "^2.18.2",
+    "nock": "^9.1.6",
     "sinon": "^1.16.1",
     "tcp-port-used": "^0.1.2",
     "uglify-js": "^2.4.24"

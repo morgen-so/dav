@@ -85,7 +85,7 @@ suite('calendars', function() {
       'data should reflect update'
     );
     assert.notInclude(
-      object.calendardata,
+      object.calendarData,
       'SUMMARY:Bastille Day Party',
       'data should reflect update'
     );
@@ -139,7 +139,7 @@ suite('calendars', function() {
     );
 
     assert.notInclude(
-      object.calendardata,
+      object.calendarData,
       'SUMMARY:Bastille Day Party',
       'data should reflect update'
     );

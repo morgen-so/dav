@@ -462,6 +462,14 @@ xhr.send(req, 'https://mail.mozilla.com/calendars/123.ics')
 
 For more example usages, check out the [suite of integration tests](https://github.com/gaye/dav/tree/master/test/integration).
 
+## Running integration tests
+Make sure PHP, sqlite3 and PHP extensions are installed:
+```
+sudo apt install php7.0-cli php7.0-mysq php7-dom php7.0-mbstring php7.0-xml
+sudo apt install sqlite3
+sudo apt-get install sqlite php-sqlite3
+```
+
 ## Debugging
 
 dav can tell you a lot of potentially useful things if you set `dav.debug.enabled = true`.
