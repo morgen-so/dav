@@ -944,6 +944,7 @@ exports.createAccount = _co2['default'].wrap(regeneratorRuntime.mark(function ca
 Object.defineProperty(exports, '__esModule', {
   value: true
 });
+exports.getCalendarObject = getCalendarObject;
 exports.createCalendarObject = createCalendarObject;
 exports.updateCalendarObject = updateCalendarObject;
 exports.deleteCalendarObject = deleteCalendarObject;
@@ -1053,6 +1054,23 @@ var listCalendars = _co2['default'].wrap(regeneratorRuntime.mark(function callee
 }));
 
 exports.listCalendars = listCalendars;
+/**
+ * @param {dav.Calendar} calendar the calendar to get the object from.
+ * @return {Promise} promise will resolve when the event
+ *
+ * Options:
+ *
+ *   (String) href - href of the event to retrieve
+ *   (dav.Sandbox) sandbox - optional request sandbox.
+ *   (dav.Transport) xhr - request sender.
+ */
+
+function getCalendarObject(calendar, options) {
+  if (!options.href) return null;
+  options.hrefs = [options.href];
+  return multigetSingleCalendarObject(calendar, options);
+}
+
 /**
  * @param {dav.Calendar} calendar the calendar to put the object on.
  * @return {Promise} promise will resolve when the calendar has been created.
@@ -1252,6 +1270,25 @@ var multigetCalendarObjects = _co2['default'].wrap(regeneratorRuntime.mark(funct
 }));
 
 exports.multigetCalendarObjects = multigetCalendarObjects;
+var multigetSingleCalendarObject = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(calendar, options) {
+  var events;
+  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
+    while (1) switch (context$1$0.prev = context$1$0.next) {
+      case 0:
+        events = multigetCalendarObjects(calendar, options);
+        return context$1$0.abrupt('return', events.filter(function (event) {
+          // Find the response that corresponds to the parameter collection.
+          return (0, _fuzzy_url_equals2['default'])(options.href, event.href);
+        })[0]);
+
+      case 2:
+      case 'end':
+        return context$1$0.stop();
+    }
+  }, callee$0$0, this);
+}));
+
+exports.multigetSingleCalendarObject = multigetSingleCalendarObject;
 /**
  * @param {dav.Calendar} calendar the calendar to fetch updates to.
  * @return {Promise} promise will resolve with updated calendar object.
@@ -1584,6 +1621,14 @@ var Client = (function () {
 
       options.xhr = options.xhr || this.xhr;
       return calendars.createCalendarObject(calendar, options);
+    }
+  }, {
+    key: 'getCalendarObject',
+    value: function getCalendarObject(calendar) {
+      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
+      options.xhr = options.xhr || this.xhr;
+      return calendars.getCalendarObject(calendar, options);
     }
   }, {
     key: 'updateCalendarObject',
