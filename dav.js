@@ -1282,7 +1282,7 @@ var multigetSingleCalendarObject = _co2['default'].wrap(regeneratorRuntime.mark(
         events = context$1$0.sent;
         return context$1$0.abrupt('return', events.filter(function (event) {
           // Find the response that corresponds to the parameter collection.
-          return (0, _fuzzy_url_equals2['default'])(options.href, event.href);
+          return (0, _fuzzy_url_equals2['default'])(options.href, event.url);
         })[0]);
 
       case 4:
