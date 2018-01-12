@@ -1067,6 +1067,7 @@ exports.listCalendars = listCalendars;
 
 function createCalendarObject(calendar, options) {
   var objectUrl = _url2['default'].resolve(calendar.url, options.filename);
+  options.contentType = 'text/calendar';
   return webdav.createObject(objectUrl, options.data, options);
 }
 
@@ -1083,6 +1084,7 @@ function createCalendarObject(calendar, options) {
  */
 
 function updateCalendarObject(calendarObject, options) {
+  options.contentType = 'text/calendar';
   return webdav.updateObject(calendarObject.url, calendarObject.calendarData, calendarObject.etag, options);
 }
 
@@ -2754,7 +2756,11 @@ function getProps(propstats) {
 }
 
 function setRequestHeaders(request, options) {
-  request.setRequestHeader('Content-Type', 'application/xml;charset=utf-8');
+  if ('contentType' in options && options.contentType != null) {
+    request.setRequestHeader('Content-Type', options.contentType);
+  } else {
+    request.setRequestHeader('Content-Type', 'application/xml;charset=utf-8');
+  }
 
   if ('depth' in options && options.depth != null) {
     request.setRequestHeader('Depth', options.depth);
@@ -3395,12 +3401,12 @@ var debug = require('./debug')('dav:webdav');
  */
 
 function createObject(objectUrl, objectData, options) {
-  var req = request.basic({ method: 'PUT', data: objectData });
+  var req = request.basic({ method: 'PUT', contentType: options.contentType, data: objectData });
   return options.xhr.send(req, objectUrl, { sandbox: options.sandbox });
 }
 
 function updateObject(objectUrl, objectData, etag, options) {
-  var req = request.basic({ method: 'PUT', data: objectData, etag: etag });
+  var req = request.basic({ method: 'PUT', contentType: options.contentType, data: objectData, etag: etag });
   return options.xhr.send(req, objectUrl, { sandbox: options.sandbox });
 }
 
