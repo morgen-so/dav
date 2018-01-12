@@ -1275,13 +1275,17 @@ var multigetSingleCalendarObject = _co2['default'].wrap(regeneratorRuntime.mark(
   return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
     while (1) switch (context$1$0.prev = context$1$0.next) {
       case 0:
-        events = multigetCalendarObjects(calendar, options);
+        context$1$0.next = 2;
+        return multigetCalendarObjects(calendar, options);
+
+      case 2:
+        events = context$1$0.sent;
         return context$1$0.abrupt('return', events.filter(function (event) {
           // Find the response that corresponds to the parameter collection.
           return (0, _fuzzy_url_equals2['default'])(options.href, event.href);
         })[0]);
 
-      case 2:
+      case 4:
       case 'end':
         return context$1$0.stop();
     }
