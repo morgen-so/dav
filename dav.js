@@ -816,6 +816,36 @@ var homeUrl = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(a
 }));
 
 /**
+ * @param {dav.Account} account to address set
+ */
+var addressSet = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(account, options) {
+  var prop, req, responses, response;
+  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
+    while (1) switch (context$1$0.prev = context$1$0.next) {
+      case 0:
+        debug('Fetch address set from principal url ' + account.principalUrl + '.');
+        prop = { name: 'calendar-user-address-set', namespace: ns.CALDAV };
+        req = request.propfind({ props: [prop] });
+        context$1$0.next = 5;
+        return options.xhr.send(req, account.principalUrl, {
+          sandbox: options.sandbox
+        });
+
+      case 5:
+        responses = context$1$0.sent;
+        response = responses.find(function (response) {
+          return (0, _fuzzy_url_equals2['default'])(account.principalUrl, response.href);
+        });
+        return context$1$0.abrupt('return', response.props.calendarUserAddressSet);
+
+      case 8:
+      case 'end':
+        return context$1$0.stop();
+    }
+  }, callee$0$0, this);
+}));
+
+/**
  * Options:
  *
  *   (String) accountType - one of 'caldav' or 'carddav'. Defaults to 'caldav'.
@@ -859,14 +889,26 @@ exports.createAccount = _co2['default'].wrap(regeneratorRuntime.mark(function ca
       case 11:
         account.homeUrl = context$1$0.sent;
 
+        if (!(options.accountType === 'caldav')) {
+          context$1$0.next = 16;
+          break;
+        }
+
+        context$1$0.next = 15;
+        return addressSet(account, options);
+
+      case 15:
+        account.addresses = context$1$0.sent;
+
+      case 16:
         if (options.loadCollections) {
-          context$1$0.next = 14;
+          context$1$0.next = 18;
           break;
         }
 
         return context$1$0.abrupt('return', account);
 
-      case 14:
+      case 18:
         key = undefined, loadCollections = undefined, loadObjects = undefined;
 
         if (options.accountType === 'caldav') {
@@ -879,23 +921,23 @@ exports.createAccount = _co2['default'].wrap(regeneratorRuntime.mark(function ca
           loadObjects = _contacts.listVCards;
         }
 
-        context$1$0.next = 18;
+        context$1$0.next = 22;
         return loadCollections(account, options);
 
-      case 18:
+      case 22:
         collections = context$1$0.sent;
 
         account[key] = collections;
 
         if (options.loadObjects) {
-          context$1$0.next = 22;
+          context$1$0.next = 26;
           break;
         }
 
         return context$1$0.abrupt('return', account);
 
-      case 22:
-        context$1$0.next = 24;
+      case 26:
+        context$1$0.next = 28;
         return collections.map(_co2['default'].wrap(regeneratorRuntime.mark(function callee$1$0(collection) {
           return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
             while (1) switch (context$2$0.prev = context$2$0.next) {
@@ -922,7 +964,7 @@ exports.createAccount = _co2['default'].wrap(regeneratorRuntime.mark(function ca
           }, callee$1$0, this, [[0, 6]]);
         })));
 
-      case 24:
+      case 28:
 
         account[key] = account[key].filter(function (collection) {
           return !collection.error;
@@ -930,7 +972,7 @@ exports.createAccount = _co2['default'].wrap(regeneratorRuntime.mark(function ca
 
         return context$1$0.abrupt('return', account);
 
-      case 26:
+      case 30:
       case 'end':
         return context$1$0.stop();
     }
@@ -2223,7 +2265,8 @@ var Account = function Account(options) {
     principalUrl: null,
     homeUrl: null,
     calendars: null,
-    addressBooks: null
+    addressBooks: null,
+    addresses: null
   }, options);
 }
 
@@ -2434,7 +2477,8 @@ var traverse = {
       resourcetype: false,
       supportedCalendarComponentSet: false,
       supportedReportSet: false,
-      currentUserPrincipal: false
+      currentUserPrincipal: false,
+      calendarUserAddressSet: false
     });
   },
 
@@ -2447,6 +2491,11 @@ var traverse = {
   // [x, y, z]
   supportedCalendarComponentSet: function supportedCalendarComponentSet(node) {
     return complex(node, { comp: true }, 'comp');
+  },
+
+  // [x, y, z]
+  calendarUserAddressSet: function calendarUserAddressSet(node) {
+    return complex(node, { href: true }, 'href');
   },
 
   // [x, y, z]
@@ -7491,7 +7540,7 @@ exports.XMLReader = XMLReader;
 },{}],35:[function(require,module,exports){
 module.exports={
   "name": "dav",
-  "version": "1.7.8",
+  "version": "1.7.9",
   "author": "Gareth Aye [:gaye] <gaye@mozilla.com>",
   "description": "WebDAV, CalDAV, and CardDAV client for nodejs and the browser",
   "license": "MPL-2.0",
