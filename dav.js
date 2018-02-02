@@ -3716,7 +3716,9 @@ var XMLHttpRequest = (function () {
             }
 
           if (request.status < 200 || request.status >= 400) {
-            return reject(new Error('Bad status [' + request.status + ']: ' + request.responseText));
+            var error = new Error('Bad status [' + request.status + ']: ' + request.responseText);
+            error.code = request.status;
+            return reject(error);
           }
 
           return resolve(request.responseText);
