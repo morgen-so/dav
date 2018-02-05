@@ -784,7 +784,7 @@ var homeUrl = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(a
           prop = { name: 'addressbook-home-set', namespace: ns.CARDDAV };
         }
 
-        req = request.propfind({ props: [prop] });
+        req = request.propfind({ props: [prop], depth: 0 });
         context$1$0.next = 6;
         return options.xhr.send(req, account.principalUrl, {
           sandbox: options.sandbox
@@ -825,7 +825,7 @@ var addressSet = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$
       case 0:
         debug('Fetch address set from principal url ' + account.principalUrl + '.');
         prop = { name: 'calendar-user-address-set', namespace: ns.CALDAV };
-        req = request.propfind({ props: [prop] });
+        req = request.propfind({ props: [prop], depth: 0 });
         context$1$0.next = 5;
         return options.xhr.send(req, account.principalUrl, {
           sandbox: options.sandbox
