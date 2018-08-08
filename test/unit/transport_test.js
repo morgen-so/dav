@@ -69,9 +69,8 @@ suite('Basic#send', function() {
       .get('/')
       .reply(200, '200 OK');
 
-    let value = yield xhr.send(req, 'http://127.0.0.1:1337');
-    assert.instanceOf(value, XMLHttpRequest);
-    assert.strictEqual(value.request.readyState, 4);
+    yield xhr.send(req, 'http://127.0.0.1:1337');
+    assert.strictEqual(xhr.readyState, 4);
   }));
 });
 

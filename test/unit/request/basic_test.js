@@ -57,7 +57,7 @@ suite('put', function() {
       assert.fail('request.basic should have thrown an error');
     } catch (error) {
       assert.instanceOf(error, Error);
-      assert.include(error.toString(), 'Bad status: 400');
+      assert.include(error.toString(), '400');
     }
   }));
 });

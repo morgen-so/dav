@@ -23,8 +23,8 @@
   ],
   "dependencies": {
     "co": "^4.6.0",
-    "xmldom": "^0.1.19",
-    "xmlhttprequest": "^1.7.0"
+    "request": "^2.87.0",
+    "xmldom": "^0.1.19"
   },
   "devDependencies": {
     "babel": "^5.8.23",
