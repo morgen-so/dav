@@ -6,7 +6,7 @@ import sinon from 'sinon';
 import { Credentials } from '../../lib/model';
 import { createSandbox } from '../../lib/sandbox';
 import { Basic, OAuth2 } from '../../lib/transport';
-import XMLHttpRequest from '../../lib/xmlhttprequest';
+import XMLHttpRequestWrapper from '../../lib/XMLHttpRequestWrapper';
 
 suite('Basic#send', function() {
   let xhr, req;
@@ -117,7 +117,7 @@ suite.skip('OAuth2#send', function() {
       retry: false
     });
 
-    assert.instanceOf(response, XMLHttpRequest);
+    assert.instanceOf(response, XMLHttpRequestWrapper);
     assert.ok(access.isDone(), 'should get access');
     assert.strictEqual(credentials.accessToken, 'sosafesosecret');
     assert.strictEqual(credentials.refreshToken, 'lemonade!!1');
@@ -149,7 +149,7 @@ suite.skip('OAuth2#send', function() {
       retry: false
     });
 
-    assert.instanceOf(response, XMLHttpRequest);
+    assert.instanceOf(response, XMLHttpRequestWrapper);
     assert.ok(refresh.isDone(), 'should refresh');
     assert.strictEqual(credentials.accessToken, 'Little Bear');
     assert.typeOf(credentials.expiration, 'number');
@@ -175,7 +175,7 @@ suite.skip('OAuth2#send', function() {
       retry: false
     });
 
-    assert.instanceOf(response, XMLHttpRequest);
+    assert.instanceOf(response, XMLHttpRequestWrapper);
     assert.notOk(token.isDone(), 'should not fetch new token(s)');
     assert.strictEqual(credentials.accessToken, 'Little Bear');
     assert.strictEqual(credentials.refreshToken, 'spicy tamales');
@@ -209,7 +209,7 @@ suite.skip('OAuth2#send', function() {
     credentials.expiration = Date.now() + 60 * 60 * 1000;
 
     let response = yield xhr.send(req, 'http://127.0.0.1:1337');
-    assert.instanceOf(response, XMLHttpRequest);
+    assert.instanceOf(response, XMLHttpRequestWrapper);
     assert.strictEqual(response.status, 200);
     assert.strictEqual(response.responseText, '200 OK');
     assert.ok(unauthorized.isDone(), 'tried to use expired access token');

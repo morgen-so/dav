@@ -4,13 +4,13 @@ import nock from 'nock';
 import sinon from 'sinon';
 
 import { createSandbox } from '../../lib/sandbox';
-import XMLHttpRequest from '../../lib/xmlhttprequest';
+import XMLHttpRequestWrapper from '../../lib/XMLHttpRequestWrapper';
 
-suite('XMLHttpRequest#send', function() {
+suite('XMLHttpRequestWrapper#send', function() {
   let request;
 
   setup(function() {
-    request = new XMLHttpRequest();
+    request = new XMLHttpRequestWrapper();
   });
 
   teardown(function() {

@@ -123,7 +123,7 @@
 
 ### 1.5.5
 
-+ Bundle XMLHttpRequest polyfill for environments where it's not available
++ Bundle XMLHttpRequestWrapper polyfill for environments where it's not available
 
 ### 1.5.4
 
@@ -218,7 +218,7 @@
 
 ### 0.9.1
 
-+ remove nodejs polyfills for DOMParser and XMLHttpRequest from build output
++ remove nodejs polyfills for DOMParser and XMLHttpRequestWrapper from build output
 + generate minified binaries
 
 ### 0.9.0

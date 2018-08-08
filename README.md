@@ -428,7 +428,7 @@ var req = dav.request.basic({
 
 client.send(req, '/calendars/123.ics')
 .then(function(response) {
-  // response instanceof XMLHttpRequest
+  // response instanceof XMLHttpRequestWrapper
 });
 ```
 
@@ -456,7 +456,7 @@ var req = dav.request.basic({
 
 xhr.send(req, 'https://mail.mozilla.com/calendars/123.ics')
 .then(function(response) {
-  // response instanceof XMLHttpRequest
+  // response instanceof XMLHttpRequestWrapper
 });
 ```
 

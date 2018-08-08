@@ -17,7 +17,7 @@ dav.min.js dav.js.map: dav.js node_modules
 
 dav.js: build node_modules
 	rm -rf dav.js /tmp/dav.js
-	./node_modules/.bin/browserify --standalone dav ./build/index.js > /tmp/dav.js
+	./node_modules/.bin/browserify --node ./build/index.js > /tmp/dav.js
 	cat lib/polyfill/*.js /tmp/dav.js > dav.js
 
 build: $(JS) $(HBS) node_modules

@@ -13,7 +13,7 @@
 
 ### Under the hood
 
-dav uses npm to manage external dependencies. External npm modules get bundled into the browser js binary with the (excellent) [browserify](http://browserify.org/) utility. dav uses the `DOMParser` and `XMLHttpRequest` web apis (to parse xml and send http requests). All of the async library operations use es6 [Promises](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise).
+dav uses npm to manage external dependencies. External npm modules get bundled into the browser js binary with the (excellent) [browserify](http://browserify.org/) utility. dav uses the `DOMParser` and `XMLHttpRequestWrapper` web apis (to parse xml and send http requests). All of the async library operations use es6 [Promises](https://developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Promise).
 
 ### Running the tests
 

@@ -3,7 +3,7 @@ import sinon from 'sinon';
 
 import * as dav from '../../lib';
 import { Sandbox, createSandbox } from '../../lib/sandbox';
-import XMLHttpRequest from '../../lib/xmlhttprequest';
+import XMLHttpRequestWrapper from '../../lib/XMLHttpRequestWrapper';
 
 suite('sandbox', function() {
   let sandbox;
@@ -14,8 +14,8 @@ suite('sandbox', function() {
 
   test('#add', function() {
     assert.lengthOf(sandbox.requestList, 0);
-    let one = new XMLHttpRequest(),
-        two = new XMLHttpRequest();
+    let one = new XMLHttpRequestWrapper(),
+        two = new XMLHttpRequestWrapper();
     sandbox.add(one);
     sandbox.add(two);
     assert.lengthOf(sandbox.requestList, 2);
@@ -24,8 +24,8 @@ suite('sandbox', function() {
   });
 
   test('#abort', function() {
-    let one = new XMLHttpRequest(),
-        two = new XMLHttpRequest();
+    let one = new XMLHttpRequestWrapper(),
+        two = new XMLHttpRequestWrapper();
     sandbox.add(one);
     sandbox.add(two);
     let stubOne = sinon.stub(one, 'abort'),
@@ -49,8 +49,8 @@ suite('new sandbox object interface', function() {
 
   test('#add', function() {
     assert.lengthOf(sandbox.requestList, 0);
-    let one = new XMLHttpRequest(),
-        two = new XMLHttpRequest();
+    let one = new XMLHttpRequestWrapper(),
+        two = new XMLHttpRequestWrapper();
     sandbox.add(one);
     sandbox.add(two);
     assert.lengthOf(sandbox.requestList, 2);
@@ -59,8 +59,8 @@ suite('new sandbox object interface', function() {
   });
 
   test('#abort', function() {
-    let one = new XMLHttpRequest(),
-        two = new XMLHttpRequest();
+    let one = new XMLHttpRequestWrapper(),
+        two = new XMLHttpRequestWrapper();
     sandbox.add(one);
     sandbox.add(two);
     let stubOne = sinon.stub(one, 'abort'),
