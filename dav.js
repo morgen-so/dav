@@ -3637,7 +3637,6 @@ var XMLHttpRequest = (function () {
 	function XMLHttpRequest() {
 		_classCallCheck(this, XMLHttpRequest);
 
-		//this.request = new Native(options);
 		this.sandbox = null;
 		this._options = null;
 		this._request = null;
@@ -68205,29 +68204,34 @@ Store.prototype.getAllCookies = function(cb) {
 
 },{}],361:[function(require,module,exports){
 module.exports={
-  "_from": "tough-cookie@~2.3.3",
+  "_args": [
+    [
+      "tough-cookie@2.3.4",
+      "/home/anconam/projects/dav"
+    ]
+  ],
+  "_from": "tough-cookie@2.3.4",
   "_id": "tough-cookie@2.3.4",
   "_inBundle": false,
   "_integrity": "sha512-TZ6TTfI5NtZnuyy/Kecv+CnoROnyXn2DN97LontgQpCwsX2XyLYCC0ENhYkehSOwAp8rTQKc/NUIF7BkQ5rKLA==",
   "_location": "/tough-cookie",
   "_phantomChildren": {},
   "_requested": {
-    "type": "range",
+    "type": "version",
     "registry": true,
-    "raw": "tough-cookie@~2.3.3",
+    "raw": "tough-cookie@2.3.4",
     "name": "tough-cookie",
     "escapedName": "tough-cookie",
-    "rawSpec": "~2.3.3",
+    "rawSpec": "2.3.4",
     "saveSpec": null,
-    "fetchSpec": "~2.3.3"
+    "fetchSpec": "2.3.4"
   },
   "_requiredBy": [
     "/request"
   ],
   "_resolved": "https://registry.npmjs.org/tough-cookie/-/tough-cookie-2.3.4.tgz",
-  "_shasum": "ec60cee38ac675063ffc97a5c18970578ee83655",
-  "_spec": "tough-cookie@~2.3.3",
-  "_where": "/home/anconam/projects/dav/node_modules/request",
+  "_spec": "2.3.4",
+  "_where": "/home/anconam/projects/dav",
   "author": {
     "name": "Jeremy Stashewsky",
     "email": "jstashewsky@salesforce.com"
@@ -68235,7 +68239,6 @@ module.exports={
   "bugs": {
     "url": "https://github.com/salesforce/tough-cookie/issues"
   },
-  "bundleDependencies": false,
   "contributors": [
     {
       "name": "Alexander Savin"
@@ -68259,7 +68262,6 @@ module.exports={
   "dependencies": {
     "punycode": "^1.4.1"
   },
-  "deprecated": false,
   "description": "RFC6265 Cookies and Cookie Jar for node.js",
   "devDependencies": {
     "async": "^1.4.2",
