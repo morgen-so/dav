@@ -67,7 +67,7 @@ var XMLHttpRequestWrapper = (function () {
 		value: function send(data) {
 			var _this = this;
 
-			debug('Sending request data: ' + data);
+			debug('Sending request (' + this._options.method + ') to ' + this._options.url + ' with data: ' + data);
 			if (this.sandbox) this.sandbox.add(this);
 			if (data) this._options.body = data;
 			return new Promise(function (resolve, reject) {
