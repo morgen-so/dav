@@ -679,12 +679,18 @@ var XMLHttpRequestWrapper = (function () {
 			this._options = {
 				method: method,
 				url: url,
+				headers: {
+					"Accept": "application/json, text/plain, */*",
+					"User-Agent": "minetime/request"
+				},
 				auth: user ? {
 					user: user,
 					pass: password,
 					sendImmediately: false
 				} : undefined,
-				timeout: this._defaultTimeout
+				timeout: this._defaultTimeout,
+				agent: false,
+				pool: false
 			};
 		}
 	}, {
@@ -3752,7 +3758,7 @@ var supportedReportSet = _co2['default'].wrap(regeneratorRuntime.mark(function c
         debug('Checking supported report set for collection at ' + collection.url);
         req = request.propfind({
           props: [{ name: 'supported-report-set', namespace: ns.DAV }],
-          depth: 1,
+          depth: 0,
           mergeResponses: true
         });
         context$1$0.next = 4;

@@ -54,12 +54,18 @@ var XMLHttpRequestWrapper = (function () {
 			this._options = {
 				method: method,
 				url: url,
+				headers: {
+					"Accept": "application/json, text/plain, */*",
+					"User-Agent": "minetime/request"
+				},
 				auth: user ? {
 					user: user,
 					pass: password,
 					sendImmediately: false
 				} : undefined,
-				timeout: this._defaultTimeout
+				timeout: this._defaultTimeout,
+				agent: false,
+				pool: false
 			};
 		}
 	}, {
