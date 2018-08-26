@@ -114,6 +114,77 @@ var listCalendars = _co2['default'].wrap(regeneratorRuntime.mark(function callee
 
 exports.listCalendars = listCalendars;
 /**
+ * @param {dav.Account} account to fetch calendars for.
+ * @param {string} account to fetch calendars for.
+ */
+var getCalendar = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(account, calendarUrl, options) {
+  var req, responses, cals;
+  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
+    while (1) switch (context$1$0.prev = context$1$0.next) {
+      case 0:
+        debug('Fetch calendar ' + calendarUrl);
+        req = request.propfind({
+          props: [{ name: 'calendar-description', namespace: ns.CALDAV }, { name: 'calendar-timezone', namespace: ns.CALDAV }, { name: 'displayname', namespace: ns.DAV }, { name: 'getctag', namespace: ns.CALENDAR_SERVER }, { name: 'resourcetype', namespace: ns.DAV }, { name: 'supported-calendar-component-set', namespace: ns.CALDAV }, { name: 'sync-token', namespace: ns.DAV }],
+          depth: 0
+        });
+        context$1$0.next = 4;
+        return options.xhr.send(req, calendarUrl, {
+          sandbox: options.sandbox
+        });
+
+      case 4:
+        responses = context$1$0.sent;
+
+        debug('Found ' + responses.length + ' calendars (expect 1).');
+        cals = responses.filter(function (res) {
+          // We only want the calendar if it contains iCalendar objects.
+          var resourcetype = res.props.resourcetype || [];
+          return resourcetype.indexOf('calendar') !== -1;
+        }).map(function (res) {
+          debug('Found calendar ' + res.props.displayname + ',\n             props: ' + JSON.stringify(res.props));
+          return new _model.Calendar({
+            data: res,
+            account: account,
+            description: res.props.calendarDescription,
+            timezone: res.props.calendarTimezone,
+            url: _url2['default'].resolve(account.rootUrl, res.href),
+            ctag: res.props.getctag,
+            displayName: res.props.displayname,
+            components: res.props.supportedCalendarComponentSet,
+            resourcetype: res.props.resourcetype,
+            syncToken: res.props.syncToken
+          });
+        });
+        context$1$0.next = 9;
+        return cals.map(_co2['default'].wrap(regeneratorRuntime.mark(function callee$1$0(cal) {
+          return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
+            while (1) switch (context$2$0.prev = context$2$0.next) {
+              case 0:
+                context$2$0.next = 2;
+                return webdav.supportedReportSet(cal, options);
+
+              case 2:
+                cal.reports = context$2$0.sent;
+
+              case 3:
+              case 'end':
+                return context$2$0.stop();
+            }
+          }, callee$1$0, this);
+        })));
+
+      case 9:
+        return context$1$0.abrupt('return', cals.length ? cals[0] : null);
+
+      case 10:
+      case 'end':
+        return context$1$0.stop();
+    }
+  }, callee$0$0, this);
+}));
+
+exports.getCalendar = getCalendar;
+/**
  * @param {dav.Calendar} calendar the calendar to get the object from.
  * @return {Promise} promise will resolve when the event
  *

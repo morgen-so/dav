@@ -57,7 +57,7 @@ suite('Basic#send', function() {
 
     req.onerror = function(error) {
       assert.instanceOf(error, Error);
-      assert.include(error.toString(), 'Bad status: 400');
+      assert.include(error.toString(), 'Bad status 400');
       done();
     };
 
