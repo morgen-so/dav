@@ -19038,6 +19038,9 @@ module.exports={
   "application/geo+json-seq": {
     "source": "iana"
   },
+  "application/geopackage+sqlite3": {
+    "source": "iana"
+  },
   "application/geoxacml+xml": {
     "source": "iana",
     "compressible": true
@@ -20097,6 +20100,9 @@ module.exports={
     "source": "iana",
     "compressible": true
   },
+  "application/vnd.3gpp.mc-signalling-ear": {
+    "source": "iana"
+  },
   "application/vnd.3gpp.mcdata-payload": {
     "source": "iana"
   },
@@ -20317,9 +20323,21 @@ module.exports={
     "compressible": true,
     "extensions": ["mpkg"]
   },
+  "application/vnd.apple.keynote": {
+    "source": "iana",
+    "extensions": ["keynote"]
+  },
   "application/vnd.apple.mpegurl": {
     "source": "iana",
     "extensions": ["m3u8"]
+  },
+  "application/vnd.apple.numbers": {
+    "source": "iana",
+    "extensions": ["numbers"]
+  },
+  "application/vnd.apple.pages": {
+    "source": "iana",
+    "extensions": ["pages"]
   },
   "application/vnd.apple.pkpass": {
     "compressible": false,
@@ -20645,11 +20663,8 @@ module.exports={
     "source": "iana",
     "extensions": ["fe_launch"]
   },
-  "application/vnd.desmume-movie": {
-    "source": "iana"
-  },
   "application/vnd.desmume.movie": {
-    "source": "apache"
+    "source": "iana"
   },
   "application/vnd.dir-bi.plate-dl-nosuffix": {
     "source": "iana"
@@ -21069,6 +21084,10 @@ module.exports={
   },
   "application/vnd.fut-misnet": {
     "source": "iana"
+  },
+  "application/vnd.futoin+json": {
+    "source": "iana",
+    "compressible": true
   },
   "application/vnd.fuzzysheet": {
     "source": "iana",
@@ -22738,12 +22757,8 @@ module.exports={
   "application/vnd.panoply": {
     "source": "iana"
   },
-  "application/vnd.paos+xml": {
-    "source": "iana",
-    "compressible": true
-  },
   "application/vnd.paos.xml": {
-    "source": "apache"
+    "source": "iana"
   },
   "application/vnd.patentdive": {
     "source": "iana"
@@ -24286,6 +24301,9 @@ module.exports={
   "application/zlib": {
     "source": "iana"
   },
+  "application/zstd": {
+    "source": "iana"
+  },
   "audio/1d-interleaved-parityfec": {
     "source": "iana"
   },
@@ -24914,11 +24932,18 @@ module.exports={
     "extensions": ["woff2"]
   },
   "image/aces": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["exr"]
   },
   "image/apng": {
     "compressible": false,
     "extensions": ["apng"]
+  },
+  "image/avci": {
+    "source": "iana"
+  },
+  "image/avcs": {
+    "source": "iana"
   },
   "image/bmp": {
     "source": "iana",
@@ -24930,13 +24955,16 @@ module.exports={
     "extensions": ["cgm"]
   },
   "image/dicom-rle": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["drle"]
   },
   "image/emf": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["emf"]
   },
   "image/fits": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["fits"]
   },
   "image/g3fax": {
     "source": "iana",
@@ -24947,12 +24975,25 @@ module.exports={
     "compressible": false,
     "extensions": ["gif"]
   },
+  "image/heic": {
+    "source": "iana"
+  },
+  "image/heic-sequence": {
+    "source": "iana"
+  },
+  "image/heif": {
+    "source": "iana"
+  },
+  "image/heif-sequence": {
+    "source": "iana"
+  },
   "image/ief": {
     "source": "iana",
     "extensions": ["ief"]
   },
   "image/jls": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["jls"]
   },
   "image/jp2": {
     "source": "iana",
@@ -24994,7 +25035,8 @@ module.exports={
     "extensions": ["btif"]
   },
   "image/prs.pti": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["pti"]
   },
   "image/pwg-raster": {
     "source": "iana"
@@ -25009,15 +25051,17 @@ module.exports={
     "extensions": ["svg","svgz"]
   },
   "image/t38": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["t38"]
   },
   "image/tiff": {
     "source": "iana",
     "compressible": false,
-    "extensions": ["tiff","tif"]
+    "extensions": ["tif","tiff"]
   },
   "image/tiff-fx": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["tfx"]
   },
   "image/vnd.adobe.photoshop": {
     "source": "iana",
@@ -25025,7 +25069,8 @@ module.exports={
     "extensions": ["psd"]
   },
   "image/vnd.airzip.accelerator.azv": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["azv"]
   },
   "image/vnd.cns.inf2": {
     "source": "iana"
@@ -25074,7 +25119,8 @@ module.exports={
     "source": "iana"
   },
   "image/vnd.microsoft.icon": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["ico"]
   },
   "image/vnd.mix": {
     "source": "iana"
@@ -25110,10 +25156,12 @@ module.exports={
     "source": "iana"
   },
   "image/vnd.tencent.tap": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["tap"]
   },
   "image/vnd.valve.source.texture": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["vtf"]
   },
   "image/vnd.wap.wbmp": {
     "source": "iana",
@@ -25124,14 +25172,16 @@ module.exports={
     "extensions": ["xif"]
   },
   "image/vnd.zbrush.pcx": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["pcx"]
   },
   "image/webp": {
     "source": "apache",
     "extensions": ["webp"]
   },
   "image/wmf": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["wmf"]
   },
   "image/x-3ds": {
     "source": "apache",
@@ -27523,7 +27573,7 @@ Auth.prototype.onResponse = function (response) {
 
   var c = caseless(response.headers)
 
-  var regSplit = /, (?=[A-Z])/
+  var regSplit = /, (?=[a-zA-Z])(?![a-zA-Z]*=)/
   var authHeader = c.get('www-authenticate')
   var authMethods = authHeader && authHeader.split(regSplit)
   if (!authMethods) return
@@ -43984,7 +44034,7 @@ module.exports={
   ],
   "dependencies": {
     "co": "^4.6.0",
-    "request": "git+https://github.com/marcoancona/request.git#20c8b600de70e25c9497e053642e838007d337e3",
+    "request": "git+https://github.com/marcoancona/request.git#01b7b6ef318fd2f08c9e56ab3f9b9526ce32024d",
     "xmldom": "^0.1.19"
   },
   "devDependencies": {
