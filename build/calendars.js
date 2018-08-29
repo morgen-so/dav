@@ -53,7 +53,7 @@ var listCalendars = _co2['default'].wrap(regeneratorRuntime.mark(function callee
       case 0:
         debug('Fetch calendars from home url ' + account.homeUrl);
         req = request.propfind({
-          props: [{ name: 'calendar-description', namespace: ns.CALDAV }, { name: 'calendar-timezone', namespace: ns.CALDAV }, { name: 'displayname', namespace: ns.DAV }, { name: 'getctag', namespace: ns.CALENDAR_SERVER }, { name: 'resourcetype', namespace: ns.DAV }, { name: 'supported-calendar-component-set', namespace: ns.CALDAV }, { name: 'sync-token', namespace: ns.DAV }],
+          props: [{ name: 'calendar-description', namespace: ns.CALDAV }, { name: 'calendar-timezone', namespace: ns.CALDAV }, { name: 'displayname', namespace: ns.DAV }, { name: 'getctag', namespace: ns.CALENDAR_SERVER }, { name: 'resourcetype', namespace: ns.DAV }, { name: 'supported-calendar-component-set', namespace: ns.CALDAV }, { name: 'sync-token', namespace: ns.DAV }, { name: 'calendar-color', namespace: ns.APPLE }],
           depth: 1
         });
         context$1$0.next = 4;
@@ -76,6 +76,7 @@ var listCalendars = _co2['default'].wrap(regeneratorRuntime.mark(function callee
             account: account,
             description: res.props.calendarDescription,
             timezone: res.props.calendarTimezone,
+            color: res.props.calendarColor,
             url: _url2['default'].resolve(account.rootUrl, res.href),
             ctag: res.props.getctag,
             displayName: res.props.displayname,
@@ -124,7 +125,7 @@ var getCalendar = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0
       case 0:
         debug('Fetch calendar ' + calendarUrl);
         req = request.propfind({
-          props: [{ name: 'calendar-description', namespace: ns.CALDAV }, { name: 'calendar-timezone', namespace: ns.CALDAV }, { name: 'displayname', namespace: ns.DAV }, { name: 'getctag', namespace: ns.CALENDAR_SERVER }, { name: 'resourcetype', namespace: ns.DAV }, { name: 'supported-calendar-component-set', namespace: ns.CALDAV }, { name: 'sync-token', namespace: ns.DAV }],
+          props: [{ name: 'calendar-description', namespace: ns.CALDAV }, { name: 'calendar-timezone', namespace: ns.CALDAV }, { name: 'displayname', namespace: ns.DAV }, { name: 'getctag', namespace: ns.CALENDAR_SERVER }, { name: 'resourcetype', namespace: ns.DAV }, { name: 'supported-calendar-component-set', namespace: ns.CALDAV }, { name: 'sync-token', namespace: ns.DAV }, { name: 'calendar-color', namespace: ns.APPLE }],
           depth: 0
         });
         context$1$0.next = 4;
@@ -147,6 +148,7 @@ var getCalendar = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0
             account: account,
             description: res.props.calendarDescription,
             timezone: res.props.calendarTimezone,
+            color: res.props.calendarColor,
             url: _url2['default'].resolve(account.rootUrl, res.href),
             ctag: res.props.getctag,
             displayName: res.props.displayname,
