@@ -679,12 +679,18 @@ var XMLHttpRequestWrapper = (function () {
 			this._options = {
 				method: method,
 				url: url,
+				headers: {
+					"Accept": "application/json, text/plain, */*",
+					"User-Agent": "minetime/request"
+				},
 				auth: user ? {
 					user: user,
 					pass: password,
 					sendImmediately: false
 				} : undefined,
-				timeout: this._defaultTimeout
+				timeout: this._defaultTimeout,
+				agent: false,
+				pool: false
 			};
 		}
 	}, {
@@ -1226,6 +1232,77 @@ var listCalendars = _co2['default'].wrap(regeneratorRuntime.mark(function callee
 }));
 
 exports.listCalendars = listCalendars;
+/**
+ * @param {dav.Account} account to fetch calendars for.
+ * @param {string} account to fetch calendars for.
+ */
+var getCalendar = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(account, calendarUrl, options) {
+  var req, responses, cals;
+  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
+    while (1) switch (context$1$0.prev = context$1$0.next) {
+      case 0:
+        debug('Fetch calendar ' + calendarUrl);
+        req = request.propfind({
+          props: [{ name: 'calendar-description', namespace: ns.CALDAV }, { name: 'calendar-timezone', namespace: ns.CALDAV }, { name: 'displayname', namespace: ns.DAV }, { name: 'getctag', namespace: ns.CALENDAR_SERVER }, { name: 'resourcetype', namespace: ns.DAV }, { name: 'supported-calendar-component-set', namespace: ns.CALDAV }, { name: 'sync-token', namespace: ns.DAV }],
+          depth: 0
+        });
+        context$1$0.next = 4;
+        return options.xhr.send(req, calendarUrl, {
+          sandbox: options.sandbox
+        });
+
+      case 4:
+        responses = context$1$0.sent;
+
+        debug('Found ' + responses.length + ' calendars (expect 1).');
+        cals = responses.filter(function (res) {
+          // We only want the calendar if it contains iCalendar objects.
+          var resourcetype = res.props.resourcetype || [];
+          return resourcetype.indexOf('calendar') !== -1;
+        }).map(function (res) {
+          debug('Found calendar ' + res.props.displayname + ',\n             props: ' + JSON.stringify(res.props));
+          return new _model.Calendar({
+            data: res,
+            account: account,
+            description: res.props.calendarDescription,
+            timezone: res.props.calendarTimezone,
+            url: _url2['default'].resolve(account.rootUrl, res.href),
+            ctag: res.props.getctag,
+            displayName: res.props.displayname,
+            components: res.props.supportedCalendarComponentSet,
+            resourcetype: res.props.resourcetype,
+            syncToken: res.props.syncToken
+          });
+        });
+        context$1$0.next = 9;
+        return cals.map(_co2['default'].wrap(regeneratorRuntime.mark(function callee$1$0(cal) {
+          return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
+            while (1) switch (context$2$0.prev = context$2$0.next) {
+              case 0:
+                context$2$0.next = 2;
+                return webdav.supportedReportSet(cal, options);
+
+              case 2:
+                cal.reports = context$2$0.sent;
+
+              case 3:
+              case 'end':
+                return context$2$0.stop();
+            }
+          }, callee$1$0, this);
+        })));
+
+      case 9:
+        return context$1$0.abrupt('return', cals.length ? cals[0] : null);
+
+      case 10:
+      case 'end':
+        return context$1$0.stop();
+    }
+  }, callee$0$0, this);
+}));
+
+exports.getCalendar = getCalendar;
 /**
  * @param {dav.Calendar} calendar the calendar to get the object from.
  * @return {Promise} promise will resolve when the event
@@ -1789,6 +1866,14 @@ var Client = (function () {
 
       options.xhr = options.xhr || this.xhr;
       return accounts.createAccount(options);
+    }
+  }, {
+    key: 'getCalendar',
+    value: function getCalendar(account, calendarUrl) {
+      var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+
+      options.xhr = options.xhr || this.xhr;
+      return calendars.getCalendar(account, calendarUrl, options);
     }
   }, {
     key: 'createCalendarObject',
@@ -3673,7 +3758,7 @@ var supportedReportSet = _co2['default'].wrap(regeneratorRuntime.mark(function c
         debug('Checking supported report set for collection at ' + collection.url);
         req = request.propfind({
           props: [{ name: 'supported-report-set', namespace: ns.DAV }],
-          depth: 1,
+          depth: 0,
           mergeResponses: true
         });
         context$1$0.next = 4;
@@ -18953,6 +19038,9 @@ module.exports={
   "application/geo+json-seq": {
     "source": "iana"
   },
+  "application/geopackage+sqlite3": {
+    "source": "iana"
+  },
   "application/geoxacml+xml": {
     "source": "iana",
     "compressible": true
@@ -20012,6 +20100,9 @@ module.exports={
     "source": "iana",
     "compressible": true
   },
+  "application/vnd.3gpp.mc-signalling-ear": {
+    "source": "iana"
+  },
   "application/vnd.3gpp.mcdata-payload": {
     "source": "iana"
   },
@@ -20232,9 +20323,21 @@ module.exports={
     "compressible": true,
     "extensions": ["mpkg"]
   },
+  "application/vnd.apple.keynote": {
+    "source": "iana",
+    "extensions": ["keynote"]
+  },
   "application/vnd.apple.mpegurl": {
     "source": "iana",
     "extensions": ["m3u8"]
+  },
+  "application/vnd.apple.numbers": {
+    "source": "iana",
+    "extensions": ["numbers"]
+  },
+  "application/vnd.apple.pages": {
+    "source": "iana",
+    "extensions": ["pages"]
   },
   "application/vnd.apple.pkpass": {
     "compressible": false,
@@ -20560,11 +20663,8 @@ module.exports={
     "source": "iana",
     "extensions": ["fe_launch"]
   },
-  "application/vnd.desmume-movie": {
-    "source": "iana"
-  },
   "application/vnd.desmume.movie": {
-    "source": "apache"
+    "source": "iana"
   },
   "application/vnd.dir-bi.plate-dl-nosuffix": {
     "source": "iana"
@@ -20984,6 +21084,10 @@ module.exports={
   },
   "application/vnd.fut-misnet": {
     "source": "iana"
+  },
+  "application/vnd.futoin+json": {
+    "source": "iana",
+    "compressible": true
   },
   "application/vnd.fuzzysheet": {
     "source": "iana",
@@ -22653,12 +22757,8 @@ module.exports={
   "application/vnd.panoply": {
     "source": "iana"
   },
-  "application/vnd.paos+xml": {
-    "source": "iana",
-    "compressible": true
-  },
   "application/vnd.paos.xml": {
-    "source": "apache"
+    "source": "iana"
   },
   "application/vnd.patentdive": {
     "source": "iana"
@@ -24201,6 +24301,9 @@ module.exports={
   "application/zlib": {
     "source": "iana"
   },
+  "application/zstd": {
+    "source": "iana"
+  },
   "audio/1d-interleaved-parityfec": {
     "source": "iana"
   },
@@ -24829,11 +24932,18 @@ module.exports={
     "extensions": ["woff2"]
   },
   "image/aces": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["exr"]
   },
   "image/apng": {
     "compressible": false,
     "extensions": ["apng"]
+  },
+  "image/avci": {
+    "source": "iana"
+  },
+  "image/avcs": {
+    "source": "iana"
   },
   "image/bmp": {
     "source": "iana",
@@ -24845,13 +24955,16 @@ module.exports={
     "extensions": ["cgm"]
   },
   "image/dicom-rle": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["drle"]
   },
   "image/emf": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["emf"]
   },
   "image/fits": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["fits"]
   },
   "image/g3fax": {
     "source": "iana",
@@ -24862,12 +24975,25 @@ module.exports={
     "compressible": false,
     "extensions": ["gif"]
   },
+  "image/heic": {
+    "source": "iana"
+  },
+  "image/heic-sequence": {
+    "source": "iana"
+  },
+  "image/heif": {
+    "source": "iana"
+  },
+  "image/heif-sequence": {
+    "source": "iana"
+  },
   "image/ief": {
     "source": "iana",
     "extensions": ["ief"]
   },
   "image/jls": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["jls"]
   },
   "image/jp2": {
     "source": "iana",
@@ -24909,7 +25035,8 @@ module.exports={
     "extensions": ["btif"]
   },
   "image/prs.pti": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["pti"]
   },
   "image/pwg-raster": {
     "source": "iana"
@@ -24924,15 +25051,17 @@ module.exports={
     "extensions": ["svg","svgz"]
   },
   "image/t38": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["t38"]
   },
   "image/tiff": {
     "source": "iana",
     "compressible": false,
-    "extensions": ["tiff","tif"]
+    "extensions": ["tif","tiff"]
   },
   "image/tiff-fx": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["tfx"]
   },
   "image/vnd.adobe.photoshop": {
     "source": "iana",
@@ -24940,7 +25069,8 @@ module.exports={
     "extensions": ["psd"]
   },
   "image/vnd.airzip.accelerator.azv": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["azv"]
   },
   "image/vnd.cns.inf2": {
     "source": "iana"
@@ -24989,7 +25119,8 @@ module.exports={
     "source": "iana"
   },
   "image/vnd.microsoft.icon": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["ico"]
   },
   "image/vnd.mix": {
     "source": "iana"
@@ -25025,10 +25156,12 @@ module.exports={
     "source": "iana"
   },
   "image/vnd.tencent.tap": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["tap"]
   },
   "image/vnd.valve.source.texture": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["vtf"]
   },
   "image/vnd.wap.wbmp": {
     "source": "iana",
@@ -25039,14 +25172,16 @@ module.exports={
     "extensions": ["xif"]
   },
   "image/vnd.zbrush.pcx": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["pcx"]
   },
   "image/webp": {
     "source": "apache",
     "extensions": ["webp"]
   },
   "image/wmf": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["wmf"]
   },
   "image/x-3ds": {
     "source": "apache",
@@ -27438,7 +27573,7 @@ Auth.prototype.onResponse = function (response) {
 
   var c = caseless(response.headers)
 
-  var regSplit = /, (?=[A-Z])/
+  var regSplit = /, (?=[a-zA-Z])(?![a-zA-Z]*=)/
   var authHeader = c.get('www-authenticate')
   var authMethods = authHeader && authHeader.split(regSplit)
   if (!authMethods) return
@@ -38513,7 +38648,7 @@ module.exports={
   "_resolved": "https://registry.npmjs.org/tough-cookie/-/tough-cookie-2.3.4.tgz",
   "_shasum": "ec60cee38ac675063ffc97a5c18970578ee83655",
   "_spec": "tough-cookie@~2.3.3",
-  "_where": "/home/anconam/projects/dav/node_modules/request",
+  "_where": "/Users/anconam/Documents/projects/dav/node_modules/request",
   "author": {
     "name": "Jeremy Stashewsky",
     "email": "jstashewsky@salesforce.com"
@@ -43899,7 +44034,7 @@ module.exports={
   ],
   "dependencies": {
     "co": "^4.6.0",
-    "request": "git+https://github.com/marcoancona/request.git#20c8b600de70e25c9497e053642e838007d337e3",
+    "request": "git+https://github.com/marcoancona/request.git#01b7b6ef318fd2f08c9e56ab3f9b9526ce32024d",
     "xmldom": "^0.1.19"
   },
   "devDependencies": {

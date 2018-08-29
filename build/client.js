@@ -83,6 +83,14 @@ var Client = (function () {
       return accounts.createAccount(options);
     }
   }, {
+    key: 'getCalendar',
+    value: function getCalendar(account, calendarUrl) {
+      var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
+
+      options.xhr = options.xhr || this.xhr;
+      return calendars.getCalendar(account, calendarUrl, options);
+    }
+  }, {
     key: 'createCalendarObject',
     value: function createCalendarObject(calendar) {
       var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];

@@ -80,7 +80,7 @@ var supportedReportSet = _co2['default'].wrap(regeneratorRuntime.mark(function c
         debug('Checking supported report set for collection at ' + collection.url);
         req = request.propfind({
           props: [{ name: 'supported-report-set', namespace: ns.DAV }],
-          depth: 1,
+          depth: 0,
           mergeResponses: true
         });
         context$1$0.next = 4;
