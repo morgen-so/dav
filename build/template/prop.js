@@ -61,6 +61,8 @@ function xmlnsPrefix(namespace) {
       return 'c';
     case ns.CARDDAV:
       return 'card';
+    case ns.APPLE:
+      return 'x';
     default:
       throw new Error('Unrecognized xmlns ' + namespace);
   }

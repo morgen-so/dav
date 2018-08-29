@@ -3326,6 +3326,8 @@ function xmlnsPrefix(namespace) {
       return 'c';
     case ns.CARDDAV:
       return 'card';
+    case ns.APPLE:
+      return 'x';
     default:
       throw new Error('Unrecognized xmlns ' + namespace);
   }
@@ -3346,7 +3348,7 @@ var _prop = require('./prop');
 var _prop2 = _interopRequireDefault(_prop);
 
 function propfind(object) {
-  return '<d:propfind xmlns:c="urn:ietf:params:xml:ns:caldav"\n              xmlns:card="urn:ietf:params:xml:ns:carddav"\n              xmlns:cs="http://calendarserver.org/ns/"\n              xmlns:d="DAV:">\n    <d:prop>\n      ' + object.props.map(_prop2['default']) + '\n    </d:prop>\n  </d:propfind>';
+  return '<d:propfind xmlns:c="urn:ietf:params:xml:ns:caldav"\n              xmlns:card="urn:ietf:params:xml:ns:carddav"\n              xmlns:cs="http://calendarserver.org/ns/"\n              xmlns:x="https://apple.com/ns/ical"\n              xmlns:d="DAV:">\n    <d:prop>\n      ' + object.props.map(_prop2['default']) + '\n    </d:prop>\n  </d:propfind>';
 }
 
 module.exports = exports['default'];
