@@ -2629,7 +2629,7 @@ Object.defineProperty(exports, '__esModule', {
 });
 var CALENDAR_SERVER = 'http://calendarserver.org/ns/';
 exports.CALENDAR_SERVER = CALENDAR_SERVER;
-var APPLE = "https://apple.com/ns/ical";
+var APPLE = "http://apple.com/ns/ical/";
 exports.APPLE = APPLE;
 var CALDAV = 'urn:ietf:params:xml:ns:caldav';
 exports.CALDAV = CALDAV;
@@ -3348,7 +3348,7 @@ var _prop = require('./prop');
 var _prop2 = _interopRequireDefault(_prop);
 
 function propfind(object) {
-  return '<d:propfind xmlns:c="urn:ietf:params:xml:ns:caldav"\n              xmlns:card="urn:ietf:params:xml:ns:carddav"\n              xmlns:cs="http://calendarserver.org/ns/"\n              xmlns:x="https://apple.com/ns/ical"\n              xmlns:d="DAV:">\n    <d:prop>\n      ' + object.props.map(_prop2['default']) + '\n    </d:prop>\n  </d:propfind>';
+  return '<d:propfind xmlns:c="urn:ietf:params:xml:ns:caldav"\n              xmlns:card="urn:ietf:params:xml:ns:carddav"\n              xmlns:cs="http://calendarserver.org/ns/"\n              xmlns:x="http://apple.com/ns/ical/"\n              xmlns:d="DAV:">\n    <d:prop>\n      ' + object.props.map(_prop2['default']) + '\n    </d:prop>\n  </d:propfind>';
 }
 
 module.exports = exports['default'];

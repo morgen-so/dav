@@ -5,7 +5,7 @@ Object.defineProperty(exports, '__esModule', {
 });
 var CALENDAR_SERVER = 'http://calendarserver.org/ns/';
 exports.CALENDAR_SERVER = CALENDAR_SERVER;
-var APPLE = "https://apple.com/ns/ical";
+var APPLE = "http://apple.com/ns/ical/";
 exports.APPLE = APPLE;
 var CALDAV = 'urn:ietf:params:xml:ns:caldav';
 exports.CALDAV = CALDAV;
