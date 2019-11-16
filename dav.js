@@ -1172,7 +1172,7 @@ var listCalendars = _co2['default'].wrap(regeneratorRuntime.mark(function callee
       case 0:
         debug('Fetch calendars from home url ' + account.homeUrl);
         req = request.propfind({
-          props: [{ name: 'calendar-description', namespace: ns.CALDAV }, { name: 'calendar-timezone', namespace: ns.CALDAV }, { name: 'displayname', namespace: ns.DAV }, { name: 'getctag', namespace: ns.CALENDAR_SERVER }, { name: 'resourcetype', namespace: ns.DAV }, { name: 'supported-calendar-component-set', namespace: ns.CALDAV }, { name: 'sync-token', namespace: ns.DAV }, { name: 'calendar-color', namespace: ns.APPLE }],
+          props: [{ name: 'calendar-description', namespace: ns.CALDAV }, { name: 'calendar-timezone', namespace: ns.CALDAV }, { name: 'displayname', namespace: ns.DAV }, { name: 'getctag', namespace: ns.CALENDAR_SERVER }, { name: 'resourcetype', namespace: ns.DAV }, { name: 'supported-calendar-component-set', namespace: ns.CALDAV }, { name: 'sync-token', namespace: ns.DAV }, { name: 'calendar-color', namespace: ns.APPLE }, { name: 'current-user-privilege-set', namespace: ns.DAV }],
           depth: 1
         });
         context$1$0.next = 4;
@@ -1201,7 +1201,8 @@ var listCalendars = _co2['default'].wrap(regeneratorRuntime.mark(function callee
             displayName: res.props.displayname,
             components: res.props.supportedCalendarComponentSet,
             resourcetype: res.props.resourcetype,
-            syncToken: res.props.syncToken
+            syncToken: res.props.syncToken,
+            currentUserPrivilegeSet: res.props.currentUserPrivilegeSet
           });
         });
         context$1$0.next = 9;
@@ -1274,7 +1275,7 @@ var getCalendar = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0
             components: res.props.supportedCalendarComponentSet,
             resourcetype: res.props.resourcetype,
             syncToken: res.props.syncToken,
-            privilegeSet: res.props.currentUserPrivilegeSet
+            currentUserPrivilegeSet: res.props.currentUserPrivilegeSet
           });
         });
         context$1$0.next = 9;
