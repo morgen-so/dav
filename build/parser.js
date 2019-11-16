@@ -55,7 +55,7 @@ var traverse = {
     return complex(node, {
       resourcetype: false,
       supportedCalendarComponentSet: false,
-      currentUserPrivilegeSet: true,
+      currentUserPrivilegeSet: false,
       supportedReportSet: false,
       currentUserPrincipal: false,
       calendarUserAddressSet: false
@@ -104,7 +104,9 @@ var traverse = {
   },
 
   privilege: function privilege(node) {
-    return decodeURIComponent(childNodes(node)[0].nodeValue);
+    return childNodes(node).map(function (childNode) {
+      return childNode.localName;
+    });
   },
 
   href: function href(node) {
