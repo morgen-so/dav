@@ -2696,6 +2696,7 @@ var traverse = {
     return complex(node, {
       resourcetype: false,
       supportedCalendarComponentSet: false,
+      currentUserPrivilegeSet: true,
       supportedReportSet: false,
       currentUserPrincipal: false,
       calendarUserAddressSet: false
@@ -2714,6 +2715,11 @@ var traverse = {
   },
 
   // [x, y, z]
+  currentUserPrivilegeSet: function currentUserPrivilegeSet(node) {
+    return complex(node, { privilege: true }, 'privilege');
+  },
+
+  // [x, y, z]
   calendarUserAddressSet: function calendarUserAddressSet(node) {
     return complex(node, { href: true }, 'href');
   },
@@ -2721,11 +2727,6 @@ var traverse = {
   // [x, y, z]
   supportedReportSet: function supportedReportSet(node) {
     return complex(node, { supportedReport: true }, 'supportedReport');
-  },
-
-  // [x, y, z]
-  currentUserPrivilegeSet: function currentUserPrivilegeSet(node) {
-    return complex(node, { currentUserPrivilege: true }, 'currentUserPrivilege');
   },
 
   comp: function comp(node) {
@@ -2737,11 +2738,6 @@ var traverse = {
     return complex(node, { report: false }, 'report');
   },
 
-  // x
-  currentUserPrivilege: function currentUserPrivilege(node) {
-    return complex(node, { privilege: false }, 'privilege');
-  },
-
   report: function report(node) {
     return childNodes(node).map(function (childNode) {
       return childNode.localName;
@@ -2749,9 +2745,7 @@ var traverse = {
   },
 
   privilege: function privilege(node) {
-    return childNodes(node).map(function (childNode) {
-      return childNode.localName;
-    });
+    return decodeURIComponent(childNodes(node)[0].nodeValue);
   },
 
   href: function href(node) {
