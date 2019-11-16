@@ -82,6 +82,11 @@ var traverse = {
     return complex(node, { supportedReport: true }, 'supportedReport');
   },
 
+  // [x, y, z]
+  currentUserPrivilegeSet: function currentUserPrivilegeSet(node) {
+    return complex(node, { currentUserPrivilege: true }, 'currentUserPrivilege');
+  },
+
   comp: function comp(node) {
     return node.getAttribute('name');
   },
@@ -91,7 +96,18 @@ var traverse = {
     return complex(node, { report: false }, 'report');
   },
 
+  // x
+  currentUserPrivilege: function currentUserPrivilege(node) {
+    return complex(node, { privilege: false }, 'privilege');
+  },
+
   report: function report(node) {
+    return childNodes(node).map(function (childNode) {
+      return childNode.localName;
+    });
+  },
+
+  privilege: function privilege(node) {
     return childNodes(node).map(function (childNode) {
       return childNode.localName;
     });
