@@ -1244,7 +1244,7 @@ var getCalendar = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0
       case 0:
         debug('Fetch calendar ' + calendarUrl);
         req = request.propfind({
-          props: [{ name: 'calendar-description', namespace: ns.CALDAV }, { name: 'calendar-timezone', namespace: ns.CALDAV }, { name: 'displayname', namespace: ns.DAV }, { name: 'getctag', namespace: ns.CALENDAR_SERVER }, { name: 'resourcetype', namespace: ns.DAV }, { name: 'supported-calendar-component-set', namespace: ns.CALDAV }, { name: 'sync-token', namespace: ns.DAV }, { name: 'calendar-color', namespace: ns.APPLE }],
+          props: [{ name: 'calendar-description', namespace: ns.CALDAV }, { name: 'calendar-timezone', namespace: ns.CALDAV }, { name: 'displayname', namespace: ns.DAV }, { name: 'getctag', namespace: ns.CALENDAR_SERVER }, { name: 'resourcetype', namespace: ns.DAV }, { name: 'supported-calendar-component-set', namespace: ns.CALDAV }, { name: 'sync-token', namespace: ns.DAV }, { name: 'calendar-color', namespace: ns.APPLE }, { name: 'current-user-privilege-set', namespace: ns.DAV }],
           depth: 0
         });
         context$1$0.next = 4;
@@ -1273,7 +1273,8 @@ var getCalendar = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0
             displayName: res.props.displayname,
             components: res.props.supportedCalendarComponentSet,
             resourcetype: res.props.resourcetype,
-            syncToken: res.props.syncToken
+            syncToken: res.props.syncToken,
+            privilegeSet: res.props.currentUserPrivilegeSet
           });
         });
         context$1$0.next = 9;
@@ -38654,7 +38655,7 @@ module.exports={
   "_resolved": "https://registry.npmjs.org/tough-cookie/-/tough-cookie-2.3.4.tgz",
   "_shasum": "ec60cee38ac675063ffc97a5c18970578ee83655",
   "_spec": "tough-cookie@~2.3.3",
-  "_where": "/home/anconam/projects/dav/node_modules/request",
+  "_where": "/Users/anconam/Documents/projects/dav/node_modules/request",
   "author": {
     "name": "Jeremy Stashewsky",
     "email": "jstashewsky@salesforce.com"
