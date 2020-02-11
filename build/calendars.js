@@ -373,17 +373,26 @@ var multigetCalendarObjects = _co2['default'].wrap(regeneratorRuntime.mark(funct
         return context$1$0.abrupt('return', []);
 
       case 4:
+
+        // Suddenly (Feb 2020), iCloud returns 500 if hrefs contain the calendar href, despite providing the correct body!!
+        // This is a workaround. Other solution would be to ignore 500 and parse the result but this seems even worse.
+        if (calendar.url.indexOf("icloud") > -1) {
+          hrefs = hrefs.filter(function (href) {
+            return href.indexOf(".ics") > -1;
+          });
+        }
+
         req = request.calendarMultiget({
           depth: 1,
           props: [{ name: 'getetag', namespace: ns.DAV }, { name: 'calendar-data', namespace: ns.CALDAV }],
           hrefs: hrefs
         });
-        context$1$0.next = 7;
+        context$1$0.next = 8;
         return options.xhr.send(req, calendar.url, {
           sandbox: options.sandbox
         });
 
-      case 7:
+      case 8:
         responses = context$1$0.sent;
         return context$1$0.abrupt('return', responses.map(function (res) {
           //debug(`Found calendar object with url ${res.href}`);
@@ -396,7 +405,7 @@ var multigetCalendarObjects = _co2['default'].wrap(regeneratorRuntime.mark(funct
           });
         }));
 
-      case 9:
+      case 10:
       case 'end':
         return context$1$0.stop();
     }
