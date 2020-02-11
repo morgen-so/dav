@@ -373,26 +373,17 @@ var multigetCalendarObjects = _co2['default'].wrap(regeneratorRuntime.mark(funct
         return context$1$0.abrupt('return', []);
 
       case 4:
-
-        // Suddenly (Feb 2020), iCloud returns 500 if hrefs contain the calendar href, despite providing the correct body!!
-        // This is a workaround. Other solution would be to ignore 500 and parse the result but this seems even worse.
-        if (calendar.url.indexOf("icloud") > -1) {
-          hrefs = hrefs.filter(function (href) {
-            return href.indexOf(".ics") > -1;
-          });
-        }
-
         req = request.calendarMultiget({
           depth: 1,
           props: [{ name: 'getetag', namespace: ns.DAV }, { name: 'calendar-data', namespace: ns.CALDAV }],
           hrefs: hrefs
         });
-        context$1$0.next = 8;
+        context$1$0.next = 7;
         return options.xhr.send(req, calendar.url, {
           sandbox: options.sandbox
         });
 
-      case 8:
+      case 7:
         responses = context$1$0.sent;
         return context$1$0.abrupt('return', responses.map(function (res) {
           //debug(`Found calendar object with url ${res.href}`);
@@ -405,7 +396,7 @@ var multigetCalendarObjects = _co2['default'].wrap(regeneratorRuntime.mark(funct
           });
         }));
 
-      case 10:
+      case 9:
       case 'end':
         return context$1$0.stop();
     }
@@ -597,18 +588,26 @@ var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$
           return res.href;
         });
 
+        // Starting from Feb 2020, iCloud sends 500 if hrefs contain the calendar one, despite providing the other data correctly!
+        // TODO: Is this supposed to be the standard??
+        if (calendar.url.indexOf("icloud.com") > -1) {
+          newUpdatedHrefs = newUpdatedHrefs.filter(function (href) {
+            return href.indexOf(".ics") > -1;
+          });
+        }
+
         req = request.calendarMultiget({
           props: [{ name: 'getetag', namespace: ns.DAV }, { name: 'calendar-data', namespace: ns.CALDAV }],
           depth: 1,
           hrefs: newUpdatedHrefs
         });
 
-        context$1$0.next = 9;
+        context$1$0.next = 10;
         return options.xhr.send(req, calendar.url, {
           sandbox: options.sandbox
         });
 
-      case 9:
+      case 10:
         results = context$1$0.sent;
 
         results.forEach(function (response) {
@@ -644,7 +643,7 @@ var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$
         calendar.syncToken = result.syncToken;
         return context$1$0.abrupt('return', calendar);
 
-      case 14:
+      case 15:
       case 'end':
         return context$1$0.stop();
     }
