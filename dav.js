@@ -1,795 +1,170 @@
-/**
- * Polyfill from developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Array/find
- */
-if (!Array.prototype.find) {
-  Array.prototype.find = function(predicate) {
-    if (this == null) {
-      throw new TypeError('Array.prototype.find called on null or undefined');
-    }
-    if (typeof predicate !== 'function') {
-      throw new TypeError('predicate must be a function');
-    }
-    var list = Object(this);
-    var length = list.length >>> 0;
-    var thisArg = arguments[1];
-    var value;
-
-    for (var i = 0; i < length; i++) {
-      value = list[i];
-      if (predicate.call(thisArg, value, i, list)) {
-        return value;
-      }
-    }
-    return undefined;
-  };
-}
-/**
- * Polyfill from developer.mozilla.org/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
- */
-if (!Object.assign) {
-  Object.defineProperty(Object, 'assign', {
-    enumerable: false,
-    configurable: true,
-    writable: true,
-    value: function(target, firstSource) {
-      'use strict';
-      if (target === undefined || target === null) {
-        throw new TypeError('Cannot convert first argument to object');
-      }
-
-      var to = Object(target);
-      for (var i = 1; i < arguments.length; i++) {
-        var nextSource = arguments[i];
-        if (nextSource === undefined || nextSource === null) {
-          continue;
-        }
-        nextSource = Object(nextSource);
-
-        var keysArray = Object.keys(Object(nextSource));
-        for (var nextIndex = 0, len = keysArray.length; nextIndex < len; nextIndex++) {
-          var nextKey = keysArray[nextIndex];
-          var desc = Object.getOwnPropertyDescriptor(nextSource, nextKey);
-          if (desc !== undefined && desc.enumerable) {
-            to[nextKey] = nextSource[nextKey];
-          }
-        }
-      }
-      return to;
-    }
-  });
-}
-/**
- * Copyright (c) 2014, Facebook, Inc.
- * All rights reserved.
- *
- * This source code is licensed under the BSD-style license found in the
- * https://raw.github.com/facebook/regenerator/master/LICENSE file. An
- * additional grant of patent rights can be found in the PATENTS file in
- * the same directory.
- */
-
-!(function(global) {
-  "use strict";
-
-  var hasOwn = Object.prototype.hasOwnProperty;
-  var undefined; // More compressible than void 0.
-  var iteratorSymbol =
-    typeof Symbol === "function" && Symbol.iterator || "@@iterator";
-
-  var inModule = typeof module === "object";
-  var runtime = global.regeneratorRuntime;
-  if (runtime) {
-    if (inModule) {
-      // If regeneratorRuntime is defined globally and we're in a module,
-      // make the exports object identical to regeneratorRuntime.
-      module.exports = runtime;
-    }
-    // Don't bother evaluating the rest of this file if the runtime was
-    // already defined globally.
-    return;
-  }
-
-  // Define the runtime globally (as expected by generated code) as either
-  // module.exports (if we're in a module) or a new, empty object.
-  runtime = global.regeneratorRuntime = inModule ? module.exports : {};
-
-  function wrap(innerFn, outerFn, self, tryLocsList) {
-    // If outerFn provided, then outerFn.prototype instanceof Generator.
-    var generator = Object.create((outerFn || Generator).prototype);
-
-    generator._invoke = makeInvokeMethod(
-      innerFn, self || null,
-      new Context(tryLocsList || [])
-    );
-
-    return generator;
-  }
-  runtime.wrap = wrap;
-
-  // Try/catch helper to minimize deoptimizations. Returns a completion
-  // record like context.tryEntries[i].completion. This interface could
-  // have been (and was previously) designed to take a closure to be
-  // invoked without arguments, but in all the cases we care about we
-  // already have an existing method we want to call, so there's no need
-  // to create a new function object. We can even get away with assuming
-  // the method takes exactly one argument, since that happens to be true
-  // in every case, so we don't have to touch the arguments object. The
-  // only additional allocation required is the completion record, which
-  // has a stable shape and so hopefully should be cheap to allocate.
-  function tryCatch(fn, obj, arg) {
-    try {
-      return { type: "normal", arg: fn.call(obj, arg) };
-    } catch (err) {
-      return { type: "throw", arg: err };
-    }
-  }
-
-  var GenStateSuspendedStart = "suspendedStart";
-  var GenStateSuspendedYield = "suspendedYield";
-  var GenStateExecuting = "executing";
-  var GenStateCompleted = "completed";
-
-  // Returning this object from the innerFn has the same effect as
-  // breaking out of the dispatch switch statement.
-  var ContinueSentinel = {};
-
-  // Dummy constructor functions that we use as the .constructor and
-  // .constructor.prototype properties for functions that return Generator
-  // objects. For full spec compliance, you may wish to configure your
-  // minifier not to mangle the names of these two functions.
-  function Generator() {}
-  function GeneratorFunction() {}
-  function GeneratorFunctionPrototype() {}
-
-  var Gp = GeneratorFunctionPrototype.prototype = Generator.prototype;
-  GeneratorFunction.prototype = Gp.constructor = GeneratorFunctionPrototype;
-  GeneratorFunctionPrototype.constructor = GeneratorFunction;
-  GeneratorFunction.displayName = "GeneratorFunction";
-
-  runtime.isGeneratorFunction = function(genFun) {
-    var ctor = typeof genFun === "function" && genFun.constructor;
-    return ctor
-      ? ctor === GeneratorFunction ||
-        // For the native GeneratorFunction constructor, the best we can
-        // do is to check its .name property.
-        (ctor.displayName || ctor.name) === "GeneratorFunction"
-      : false;
-  };
-
-  runtime.mark = function(genFun) {
-    genFun.__proto__ = GeneratorFunctionPrototype;
-    genFun.prototype = Object.create(Gp);
-    return genFun;
-  };
-
-  runtime.async = function(innerFn, outerFn, self, tryLocsList) {
-    return new Promise(function(resolve, reject) {
-      var generator = wrap(innerFn, outerFn, self, tryLocsList);
-      var callNext = step.bind(generator, "next");
-      var callThrow = step.bind(generator, "throw");
-
-      function step(method, arg) {
-        var record = tryCatch(generator[method], generator, arg);
-        if (record.type === "throw") {
-          reject(record.arg);
-          return;
-        }
-
-        var info = record.arg;
-        if (info.done) {
-          resolve(info.value);
-        } else {
-          Promise.resolve(info.value).then(callNext, callThrow);
-        }
-      }
-
-      callNext();
-    });
-  };
-
-  function makeInvokeMethod(innerFn, self, context) {
-    var state = GenStateSuspendedStart;
-
-    return function invoke(method, arg) {
-      if (state === GenStateExecuting) {
-        throw new Error("Generator is already running");
-      }
-
-      if (state === GenStateCompleted) {
-        // Be forgiving, per 25.3.3.3.3 of the spec:
-        // https://people.mozilla.org/~jorendorff/es6-draft.html#sec-generatorresume
-        return doneResult();
-      }
-
-      while (true) {
-        var delegate = context.delegate;
-        if (delegate) {
-          if (method === "return" ||
-              (method === "throw" && delegate.iterator[method] === undefined)) {
-            // A return or throw (when the delegate iterator has no throw
-            // method) always terminates the yield* loop.
-            context.delegate = null;
-
-            // If the delegate iterator has a return method, give it a
-            // chance to clean up.
-            var returnMethod = delegate.iterator["return"];
-            if (returnMethod) {
-              var record = tryCatch(returnMethod, delegate.iterator, arg);
-              if (record.type === "throw") {
-                // If the return method threw an exception, let that
-                // exception prevail over the original return or throw.
-                method = "throw";
-                arg = record.arg;
-                continue;
-              }
-            }
-
-            if (method === "return") {
-              // Continue with the outer return, now that the delegate
-              // iterator has been terminated.
-              continue;
-            }
-          }
-
-          var record = tryCatch(
-            delegate.iterator[method],
-            delegate.iterator,
-            arg
-          );
-
-          if (record.type === "throw") {
-            context.delegate = null;
-
-            // Like returning generator.throw(uncaught), but without the
-            // overhead of an extra function call.
-            method = "throw";
-            arg = record.arg;
-            continue;
-          }
-
-          // Delegate generator ran and handled its own exceptions so
-          // regardless of what the method was, we continue as if it is
-          // "next" with an undefined arg.
-          method = "next";
-          arg = undefined;
-
-          var info = record.arg;
-          if (info.done) {
-            context[delegate.resultName] = info.value;
-            context.next = delegate.nextLoc;
-          } else {
-            state = GenStateSuspendedYield;
-            return info;
-          }
-
-          context.delegate = null;
-        }
-
-        if (method === "next") {
-          if (state === GenStateSuspendedYield) {
-            context.sent = arg;
-          } else {
-            delete context.sent;
-          }
-
-        } else if (method === "throw") {
-          if (state === GenStateSuspendedStart) {
-            state = GenStateCompleted;
-            throw arg;
-          }
-
-          if (context.dispatchException(arg)) {
-            // If the dispatched exception was caught by a catch block,
-            // then let that catch block handle the exception normally.
-            method = "next";
-            arg = undefined;
-          }
-
-        } else if (method === "return") {
-          context.abrupt("return", arg);
-        }
-
-        state = GenStateExecuting;
-
-        var record = tryCatch(innerFn, self, context);
-        if (record.type === "normal") {
-          // If an exception is thrown from innerFn, we leave state ===
-          // GenStateExecuting and loop back for another invocation.
-          state = context.done
-            ? GenStateCompleted
-            : GenStateSuspendedYield;
-
-          var info = {
-            value: record.arg,
-            done: context.done
-          };
-
-          if (record.arg === ContinueSentinel) {
-            if (context.delegate && method === "next") {
-              // Deliberately forget the last sent value so that we don't
-              // accidentally pass it on to the delegate.
-              arg = undefined;
-            }
-          } else {
-            return info;
-          }
-
-        } else if (record.type === "throw") {
-          state = GenStateCompleted;
-          // Dispatch the exception by looping back around to the
-          // context.dispatchException(arg) call above.
-          method = "throw";
-          arg = record.arg;
-        }
-      }
-    };
-  }
-
-  function defineGeneratorMethod(method) {
-    Gp[method] = function(arg) {
-      return this._invoke(method, arg);
-    };
-  }
-  defineGeneratorMethod("next");
-  defineGeneratorMethod("throw");
-  defineGeneratorMethod("return");
-
-  Gp[iteratorSymbol] = function() {
-    return this;
-  };
-
-  Gp.toString = function() {
-    return "[object Generator]";
-  };
-
-  function pushTryEntry(locs) {
-    var entry = { tryLoc: locs[0] };
-
-    if (1 in locs) {
-      entry.catchLoc = locs[1];
-    }
-
-    if (2 in locs) {
-      entry.finallyLoc = locs[2];
-      entry.afterLoc = locs[3];
-    }
-
-    this.tryEntries.push(entry);
-  }
-
-  function resetTryEntry(entry) {
-    var record = entry.completion || {};
-    record.type = "normal";
-    delete record.arg;
-    entry.completion = record;
-  }
-
-  function Context(tryLocsList) {
-    // The root entry object (effectively a try statement without a catch
-    // or a finally block) gives us a place to store values thrown from
-    // locations where there is no enclosing try statement.
-    this.tryEntries = [{ tryLoc: "root" }];
-    tryLocsList.forEach(pushTryEntry, this);
-    this.reset();
-  }
-
-  runtime.keys = function(object) {
-    var keys = [];
-    for (var key in object) {
-      keys.push(key);
-    }
-    keys.reverse();
-
-    // Rather than returning an object with a next method, we keep
-    // things simple and return the next function itself.
-    return function next() {
-      while (keys.length) {
-        var key = keys.pop();
-        if (key in object) {
-          next.value = key;
-          next.done = false;
-          return next;
-        }
-      }
-
-      // To avoid creating an additional object, we just hang the .value
-      // and .done properties off the next function object itself. This
-      // also ensures that the minifier will not anonymize the function.
-      next.done = true;
-      return next;
-    };
-  };
-
-  function values(iterable) {
-    if (iterable) {
-      var iteratorMethod = iterable[iteratorSymbol];
-      if (iteratorMethod) {
-        return iteratorMethod.call(iterable);
-      }
-
-      if (typeof iterable.next === "function") {
-        return iterable;
-      }
-
-      if (!isNaN(iterable.length)) {
-        var i = -1, next = function next() {
-          while (++i < iterable.length) {
-            if (hasOwn.call(iterable, i)) {
-              next.value = iterable[i];
-              next.done = false;
-              return next;
-            }
-          }
-
-          next.value = undefined;
-          next.done = true;
-
-          return next;
-        };
-
-        return next.next = next;
-      }
-    }
-
-    // Return an iterator with no values.
-    return { next: doneResult };
-  }
-  runtime.values = values;
-
-  function doneResult() {
-    return { value: undefined, done: true };
-  }
-
-  Context.prototype = {
-    constructor: Context,
-
-    reset: function() {
-      this.prev = 0;
-      this.next = 0;
-      this.sent = undefined;
-      this.done = false;
-      this.delegate = null;
-
-      this.tryEntries.forEach(resetTryEntry);
-
-      // Pre-initialize at least 20 temporary variables to enable hidden
-      // class optimizations for simple generators.
-      for (var tempIndex = 0, tempName;
-           hasOwn.call(this, tempName = "t" + tempIndex) || tempIndex < 20;
-           ++tempIndex) {
-        this[tempName] = null;
-      }
-    },
-
-    stop: function() {
-      this.done = true;
-
-      var rootEntry = this.tryEntries[0];
-      var rootRecord = rootEntry.completion;
-      if (rootRecord.type === "throw") {
-        throw rootRecord.arg;
-      }
-
-      return this.rval;
-    },
-
-    dispatchException: function(exception) {
-      if (this.done) {
-        throw exception;
-      }
-
-      var context = this;
-      function handle(loc, caught) {
-        record.type = "throw";
-        record.arg = exception;
-        context.next = loc;
-        return !!caught;
-      }
-
-      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-        var entry = this.tryEntries[i];
-        var record = entry.completion;
-
-        if (entry.tryLoc === "root") {
-          // Exception thrown outside of any try block that could handle
-          // it, so set the completion value of the entire function to
-          // throw the exception.
-          return handle("end");
-        }
-
-        if (entry.tryLoc <= this.prev) {
-          var hasCatch = hasOwn.call(entry, "catchLoc");
-          var hasFinally = hasOwn.call(entry, "finallyLoc");
-
-          if (hasCatch && hasFinally) {
-            if (this.prev < entry.catchLoc) {
-              return handle(entry.catchLoc, true);
-            } else if (this.prev < entry.finallyLoc) {
-              return handle(entry.finallyLoc);
-            }
-
-          } else if (hasCatch) {
-            if (this.prev < entry.catchLoc) {
-              return handle(entry.catchLoc, true);
-            }
-
-          } else if (hasFinally) {
-            if (this.prev < entry.finallyLoc) {
-              return handle(entry.finallyLoc);
-            }
-
-          } else {
-            throw new Error("try statement without catch or finally");
-          }
-        }
-      }
-    },
-
-    abrupt: function(type, arg) {
-      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-        var entry = this.tryEntries[i];
-        if (entry.tryLoc <= this.prev &&
-            hasOwn.call(entry, "finallyLoc") &&
-            this.prev < entry.finallyLoc) {
-          var finallyEntry = entry;
-          break;
-        }
-      }
-
-      if (finallyEntry &&
-          (type === "break" ||
-           type === "continue") &&
-          finallyEntry.tryLoc <= arg &&
-          arg <= finallyEntry.finallyLoc) {
-        // Ignore the finally entry if control is not jumping to a
-        // location outside the try/catch block.
-        finallyEntry = null;
-      }
-
-      var record = finallyEntry ? finallyEntry.completion : {};
-      record.type = type;
-      record.arg = arg;
-
-      if (finallyEntry) {
-        this.next = finallyEntry.finallyLoc;
-      } else {
-        this.complete(record);
-      }
-
-      return ContinueSentinel;
-    },
-
-    complete: function(record, afterLoc) {
-      if (record.type === "throw") {
-        throw record.arg;
-      }
-
-      if (record.type === "break" ||
-          record.type === "continue") {
-        this.next = record.arg;
-      } else if (record.type === "return") {
-        this.rval = record.arg;
-        this.next = "end";
-      } else if (record.type === "normal" && afterLoc) {
-        this.next = afterLoc;
-      }
-    },
-
-    finish: function(finallyLoc) {
-      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-        var entry = this.tryEntries[i];
-        if (entry.finallyLoc === finallyLoc) {
-          this.complete(entry.completion, entry.afterLoc);
-          resetTryEntry(entry);
-          return ContinueSentinel;
-        }
-      }
-    },
-
-    "catch": function(tryLoc) {
-      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-        var entry = this.tryEntries[i];
-        if (entry.tryLoc === tryLoc) {
-          var record = entry.completion;
-          if (record.type === "throw") {
-            var thrown = record.arg;
-            resetTryEntry(entry);
-          }
-          return thrown;
-        }
-      }
-
-      // The context.catch method must only be called with a location
-      // argument that corresponds to a known catch block.
-      throw new Error("illegal catch attempt");
-    },
-
-    delegateYield: function(iterable, resultName, nextLoc) {
-      this.delegate = {
-        iterator: values(iterable),
-        resultName: resultName,
-        nextLoc: nextLoc
-      };
-
-      return ContinueSentinel;
-    }
-  };
-})(
-  // Among the various tricks for obtaining a reference to the global
-  // object, this seems to be the most reliable technique that does not
-  // use indirect eval (which violates Content Security Policy).
-  typeof global === "object" ? global :
-  typeof window === "object" ? window :
-  typeof self === "object" ? self : this
-);
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
-	value: true
+Object.defineProperty(exports, "__esModule", {
+  value: true
 });
+exports["default"] = void 0;
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 var debug = require('./debug')('dav:xmlhttprequest');
-var request = require('request');
 
+var request = require('request');
 /**
  * @fileoverview Promise wrapper around native xhr api.
  */
 
-var XMLHttpRequestWrapper = (function () {
-	function XMLHttpRequestWrapper() {
-		_classCallCheck(this, XMLHttpRequestWrapper);
 
-		this.sandbox = null;
-		this._options = null;
-		this._request = null;
-		this._response = null;
-		this._responseText = null;
-		this._defaultTimeout = 15000;
-	}
+var XMLHttpRequestWrapper = /*#__PURE__*/function () {
+  function XMLHttpRequestWrapper() {
+    _classCallCheck(this, XMLHttpRequestWrapper);
 
-	_createClass(XMLHttpRequestWrapper, [{
-		key: 'abort',
-		// OPENED
-		value: function abort() {
-			if (this._request) this._request.abort();
-		}
-	}, {
-		key: 'getResponseHeader',
-		value: function getResponseHeader(headerName) {
-			return this._response ? this._response.headers[headerName.toLowerCase()] : null;
-		}
-	}, {
-		key: 'setRequestHeader',
-		value: function setRequestHeader(header, value) {
-			if (!this._options) throw new Error("Request must be initialized with open() before setting headers");
-			if (!this._options.headers) this._options.headers = {};
-			this._options.headers[header] = value;
-		}
-	}, {
-		key: 'open',
-		value: function open(method, url, async, user, password) {
-			this._responseText = null;
-			this._response = null;
-			this._request = null;
-			this._options = {
-				method: method,
-				url: url,
-				headers: {
-					"Accept": "application/json, text/plain, */*",
-					"User-Agent": "minetime/request"
-				},
-				auth: user ? {
-					user: user,
-					pass: password,
-					sendImmediately: false
-				} : undefined,
-				timeout: this._defaultTimeout,
-				agent: false,
-				pool: false
-			};
-		}
-	}, {
-		key: 'send',
-		value: function send(data) {
-			var _this = this;
+    this.sandbox = null;
+    this._options = null;
+    this._request = null;
+    this._response = null;
+    this._responseText = null;
+    this._defaultTimeout = 15000;
+  }
 
-			debug('Sending request (' + this._options.method + ') to ' + this._options.url + ' with data: ' + data);
-			if (this.sandbox) this.sandbox.add(this);
-			if (data) this._options.body = data;
-			return new Promise(function (resolve, reject) {
-				_this._request = request(_this._options, function (error, response, body) {
-					_this._response = response;
-					if (error) return reject(error);
-					if (response.statusCode < 200 || response.statusCode >= 400) {
-						var _error = new Error('Bad status ' + response.statusCode + ': ' + body);
-						_error.code = response.statusCode;
-						return reject(_error);
-					}
-					// Ok
-					_this._responseText = body;
-					return resolve(body);
-				});
-			});
-		}
-	}, {
-		key: 'status',
-		get: function get() {
-			return this._response ? this._response.statusCode : null;
-		}
-	}, {
-		key: 'responseText',
-		get: function get() {
-			return this._responseText;
-		}
-	}, {
-		key: 'response',
-		get: function get() {
-			throw new Error("Not implemented");
-		}
-	}, {
-		key: 'timeout',
-		get: function get() {
-			return this._defaultTimeout;
-		},
-		set: function set(ms) {
-			if (this._options) this._options.timeout = ms;
-		}
-	}, {
-		key: 'responseType',
-		get: function get() {
-			return this.getResponseHeader("Content-Type");
-		}
-	}, {
-		key: 'readyState',
-		get: function get() {
-			if (!this._options) return 0; // UNSENT
-			else if (this._response) return 4; // DONE
-				else return 1;
-		}
-	}]);
+  _createClass(XMLHttpRequestWrapper, [{
+    key: "abort",
+    value: function abort() {
+      if (this._request) this._request.abort();
+    }
+  }, {
+    key: "getResponseHeader",
+    value: function getResponseHeader(headerName) {
+      return this._response ? this._response.headers[headerName.toLowerCase()] : null;
+    }
+  }, {
+    key: "setRequestHeader",
+    value: function setRequestHeader(header, value) {
+      if (!this._options) throw new Error("Request must be initialized with open() before setting headers");
+      if (!this._options.headers) this._options.headers = {};
+      this._options.headers[header] = value;
+    }
+  }, {
+    key: "open",
+    value: function open(method, url, async, user, password) {
+      this._responseText = null;
+      this._response = null;
+      this._request = null;
+      this._options = {
+        method: method,
+        url: url,
+        headers: {
+          "Accept": "application/json, text/plain, */*",
+          "User-Agent": "minetime/request"
+        },
+        auth: user ? {
+          user: user,
+          pass: password,
+          sendImmediately: false
+        } : undefined,
+        timeout: this._defaultTimeout,
+        agent: false,
+        pool: false
+      };
+    }
+  }, {
+    key: "send",
+    value: function send(data) {
+      var _this = this;
 
-	return XMLHttpRequestWrapper;
-})();
+      debug("Sending request (".concat(this._options.method, ") to ").concat(this._options.url, " with data: ").concat(data));
+      if (this.sandbox) this.sandbox.add(this);
+      if (data) this._options.body = data;
+      return new Promise(function (resolve, reject) {
+        _this._request = request(_this._options, function (error, response, body) {
+          _this._response = response;
+          if (error) return reject(error);
 
-exports['default'] = XMLHttpRequestWrapper;
-module.exports = exports['default'];
-},{"./debug":7,"request":146}],2:[function(require,module,exports){
-'use strict';
+          if (response.statusCode < 200 || response.statusCode >= 400) {
+            var _error = new Error("Bad status ".concat(response.statusCode, ": ").concat(body));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+            _error.code = response.statusCode;
+            return reject(_error);
+          } // Ok
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
 
-var _co = require('co');
+          _this._responseText = body;
+          return resolve(body);
+        });
+      });
+    }
+  }, {
+    key: "status",
+    get: function get() {
+      return this._response ? this._response.statusCode : null;
+    }
+  }, {
+    key: "responseText",
+    get: function get() {
+      return this._responseText;
+    }
+  }, {
+    key: "response",
+    get: function get() {
+      throw new Error("Not implemented");
+    }
+  }, {
+    key: "timeout",
+    get: function get() {
+      return this._defaultTimeout;
+    },
+    set: function set(ms) {
+      if (this._options) this._options.timeout = ms;
+    }
+  }, {
+    key: "responseType",
+    get: function get() {
+      return this.getResponseHeader("Content-Type");
+    }
+  }, {
+    key: "readyState",
+    get: function get() {
+      if (!this._options) return 0; // UNSENT
+      else if (this._response) return 4; // DONE
+        else return 1; // OPENED
+    }
+  }]);
 
-var _co2 = _interopRequireDefault(_co);
+  return XMLHttpRequestWrapper;
+}();
 
-var _url = require('url');
+exports["default"] = XMLHttpRequestWrapper;
+},{"./debug":7,"request":145}],2:[function(require,module,exports){
+"use strict";
 
-var _url2 = _interopRequireDefault(_url);
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-var _calendars = require('./calendars');
+var _co = _interopRequireDefault(require("co"));
 
-var _contacts = require('./contacts');
+var _url = _interopRequireDefault(require("url"));
 
-var _fuzzy_url_equals = require('./fuzzy_url_equals');
+var _calendars = require("./calendars");
 
-var _fuzzy_url_equals2 = _interopRequireDefault(_fuzzy_url_equals);
+var _contacts = require("./contacts");
 
-var _model = require('./model');
+var _fuzzy_url_equals = _interopRequireDefault(require("./fuzzy_url_equals"));
 
-var _namespace = require('./namespace');
+var _model = require("./model");
 
-var ns = _interopRequireWildcard(_namespace);
+var ns = _interopRequireWildcard(require("./namespace"));
 
-var _request = require('./request');
+var request = _interopRequireWildcard(require("./request"));
 
-var request = _interopRequireWildcard(_request);
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 var debug = require('./debug')('dav:accounts');
 
@@ -798,189 +173,215 @@ var defaults = {
   loadCollections: true,
   loadObjects: false
 };
-
 /**
  * rfc 6764.
  *
  * @param {dav.Account} account to find root url for.
  */
-var serviceDiscovery = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(account, options) {
-  var endpoint, uri, req, xhr, _location;
 
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        debug('Attempt service discovery.');
+var serviceDiscovery = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee(account, options) {
+  var endpoint, uri, req, xhr, location;
+  return regeneratorRuntime.wrap(function _callee$(_context) {
+    while (1) {
+      switch (_context.prev = _context.next) {
+        case 0:
+          debug('Attempt service discovery.');
+          endpoint = _url["default"].parse(account.server);
+          endpoint.protocol = endpoint.protocol || 'http'; // TODO(gareth) https?
 
-        endpoint = _url2['default'].parse(account.server);
+          uri = _url["default"].format({
+            protocol: endpoint.protocol,
+            host: endpoint.host,
+            pathname: "/.well-known/".concat(options.accountType)
+          });
+          req = request.basic({
+            method: 'GET'
+          });
+          _context.prev = 5;
+          _context.next = 8;
+          return options.xhr.send(req, uri, {
+            sandbox: options.sandbox
+          });
 
-        endpoint.protocol = endpoint.protocol || 'http'; // TODO(gareth) https?
+        case 8:
+          xhr = _context.sent;
 
-        uri = _url2['default'].format({
-          protocol: endpoint.protocol,
-          host: endpoint.host,
-          pathname: '/.well-known/' + options.accountType
-        });
-        req = request.basic({ method: 'GET' });
-        context$1$0.prev = 5;
-        context$1$0.next = 8;
-        return options.xhr.send(req, uri, { sandbox: options.sandbox });
+          if (!(xhr.status >= 300 && xhr.status < 400)) {
+            _context.next = 14;
+            break;
+          }
 
-      case 8:
-        xhr = context$1$0.sent;
+          // http redirect.
+          location = xhr.getResponseHeader('Location');
 
-        if (!(xhr.status >= 300 && xhr.status < 400)) {
-          context$1$0.next = 14;
+          if (!(typeof location === 'string' && location.length)) {
+            _context.next = 14;
+            break;
+          }
+
+          debug("Discovery redirected to ".concat(location));
+          return _context.abrupt("return", _url["default"].format({
+            protocol: endpoint.protocol,
+            host: endpoint.host,
+            pathname: location
+          }));
+
+        case 14:
+          _context.next = 19;
           break;
-        }
 
-        _location = xhr.getResponseHeader('Location');
+        case 16:
+          _context.prev = 16;
+          _context.t0 = _context["catch"](5);
+          debug('Discovery failed... failover to the provided url');
 
-        if (!(typeof _location === 'string' && _location.length)) {
-          context$1$0.next = 14;
-          break;
-        }
+        case 19:
+          return _context.abrupt("return", endpoint.href);
 
-        debug('Discovery redirected to ' + _location);
-        return context$1$0.abrupt('return', _url2['default'].format({
-          protocol: endpoint.protocol,
-          host: endpoint.host,
-          pathname: _location
-        }));
-
-      case 14:
-        context$1$0.next = 19;
-        break;
-
-      case 16:
-        context$1$0.prev = 16;
-        context$1$0.t0 = context$1$0['catch'](5);
-
-        debug('Discovery failed... failover to the provided url');
-
-      case 19:
-        return context$1$0.abrupt('return', endpoint.href);
-
-      case 20:
-      case 'end':
-        return context$1$0.stop();
+        case 20:
+        case "end":
+          return _context.stop();
+      }
     }
-  }, callee$0$0, this, [[5, 16]]);
+  }, _callee, null, [[5, 16]]);
 }));
-
 /**
  * rfc 5397.
  *
  * @param {dav.Account} account to get principal url for.
  */
-var principalUrl = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(account, options) {
+
+
+var principalUrl = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(account, options) {
   var req, res, container;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        debug('Fetch principal url from context path ' + account.rootUrl + '.');
-        req = request.propfind({
-          props: [{ name: 'current-user-principal', namespace: ns.DAV }],
-          depth: 0,
-          mergeResponses: true
-        });
-        context$1$0.next = 4;
-        return options.xhr.send(req, account.rootUrl, {
-          sandbox: options.sandbox
-        });
+  return regeneratorRuntime.wrap(function _callee2$(_context2) {
+    while (1) {
+      switch (_context2.prev = _context2.next) {
+        case 0:
+          debug("Fetch principal url from context path ".concat(account.rootUrl, "."));
+          req = request.propfind({
+            props: [{
+              name: 'current-user-principal',
+              namespace: ns.DAV
+            }],
+            depth: 0,
+            mergeResponses: true
+          });
+          _context2.next = 4;
+          return options.xhr.send(req, account.rootUrl, {
+            sandbox: options.sandbox
+          });
 
-      case 4:
-        res = context$1$0.sent;
-        container = res.props;
+        case 4:
+          res = _context2.sent;
+          container = res.props;
+          debug("Received principal: ".concat(container.currentUserPrincipal));
+          return _context2.abrupt("return", _url["default"].resolve(account.rootUrl, container.currentUserPrincipal));
 
-        debug('Received principal: ' + container.currentUserPrincipal);
-        return context$1$0.abrupt('return', _url2['default'].resolve(account.rootUrl, container.currentUserPrincipal));
-
-      case 8:
-      case 'end':
-        return context$1$0.stop();
+        case 8:
+        case "end":
+          return _context2.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee2);
 }));
-
 /**
  * @param {dav.Account} account to get home url for.
  */
-var homeUrl = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(account, options) {
+
+
+var homeUrl = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(account, options) {
   var prop, req, responses, response, container, href;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        debug('Fetch home url from principal url ' + account.principalUrl + '.');
-        prop = undefined;
+  return regeneratorRuntime.wrap(function _callee3$(_context3) {
+    while (1) {
+      switch (_context3.prev = _context3.next) {
+        case 0:
+          debug("Fetch home url from principal url ".concat(account.principalUrl, "."));
 
-        if (options.accountType === 'caldav') {
-          prop = { name: 'calendar-home-set', namespace: ns.CALDAV };
-        } else if (options.accountType === 'carddav') {
-          prop = { name: 'addressbook-home-set', namespace: ns.CARDDAV };
-        }
+          if (options.accountType === 'caldav') {
+            prop = {
+              name: 'calendar-home-set',
+              namespace: ns.CALDAV
+            };
+          } else if (options.accountType === 'carddav') {
+            prop = {
+              name: 'addressbook-home-set',
+              namespace: ns.CARDDAV
+            };
+          }
 
-        req = request.propfind({ props: [prop], depth: 0 });
-        context$1$0.next = 6;
-        return options.xhr.send(req, account.principalUrl, {
-          sandbox: options.sandbox
-        });
+          req = request.propfind({
+            props: [prop],
+            depth: 0
+          });
+          _context3.next = 5;
+          return options.xhr.send(req, account.principalUrl, {
+            sandbox: options.sandbox
+          });
 
-      case 6:
-        responses = context$1$0.sent;
-        response = responses.find(function (response) {
-          return (0, _fuzzy_url_equals2['default'])(account.principalUrl, response.href);
-        });
-        container = response.props;
-        href = undefined;
+        case 5:
+          responses = _context3.sent;
+          response = responses.find(function (response) {
+            return (0, _fuzzy_url_equals["default"])(account.principalUrl, response.href);
+          });
+          container = response.props;
 
-        if (options.accountType === 'caldav') {
-          debug('Received home: ' + container.calendarHomeSet);
-          href = container.calendarHomeSet;
-        } else if (options.accountType === 'carddav') {
-          debug('Received home: ' + container.addressbookHomeSet);
-          href = container.addressbookHomeSet;
-        }
+          if (options.accountType === 'caldav') {
+            debug("Received home: ".concat(container.calendarHomeSet));
+            href = container.calendarHomeSet;
+          } else if (options.accountType === 'carddav') {
+            debug("Received home: ".concat(container.addressbookHomeSet));
+            href = container.addressbookHomeSet;
+          }
 
-        return context$1$0.abrupt('return', _url2['default'].resolve(account.rootUrl, href));
+          return _context3.abrupt("return", _url["default"].resolve(account.rootUrl, href));
 
-      case 12:
-      case 'end':
-        return context$1$0.stop();
+        case 10:
+        case "end":
+          return _context3.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee3);
 }));
-
 /**
  * @param {dav.Account} account to address set
  */
-var addressSet = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(account, options) {
+
+
+var addressSet = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(account, options) {
   var prop, req, responses, response;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        debug('Fetch address set from principal url ' + account.principalUrl + '.');
-        prop = { name: 'calendar-user-address-set', namespace: ns.CALDAV };
-        req = request.propfind({ props: [prop], depth: 0 });
-        context$1$0.next = 5;
-        return options.xhr.send(req, account.principalUrl, {
-          sandbox: options.sandbox
-        });
+  return regeneratorRuntime.wrap(function _callee4$(_context4) {
+    while (1) {
+      switch (_context4.prev = _context4.next) {
+        case 0:
+          debug("Fetch address set from principal url ".concat(account.principalUrl, "."));
+          prop = {
+            name: 'calendar-user-address-set',
+            namespace: ns.CALDAV
+          };
+          req = request.propfind({
+            props: [prop],
+            depth: 0
+          });
+          _context4.next = 5;
+          return options.xhr.send(req, account.principalUrl, {
+            sandbox: options.sandbox
+          });
 
-      case 5:
-        responses = context$1$0.sent;
-        response = responses.find(function (response) {
-          return (0, _fuzzy_url_equals2['default'])(account.principalUrl, response.href);
-        });
-        return context$1$0.abrupt('return', response.props.calendarUserAddressSet);
+        case 5:
+          responses = _context4.sent;
+          response = responses.find(function (response) {
+            return (0, _fuzzy_url_equals["default"])(account.principalUrl, response.href);
+          });
+          return _context4.abrupt("return", response.props.calendarUserAddressSet);
 
-      case 8:
-      case 'end':
-        return context$1$0.stop();
+        case 8:
+        case "end":
+          return _context4.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee4);
 }));
-
 /**
  * Options:
  *
@@ -995,131 +396,132 @@ var addressSet = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$
  *
  * @return {Promise} a promise that will resolve with a dav.Account object.
  */
-exports.createAccount = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(options) {
+
+
+exports.createAccount = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(options) {
   var account, key, loadCollections, loadObjects, collections;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        options = Object.assign({}, defaults, options);
-        if (typeof options.loadObjects !== 'boolean') {
-          options.loadObjects = options.loadCollections;
-        }
+  return regeneratorRuntime.wrap(function _callee6$(_context6) {
+    while (1) {
+      switch (_context6.prev = _context6.next) {
+        case 0:
+          options = Object.assign({}, defaults, options);
 
-        account = new _model.Account({
-          server: options.server,
-          credentials: options.xhr.credentials
-        });
-        context$1$0.next = 5;
-        return serviceDiscovery(account, options);
+          if (typeof options.loadObjects !== 'boolean') {
+            options.loadObjects = options.loadCollections;
+          }
 
-      case 5:
-        account.rootUrl = context$1$0.sent;
-        context$1$0.next = 8;
-        return principalUrl(account, options);
+          account = new _model.Account({
+            server: options.server,
+            credentials: options.xhr.credentials
+          });
+          _context6.next = 5;
+          return serviceDiscovery(account, options);
 
-      case 8:
-        account.principalUrl = context$1$0.sent;
-        context$1$0.next = 11;
-        return homeUrl(account, options);
+        case 5:
+          account.rootUrl = _context6.sent;
+          _context6.next = 8;
+          return principalUrl(account, options);
 
-      case 11:
-        account.homeUrl = context$1$0.sent;
+        case 8:
+          account.principalUrl = _context6.sent;
+          _context6.next = 11;
+          return homeUrl(account, options);
 
-        if (!(options.accountType === 'caldav')) {
-          context$1$0.next = 16;
-          break;
-        }
+        case 11:
+          account.homeUrl = _context6.sent;
 
-        context$1$0.next = 15;
-        return addressSet(account, options);
+          if (!(options.accountType === 'caldav')) {
+            _context6.next = 16;
+            break;
+          }
 
-      case 15:
-        account.addresses = context$1$0.sent;
+          _context6.next = 15;
+          return addressSet(account, options);
 
-      case 16:
-        if (options.loadCollections) {
-          context$1$0.next = 18;
-          break;
-        }
+        case 15:
+          account.addresses = _context6.sent;
 
-        return context$1$0.abrupt('return', account);
+        case 16:
+          if (options.loadCollections) {
+            _context6.next = 18;
+            break;
+          }
 
-      case 18:
-        key = undefined, loadCollections = undefined, loadObjects = undefined;
+          return _context6.abrupt("return", account);
 
-        if (options.accountType === 'caldav') {
-          key = 'calendars';
-          loadCollections = _calendars.listCalendars;
-          loadObjects = _calendars.listCalendarObjects;
-        } else if (options.accountType === 'carddav') {
-          key = 'addressBooks';
-          loadCollections = _contacts.listAddressBooks;
-          loadObjects = _contacts.listVCards;
-        }
+        case 18:
+          if (options.accountType === 'caldav') {
+            key = 'calendars';
+            loadCollections = _calendars.listCalendars;
+            loadObjects = _calendars.listCalendarObjects;
+          } else if (options.accountType === 'carddav') {
+            key = 'addressBooks';
+            loadCollections = _contacts.listAddressBooks;
+            loadObjects = _contacts.listVCards;
+          }
 
-        context$1$0.next = 22;
-        return loadCollections(account, options);
+          _context6.next = 21;
+          return loadCollections(account, options);
 
-      case 22:
-        collections = context$1$0.sent;
+        case 21:
+          collections = _context6.sent;
+          account[key] = collections;
 
-        account[key] = collections;
+          if (options.loadObjects) {
+            _context6.next = 25;
+            break;
+          }
 
-        if (options.loadObjects) {
-          context$1$0.next = 26;
-          break;
-        }
+          return _context6.abrupt("return", account);
 
-        return context$1$0.abrupt('return', account);
+        case 25:
+          _context6.next = 27;
+          return collections.map(_co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(collection) {
+            return regeneratorRuntime.wrap(function _callee5$(_context5) {
+              while (1) {
+                switch (_context5.prev = _context5.next) {
+                  case 0:
+                    _context5.prev = 0;
+                    _context5.next = 3;
+                    return loadObjects(collection, options);
 
-      case 26:
-        context$1$0.next = 28;
-        return collections.map(_co2['default'].wrap(regeneratorRuntime.mark(function callee$1$0(collection) {
-          return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
-            while (1) switch (context$2$0.prev = context$2$0.next) {
-              case 0:
-                context$2$0.prev = 0;
-                context$2$0.next = 3;
-                return loadObjects(collection, options);
+                  case 3:
+                    collection.objects = _context5.sent;
+                    _context5.next = 9;
+                    break;
 
-              case 3:
-                collection.objects = context$2$0.sent;
-                context$2$0.next = 9;
-                break;
+                  case 6:
+                    _context5.prev = 6;
+                    _context5.t0 = _context5["catch"](0);
+                    collection.error = _context5.t0;
 
-              case 6:
-                context$2$0.prev = 6;
-                context$2$0.t0 = context$2$0['catch'](0);
+                  case 9:
+                  case "end":
+                    return _context5.stop();
+                }
+              }
+            }, _callee5, null, [[0, 6]]);
+          })));
 
-                collection.error = context$2$0.t0;
+        case 27:
+          account[key] = account[key].filter(function (collection) {
+            return !collection.error;
+          });
+          return _context6.abrupt("return", account);
 
-              case 9:
-              case 'end':
-                return context$2$0.stop();
-            }
-          }, callee$1$0, this, [[0, 6]]);
-        })));
-
-      case 28:
-
-        account[key] = account[key].filter(function (collection) {
-          return !collection.error;
-        });
-
-        return context$1$0.abrupt('return', account);
-
-      case 30:
-      case 'end':
-        return context$1$0.stop();
+        case 29:
+        case "end":
+          return _context6.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee6);
 }));
-
-// http redirect.
 },{"./calendars":3,"./contacts":6,"./debug":7,"./fuzzy_url_equals":8,"./model":10,"./namespace":11,"./request":13,"co":88,"url":undefined}],3:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.getCalendarObject = getCalendarObject;
@@ -1127,186 +529,237 @@ exports.createCalendarObject = createCalendarObject;
 exports.updateCalendarObject = updateCalendarObject;
 exports.deleteCalendarObject = deleteCalendarObject;
 exports.syncCalendar = syncCalendar;
+exports.syncCaldavAccount = exports.multigetSingleCalendarObject = exports.multigetCalendarObjects = exports.listCalendarObjectsEtags = exports.listCalendarObjects = exports.getCalendar = exports.listCalendars = void 0;
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+var _co = _interopRequireDefault(require("co"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var _url = _interopRequireDefault(require("url"));
 
-var _co = require('co');
+var _fuzzy_url_equals = _interopRequireDefault(require("./fuzzy_url_equals"));
 
-var _co2 = _interopRequireDefault(_co);
+var _model = require("./model");
 
-var _url = require('url');
+var ns = _interopRequireWildcard(require("./namespace"));
 
-var _url2 = _interopRequireDefault(_url);
+var request = _interopRequireWildcard(require("./request"));
 
-var _fuzzy_url_equals = require('./fuzzy_url_equals');
+var webdav = _interopRequireWildcard(require("./webdav"));
 
-var _fuzzy_url_equals2 = _interopRequireDefault(_fuzzy_url_equals);
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 
-var _model = require('./model');
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
-var _namespace = require('./namespace');
-
-var ns = _interopRequireWildcard(_namespace);
-
-var _request = require('./request');
-
-var request = _interopRequireWildcard(_request);
-
-var _webdav = require('./webdav');
-
-var webdav = _interopRequireWildcard(_webdav);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 var debug = require('./debug')('dav:calendars');
 
 var ICAL_OBJS = new Set(['VEVENT', 'VTODO', 'VJOURNAL', 'VFREEBUSY', 'VTIMEZONE', 'VALARM']);
-
 /**
  * @param {dav.Account} account to fetch calendars for.
  */
-var listCalendars = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(account, options) {
+
+var listCalendars = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(account, options) {
   var req, responses, cals;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        debug('Fetch calendars from home url ' + account.homeUrl);
-        req = request.propfind({
-          props: [{ name: 'calendar-description', namespace: ns.CALDAV }, { name: 'calendar-timezone', namespace: ns.CALDAV }, { name: 'displayname', namespace: ns.DAV }, { name: 'getctag', namespace: ns.CALENDAR_SERVER }, { name: 'resourcetype', namespace: ns.DAV }, { name: 'supported-calendar-component-set', namespace: ns.CALDAV }, { name: 'sync-token', namespace: ns.DAV }, { name: 'calendar-color', namespace: ns.APPLE }, { name: 'current-user-privilege-set', namespace: ns.DAV }],
-          depth: 1
-        });
-        context$1$0.next = 4;
-        return options.xhr.send(req, account.homeUrl, {
-          sandbox: options.sandbox
-        });
-
-      case 4:
-        responses = context$1$0.sent;
-
-        debug('Found ' + responses.length + ' calendars.');
-        cals = responses.filter(function (res) {
-          // We only want the calendar if it contains iCalendar objects.
-          var resourcetype = res.props.resourcetype || [];
-          return resourcetype.indexOf('calendar') !== -1;
-        }).map(function (res) {
-          debug('Found calendar ' + res.props.displayname + ',\n             props: ' + JSON.stringify(res.props));
-          return new _model.Calendar({
-            data: res,
-            account: account,
-            description: res.props.calendarDescription,
-            timezone: res.props.calendarTimezone,
-            color: res.props.calendarColor,
-            url: _url2['default'].resolve(account.rootUrl, res.href),
-            ctag: res.props.getctag,
-            displayName: res.props.displayname,
-            components: res.props.supportedCalendarComponentSet,
-            resourcetype: res.props.resourcetype,
-            syncToken: res.props.syncToken,
-            currentUserPrivilegeSet: res.props.currentUserPrivilegeSet
+  return regeneratorRuntime.wrap(function _callee2$(_context2) {
+    while (1) {
+      switch (_context2.prev = _context2.next) {
+        case 0:
+          debug("Fetch calendars from home url ".concat(account.homeUrl));
+          req = request.propfind({
+            props: [{
+              name: 'calendar-description',
+              namespace: ns.CALDAV
+            }, {
+              name: 'calendar-timezone',
+              namespace: ns.CALDAV
+            }, {
+              name: 'displayname',
+              namespace: ns.DAV
+            }, {
+              name: 'getctag',
+              namespace: ns.CALENDAR_SERVER
+            }, {
+              name: 'resourcetype',
+              namespace: ns.DAV
+            }, {
+              name: 'supported-calendar-component-set',
+              namespace: ns.CALDAV
+            }, {
+              name: 'sync-token',
+              namespace: ns.DAV
+            }, {
+              name: 'calendar-color',
+              namespace: ns.APPLE
+            }, {
+              name: 'current-user-privilege-set',
+              namespace: ns.DAV
+            }],
+            depth: 1
           });
-        });
-        context$1$0.next = 9;
-        return cals.map(_co2['default'].wrap(regeneratorRuntime.mark(function callee$1$0(cal) {
-          return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
-            while (1) switch (context$2$0.prev = context$2$0.next) {
-              case 0:
-                context$2$0.next = 2;
-                return webdav.supportedReportSet(cal, options);
+          _context2.next = 4;
+          return options.xhr.send(req, account.homeUrl, {
+            sandbox: options.sandbox
+          });
 
-              case 2:
-                cal.reports = context$2$0.sent;
+        case 4:
+          responses = _context2.sent;
+          debug("Found ".concat(responses.length, " calendars."));
+          cals = responses.filter(function (res) {
+            // We only want the calendar if it contains iCalendar objects.
+            var resourcetype = res.props.resourcetype || [];
+            return resourcetype.indexOf('calendar') !== -1;
+          }).map(function (res) {
+            debug("Found calendar ".concat(res.props.displayname, ",\n             props: ").concat(JSON.stringify(res.props)));
+            return new _model.Calendar({
+              data: res,
+              account: account,
+              description: res.props.calendarDescription,
+              timezone: res.props.calendarTimezone,
+              color: res.props.calendarColor,
+              url: _url["default"].resolve(account.rootUrl, res.href),
+              ctag: res.props.getctag,
+              displayName: res.props.displayname,
+              components: res.props.supportedCalendarComponentSet,
+              resourcetype: res.props.resourcetype,
+              syncToken: res.props.syncToken,
+              currentUserPrivilegeSet: res.props.currentUserPrivilegeSet
+            });
+          });
+          _context2.next = 9;
+          return cals.map(_co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee(cal) {
+            return regeneratorRuntime.wrap(function _callee$(_context) {
+              while (1) {
+                switch (_context.prev = _context.next) {
+                  case 0:
+                    _context.next = 2;
+                    return webdav.supportedReportSet(cal, options);
 
-              case 3:
-              case 'end':
-                return context$2$0.stop();
-            }
-          }, callee$1$0, this);
-        })));
+                  case 2:
+                    cal.reports = _context.sent;
 
-      case 9:
-        return context$1$0.abrupt('return', cals);
+                  case 3:
+                  case "end":
+                    return _context.stop();
+                }
+              }
+            }, _callee);
+          })));
 
-      case 10:
-      case 'end':
-        return context$1$0.stop();
+        case 9:
+          return _context2.abrupt("return", cals);
+
+        case 10:
+        case "end":
+          return _context2.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee2);
 }));
-
-exports.listCalendars = listCalendars;
 /**
  * @param {dav.Account} account to fetch calendars for.
  * @param {string} account to fetch calendars for.
  */
-var getCalendar = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(account, calendarUrl, options) {
+
+
+exports.listCalendars = listCalendars;
+
+var getCalendar = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(account, calendarUrl, options) {
   var req, responses, cals;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        debug('Fetch calendar ' + calendarUrl);
-        req = request.propfind({
-          props: [{ name: 'calendar-description', namespace: ns.CALDAV }, { name: 'calendar-timezone', namespace: ns.CALDAV }, { name: 'displayname', namespace: ns.DAV }, { name: 'getctag', namespace: ns.CALENDAR_SERVER }, { name: 'resourcetype', namespace: ns.DAV }, { name: 'supported-calendar-component-set', namespace: ns.CALDAV }, { name: 'sync-token', namespace: ns.DAV }, { name: 'calendar-color', namespace: ns.APPLE }, { name: 'current-user-privilege-set', namespace: ns.DAV }],
-          depth: 0
-        });
-        context$1$0.next = 4;
-        return options.xhr.send(req, calendarUrl, {
-          sandbox: options.sandbox
-        });
-
-      case 4:
-        responses = context$1$0.sent;
-
-        debug('Found ' + responses.length + ' calendars (expect 1).');
-        cals = responses.filter(function (res) {
-          // We only want the calendar if it contains iCalendar objects.
-          var resourcetype = res.props.resourcetype || [];
-          return resourcetype.indexOf('calendar') !== -1;
-        }).map(function (res) {
-          debug('Found calendar ' + res.props.displayname + ',\n             props: ' + JSON.stringify(res.props));
-          return new _model.Calendar({
-            data: res,
-            account: account,
-            description: res.props.calendarDescription,
-            timezone: res.props.calendarTimezone,
-            color: res.props.calendarColor,
-            url: _url2['default'].resolve(account.rootUrl, res.href),
-            ctag: res.props.getctag,
-            displayName: res.props.displayname,
-            components: res.props.supportedCalendarComponentSet,
-            resourcetype: res.props.resourcetype,
-            syncToken: res.props.syncToken,
-            currentUserPrivilegeSet: res.props.currentUserPrivilegeSet
+  return regeneratorRuntime.wrap(function _callee4$(_context4) {
+    while (1) {
+      switch (_context4.prev = _context4.next) {
+        case 0:
+          debug("Fetch calendar ".concat(calendarUrl));
+          req = request.propfind({
+            props: [{
+              name: 'calendar-description',
+              namespace: ns.CALDAV
+            }, {
+              name: 'calendar-timezone',
+              namespace: ns.CALDAV
+            }, {
+              name: 'displayname',
+              namespace: ns.DAV
+            }, {
+              name: 'getctag',
+              namespace: ns.CALENDAR_SERVER
+            }, {
+              name: 'resourcetype',
+              namespace: ns.DAV
+            }, {
+              name: 'supported-calendar-component-set',
+              namespace: ns.CALDAV
+            }, {
+              name: 'sync-token',
+              namespace: ns.DAV
+            }, {
+              name: 'calendar-color',
+              namespace: ns.APPLE
+            }, {
+              name: 'current-user-privilege-set',
+              namespace: ns.DAV
+            }],
+            depth: 0
           });
-        });
-        context$1$0.next = 9;
-        return cals.map(_co2['default'].wrap(regeneratorRuntime.mark(function callee$1$0(cal) {
-          return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
-            while (1) switch (context$2$0.prev = context$2$0.next) {
-              case 0:
-                context$2$0.next = 2;
-                return webdav.supportedReportSet(cal, options);
+          _context4.next = 4;
+          return options.xhr.send(req, calendarUrl, {
+            sandbox: options.sandbox
+          });
 
-              case 2:
-                cal.reports = context$2$0.sent;
+        case 4:
+          responses = _context4.sent;
+          debug("Found ".concat(responses.length, " calendars (expect 1)."));
+          cals = responses.filter(function (res) {
+            // We only want the calendar if it contains iCalendar objects.
+            var resourcetype = res.props.resourcetype || [];
+            return resourcetype.indexOf('calendar') !== -1;
+          }).map(function (res) {
+            debug("Found calendar ".concat(res.props.displayname, ",\n             props: ").concat(JSON.stringify(res.props)));
+            return new _model.Calendar({
+              data: res,
+              account: account,
+              description: res.props.calendarDescription,
+              timezone: res.props.calendarTimezone,
+              color: res.props.calendarColor,
+              url: _url["default"].resolve(account.rootUrl, res.href),
+              ctag: res.props.getctag,
+              displayName: res.props.displayname,
+              components: res.props.supportedCalendarComponentSet,
+              resourcetype: res.props.resourcetype,
+              syncToken: res.props.syncToken,
+              currentUserPrivilegeSet: res.props.currentUserPrivilegeSet
+            });
+          });
+          _context4.next = 9;
+          return cals.map(_co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(cal) {
+            return regeneratorRuntime.wrap(function _callee3$(_context3) {
+              while (1) {
+                switch (_context3.prev = _context3.next) {
+                  case 0:
+                    _context3.next = 2;
+                    return webdav.supportedReportSet(cal, options);
 
-              case 3:
-              case 'end':
-                return context$2$0.stop();
-            }
-          }, callee$1$0, this);
-        })));
+                  case 2:
+                    cal.reports = _context3.sent;
 
-      case 9:
-        return context$1$0.abrupt('return', cals.length ? cals[0] : null);
+                  case 3:
+                  case "end":
+                    return _context3.stop();
+                }
+              }
+            }, _callee3);
+          })));
 
-      case 10:
-      case 'end':
-        return context$1$0.stop();
+        case 9:
+          return _context4.abrupt("return", cals.length ? cals[0] : null);
+
+        case 10:
+        case "end":
+          return _context4.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee4);
 }));
-
-exports.getCalendar = getCalendar;
 /**
  * @param {dav.Calendar} calendar the calendar to get the object from.
  * @return {Promise} promise will resolve when the event
@@ -1318,12 +771,14 @@ exports.getCalendar = getCalendar;
  *   (dav.Transport) xhr - request sender.
  */
 
+
+exports.getCalendar = getCalendar;
+
 function getCalendarObject(calendar, options) {
   if (!options.href) return null;
   options.hrefs = [options.href];
   return multigetSingleCalendarObject(calendar, options);
 }
-
 /**
  * @param {dav.Calendar} calendar the calendar to put the object on.
  * @return {Promise} promise will resolve when the calendar has been created.
@@ -1336,14 +791,15 @@ function getCalendarObject(calendar, options) {
  *   (dav.Transport) xhr - request sender.
  */
 
+
 function createCalendarObject(calendar, options) {
-  var objectUrl = _url2['default'].resolve(calendar.url, options.filename);
+  var objectUrl = _url["default"].resolve(calendar.url, options.filename);
+
   options.contentType = 'text/calendar';
   return webdav.createObject(objectUrl, options.data, options);
 }
 
 ;
-
 /**
  * @param {dav.CalendarObject} calendarObject updated calendar object.
  * @return {Promise} promise will resolve when the calendar has been updated.
@@ -1358,7 +814,6 @@ function updateCalendarObject(calendarObject, options) {
   options.contentType = 'text/calendar';
   return webdav.updateObject(calendarObject.url, calendarObject.calendarData, calendarObject.etag, options);
 }
-
 /**
  * @param {dav.CalendarObject} calendarObject target calendar object.
  * @return {Promise} promise will resolve when the calendar has been deleted.
@@ -1369,10 +824,10 @@ function updateCalendarObject(calendarObject, options) {
  *   (dav.Transport) xhr - request sender.
  */
 
+
 function deleteCalendarObject(calendarObject, options) {
   return webdav.deleteObject(calendarObject.url, calendarObject.etag, options);
 }
-
 /**
  * @param {dav.Calendar} calendar the calendar to fetch objects for.
  *
@@ -1382,41 +837,39 @@ function deleteCalendarObject(calendarObject, options) {
  *   (dav.Sandbox) sandbox - optional request sandbox.
  *   (dav.Transport) xhr - request sender.
  */
-var listCalendarObjects = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(calendar, options) {
+
+
+var listCalendarObjects = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(calendar, options) {
   var results;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        debug('Listing objects on calendar ' + calendar.url + ' which belongs to\n         ' + calendar.account.credentials.username);
+  return regeneratorRuntime.wrap(function _callee5$(_context5) {
+    while (1) {
+      switch (_context5.prev = _context5.next) {
+        case 0:
+          debug("Listing objects on calendar ".concat(calendar.url, " which belongs to\n         ").concat(calendar.account.credentials.username));
+          _context5.next = 3;
+          return listCalendarObjectsEtags(calendar, options);
 
-        context$1$0.next = 3;
-        return listCalendarObjectsEtags(calendar, options);
+        case 3:
+          results = _context5.sent;
+          options.hrefs = results.map(function (res) {
+            return res.href;
+          });
+          debug('Got the following etags:');
+          debug(options.hrefs); // First query to get list of etags
 
-      case 3:
-        results = context$1$0.sent;
+          _context5.next = 9;
+          return multigetCalendarObjects(calendar, options);
 
-        options.hrefs = results.map(function (res) {
-          return res.href;
-        });
+        case 9:
+          return _context5.abrupt("return", _context5.sent);
 
-        debug('Got the following etags:');
-        debug(options.hrefs);
-
-        // First query to get list of etags
-        context$1$0.next = 9;
-        return multigetCalendarObjects(calendar, options);
-
-      case 9:
-        return context$1$0.abrupt('return', context$1$0.sent);
-
-      case 10:
-      case 'end':
-        return context$1$0.stop();
+        case 10:
+        case "end":
+          return _context5.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee5);
 }));
-
-exports.listCalendarObjects = listCalendarObjects;
 /**
  * @param {dav.Calendar} calendar the calendar to fetch etags for.
  *
@@ -1426,46 +879,60 @@ exports.listCalendarObjects = listCalendarObjects;
  *   (dav.Sandbox) sandbox - optional request sandbox.
  *   (dav.Transport) xhr - request sender.
  */
-var listCalendarObjectsEtags = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(calendar, options) {
+
+
+exports.listCalendarObjects = listCalendarObjects;
+
+var listCalendarObjectsEtags = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(calendar, options) {
   var filters, req, responses;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        debug('Getting etags on calendar ' + calendar.url + ' which belongs to\n         ' + calendar.account.credentials.username);
-
-        filters = options.filters || [{
-          type: 'comp-filter',
-          attrs: { name: 'VCALENDAR' },
-          children: [{
+  return regeneratorRuntime.wrap(function _callee6$(_context6) {
+    while (1) {
+      switch (_context6.prev = _context6.next) {
+        case 0:
+          debug("Getting etags on calendar ".concat(calendar.url, " which belongs to\n         ").concat(calendar.account.credentials.username));
+          filters = options.filters || [{
             type: 'comp-filter',
-            attrs: { name: 'VEVENT' }
-          }]
-        }];
-        req = request.calendarQuery({
-          depth: 1,
-          props: [{ name: 'getetag', namespace: ns.DAV }],
-          filters: filters
-        });
-        context$1$0.next = 5;
-        return options.xhr.send(req, calendar.url, {
-          sandbox: options.sandbox
-        });
+            attrs: {
+              name: 'VCALENDAR'
+            },
+            children: [{
+              type: 'comp-filter',
+              attrs: {
+                name: 'VEVENT'
+              }
+            }]
+          }]; // First query to get list of etags
 
-      case 5:
-        responses = context$1$0.sent;
-        return context$1$0.abrupt('return', responses.map(function (res) {
-          debug('Found calendar object (etag only) with url ' + res.href);
-          return { href: res.href, etag: res.props.getetag };
-        }));
+          req = request.calendarQuery({
+            depth: 1,
+            props: [{
+              name: 'getetag',
+              namespace: ns.DAV
+            }],
+            filters: filters
+          });
+          _context6.next = 5;
+          return options.xhr.send(req, calendar.url, {
+            sandbox: options.sandbox
+          });
 
-      case 7:
-      case 'end':
-        return context$1$0.stop();
+        case 5:
+          responses = _context6.sent;
+          return _context6.abrupt("return", responses.map(function (res) {
+            debug("Found calendar object (etag only) with url ".concat(res.href));
+            return {
+              href: res.href,
+              etag: res.props.getetag
+            };
+          }));
+
+        case 7:
+        case "end":
+          return _context6.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee6);
 }));
-
-exports.listCalendarObjectsEtags = listCalendarObjectsEtags;
 /**
  * @param {dav.Calendar} calendar the calendar to fetch objects for.
  *
@@ -1475,77 +942,89 @@ exports.listCalendarObjectsEtags = listCalendarObjectsEtags;
  *   (dav.Sandbox) sandbox - optional request sandbox.
  *   (dav.Transport) xhr - request sender.
  */
-var multigetCalendarObjects = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(calendar, options) {
+
+
+exports.listCalendarObjectsEtags = listCalendarObjectsEtags;
+
+var multigetCalendarObjects = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(calendar, options) {
   var hrefs, req, responses;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        debug('Doing multiget on calendar ' + calendar.url + ' which belongs to\n         ' + calendar.account.credentials.username);
+  return regeneratorRuntime.wrap(function _callee7$(_context7) {
+    while (1) {
+      switch (_context7.prev = _context7.next) {
+        case 0:
+          debug("Doing multiget on calendar ".concat(calendar.url, " which belongs to\n         ").concat(calendar.account.credentials.username));
+          hrefs = options.hrefs || [];
 
-        hrefs = options.hrefs || [];
+          if (hrefs.length) {
+            _context7.next = 4;
+            break;
+          }
 
-        if (hrefs.length) {
-          context$1$0.next = 4;
-          break;
-        }
+          return _context7.abrupt("return", []);
 
-        return context$1$0.abrupt('return', []);
-
-      case 4:
-        req = request.calendarMultiget({
-          depth: 1,
-          props: [{ name: 'getetag', namespace: ns.DAV }, { name: 'calendar-data', namespace: ns.CALDAV }],
-          hrefs: hrefs
-        });
-        context$1$0.next = 7;
-        return options.xhr.send(req, calendar.url, {
-          sandbox: options.sandbox
-        });
-
-      case 7:
-        responses = context$1$0.sent;
-        return context$1$0.abrupt('return', responses.map(function (res) {
-          //debug(`Found calendar object with url ${res.href}`);
-          return new _model.CalendarObject({
-            data: res,
-            calendar: calendar,
-            url: _url2['default'].resolve(calendar.account.rootUrl, res.href),
-            etag: res.props.getetag,
-            calendarData: res.props.calendarData
+        case 4:
+          req = request.calendarMultiget({
+            depth: 1,
+            props: [{
+              name: 'getetag',
+              namespace: ns.DAV
+            }, {
+              name: 'calendar-data',
+              namespace: ns.CALDAV
+            }],
+            hrefs: hrefs
           });
-        }));
+          _context7.next = 7;
+          return options.xhr.send(req, calendar.url, {
+            sandbox: options.sandbox
+          });
 
-      case 9:
-      case 'end':
-        return context$1$0.stop();
+        case 7:
+          responses = _context7.sent;
+          return _context7.abrupt("return", responses.map(function (res) {
+            //debug(`Found calendar object with url ${res.href}`);
+            return new _model.CalendarObject({
+              data: res,
+              calendar: calendar,
+              url: _url["default"].resolve(calendar.account.rootUrl, res.href),
+              etag: res.props.getetag,
+              calendarData: res.props.calendarData
+            });
+          }));
+
+        case 9:
+        case "end":
+          return _context7.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee7);
 }));
 
 exports.multigetCalendarObjects = multigetCalendarObjects;
-var multigetSingleCalendarObject = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(calendar, options) {
+
+var multigetSingleCalendarObject = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee8(calendar, options) {
   var events;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        context$1$0.next = 2;
-        return multigetCalendarObjects(calendar, options);
+  return regeneratorRuntime.wrap(function _callee8$(_context8) {
+    while (1) {
+      switch (_context8.prev = _context8.next) {
+        case 0:
+          _context8.next = 2;
+          return multigetCalendarObjects(calendar, options);
 
-      case 2:
-        events = context$1$0.sent;
-        return context$1$0.abrupt('return', events.filter(function (event) {
-          // Find the response that corresponds to the parameter collection.
-          return (0, _fuzzy_url_equals2['default'])(options.href, event.url);
-        })[0]);
+        case 2:
+          events = _context8.sent;
+          return _context8.abrupt("return", events.filter(function (event) {
+            // Find the response that corresponds to the parameter collection.
+            return (0, _fuzzy_url_equals["default"])(options.href, event.url);
+          })[0]);
 
-      case 4:
-      case 'end':
-        return context$1$0.stop();
+        case 4:
+        case "end":
+          return _context8.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee8);
 }));
-
-exports.multigetSingleCalendarObject = multigetSingleCalendarObject;
 /**
  * @param {dav.Calendar} calendar the calendar to fetch updates to.
  * @return {Promise} promise will resolve with updated calendar object.
@@ -1561,12 +1040,14 @@ exports.multigetSingleCalendarObject = multigetSingleCalendarObject;
  *   (dav.Transport) xhr - request sender.
  */
 
+
+exports.multigetSingleCalendarObject = multigetSingleCalendarObject;
+
 function syncCalendar(calendar, options) {
   options.basicSync = basicSync;
   options.webdavSync = webdavSync;
   return webdav.syncCollection(calendar, options);
 }
-
 /**
  * @param {dav.Account} account the account to fetch updates for.
  * @return {Promise} promise will resolve with updated account.
@@ -1576,254 +1057,258 @@ function syncCalendar(calendar, options) {
  *   (dav.Sandbox) sandbox - optional request sandbox.
  *   (dav.Transport) xhr - request sender.
  */
-var syncCaldavAccount = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(account) {
-  var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-  var cals;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        options.loadObjects = false;
-        if (!account.calendars) account.calendars = [];
 
-        context$1$0.next = 4;
-        return listCalendars(account, options);
 
-      case 4:
-        cals = context$1$0.sent;
+var syncCaldavAccount = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee10(account) {
+  var options,
+      cals,
+      _args10 = arguments;
+  return regeneratorRuntime.wrap(function _callee10$(_context10) {
+    while (1) {
+      switch (_context10.prev = _context10.next) {
+        case 0:
+          options = _args10.length > 1 && _args10[1] !== undefined ? _args10[1] : {};
+          options.loadObjects = false;
+          if (!account.calendars) account.calendars = [];
+          _context10.next = 5;
+          return listCalendars(account, options);
 
-        cals.filter(function (cal) {
-          // Filter the calendars not previously seen.
-          return account.calendars.every(function (prev) {
-            return !(0, _fuzzy_url_equals2['default'])(prev.url, cal.url);
+        case 5:
+          cals = _context10.sent;
+          cals.filter(function (cal) {
+            // Filter the calendars not previously seen.
+            return account.calendars.every(function (prev) {
+              return !(0, _fuzzy_url_equals["default"])(prev.url, cal.url);
+            });
+          }).forEach(function (cal) {
+            // Add them to the account's calendar list.
+            account.calendars.push(cal);
           });
-        }).forEach(function (cal) {
-          // Add them to the account's calendar list.
-          account.calendars.push(cal);
-        });
+          options.loadObjects = true;
+          _context10.next = 10;
+          return account.calendars.map(_co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee9(cal, index) {
+            return regeneratorRuntime.wrap(function _callee9$(_context9) {
+              while (1) {
+                switch (_context9.prev = _context9.next) {
+                  case 0:
+                    _context9.prev = 0;
+                    _context9.next = 3;
+                    return syncCalendar(cal, options);
 
-        options.loadObjects = true;
-        context$1$0.next = 9;
-        return account.calendars.map(_co2['default'].wrap(regeneratorRuntime.mark(function callee$1$0(cal, index) {
-          return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
-            while (1) switch (context$2$0.prev = context$2$0.next) {
-              case 0:
-                context$2$0.prev = 0;
-                context$2$0.next = 3;
-                return syncCalendar(cal, options);
+                  case 3:
+                    _context9.next = 9;
+                    break;
 
-              case 3:
-                context$2$0.next = 9;
-                break;
+                  case 5:
+                    _context9.prev = 5;
+                    _context9.t0 = _context9["catch"](0);
+                    debug("Sync calendar ".concat(cal.displayName, " failed with ").concat(_context9.t0));
+                    account.calendars.splice(index, 1);
 
-              case 5:
-                context$2$0.prev = 5;
-                context$2$0.t0 = context$2$0['catch'](0);
+                  case 9:
+                  case "end":
+                    return _context9.stop();
+                }
+              }
+            }, _callee9, null, [[0, 5]]);
+          })));
 
-                debug('Sync calendar ' + cal.displayName + ' failed with ' + context$2$0.t0);
-                account.calendars.splice(index, 1);
+        case 10:
+          return _context10.abrupt("return", account);
 
-              case 9:
-              case 'end':
-                return context$2$0.stop();
-            }
-          }, callee$1$0, this, [[0, 5]]);
-        })));
-
-      case 9:
-        return context$1$0.abrupt('return', account);
-
-      case 10:
-      case 'end':
-        return context$1$0.stop();
+        case 11:
+        case "end":
+          return _context10.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee10);
 }));
 
 exports.syncCaldavAccount = syncCaldavAccount;
-var basicSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(calendar, options) {
+
+var basicSync = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee11(calendar, options) {
   var sync;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        context$1$0.next = 2;
-        return webdav.isCollectionDirty(calendar, options);
+  return regeneratorRuntime.wrap(function _callee11$(_context11) {
+    while (1) {
+      switch (_context11.prev = _context11.next) {
+        case 0:
+          _context11.next = 2;
+          return webdav.isCollectionDirty(calendar, options);
 
-      case 2:
-        sync = context$1$0.sent;
+        case 2:
+          sync = _context11.sent;
 
-        if (sync) {
-          context$1$0.next = 6;
-          break;
-        }
-
-        debug('Local ctag matched remote! No need to sync :).');
-        return context$1$0.abrupt('return', calendar);
-
-      case 6:
-
-        debug('ctag changed so we need to fetch stuffs.');
-        context$1$0.next = 9;
-        return listCalendarObjects(calendar, options);
-
-      case 9:
-        calendar.objects = context$1$0.sent;
-        return context$1$0.abrupt('return', calendar);
-
-      case 11:
-      case 'end':
-        return context$1$0.stop();
-    }
-  }, callee$0$0, this);
-}));
-
-var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(calendar, options) {
-  var req, result, deletedHrefs, newUpdatedHrefs, results;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        req = request.syncCollection({
-          props: [{ name: 'getetag', namespace: ns.DAV }],
-
-          //{ name: 'calendar-data', namespace: ns.CALDAV }
-          syncLevel: 1,
-          syncToken: calendar.syncToken,
-          depth: 1
-        });
-        context$1$0.next = 3;
-        return options.xhr.send(req, calendar.url, {
-          sandbox: options.sandbox
-        });
-
-      case 3:
-        result = context$1$0.sent;
-        deletedHrefs = result.responses.filter(function (res) {
-          return res.status && res.status.indexOf('404') > -1;
-        }).map(function (res) {
-          return res.href;
-        });
-        newUpdatedHrefs = result.responses.filter(function (res) {
-          return !res.status || res.status.indexOf('404') === -1;
-        }).map(function (res) {
-          return res.href;
-        });
-
-        // Starting from Feb 2020, iCloud sends 500 if hrefs contain the calendar one, despite providing the other data correctly!
-        // TODO: Is this supposed to be the standard??
-        if (calendar.url.indexOf("icloud.com") > -1) {
-          newUpdatedHrefs = newUpdatedHrefs.filter(function (href) {
-            return href.indexOf(".ics") > -1;
-          });
-        }
-
-        req = request.calendarMultiget({
-          props: [{ name: 'getetag', namespace: ns.DAV }, { name: 'calendar-data', namespace: ns.CALDAV }],
-          depth: 1,
-          hrefs: newUpdatedHrefs
-        });
-
-        context$1$0.next = 10;
-        return options.xhr.send(req, calendar.url, {
-          sandbox: options.sandbox
-        });
-
-      case 10:
-        results = context$1$0.sent;
-
-        results.forEach(function (response) {
-          // Find the calendar object that this response corresponds with.
-          var calendarObject = calendar.objects.filter(function (object) {
-            return (0, _fuzzy_url_equals2['default'])(object.url, response.href);
-          })[0];
-
-          if (!calendarObject) {
-            // New
-            calendar.objects.push(new _model.CalendarObject({
-              data: response,
-              calendar: calendar,
-              url: _url2['default'].resolve(calendar.account.rootUrl, response.href),
-              etag: response.props.getetag,
-              calendarData: response.props.calendarData
-            }));
-          } else {
-            // Update (perform in place)
-            calendarObject.etag = response.props.getetag;
-            calendarObject.calendarData = response.props.calendarData;
+          if (sync) {
+            _context11.next = 6;
+            break;
           }
-        });
 
-        // Apply deleted
-        calendar.objects = calendar.objects.filter(function (object) {
-          return !deletedHrefs.some(function (del) {
-            return (0, _fuzzy_url_equals2['default'])(object.url, del);
-          });
-        });
+          debug('Local ctag matched remote! No need to sync :).');
+          return _context11.abrupt("return", calendar);
 
-        // Update token
-        calendar.syncToken = result.syncToken;
-        return context$1$0.abrupt('return', calendar);
+        case 6:
+          debug('ctag changed so we need to fetch stuffs.');
+          _context11.next = 9;
+          return listCalendarObjects(calendar, options);
 
-      case 15:
-      case 'end':
-        return context$1$0.stop();
+        case 9:
+          calendar.objects = _context11.sent;
+          return _context11.abrupt("return", calendar);
+
+        case 11:
+        case "end":
+          return _context11.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee11);
 }));
 
-// First query to get list of etags
+var webdavSync = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee12(calendar, options) {
+  var req, result, deletedHrefs, newUpdatedHrefs, results;
+  return regeneratorRuntime.wrap(function _callee12$(_context12) {
+    while (1) {
+      switch (_context12.prev = _context12.next) {
+        case 0:
+          req = request.syncCollection({
+            props: [{
+              name: 'getetag',
+              namespace: ns.DAV
+            } //{ name: 'calendar-data', namespace: ns.CALDAV }
+            ],
+            syncLevel: 1,
+            syncToken: calendar.syncToken,
+            depth: 1
+          });
+          _context12.next = 3;
+          return options.xhr.send(req, calendar.url, {
+            sandbox: options.sandbox
+          });
 
-// Results contains new, modified or deleted objects.
-// Detect deleted objects as objects with 'null' calendarData.
+        case 3:
+          result = _context12.sent;
+          // Results contains new, modified or deleted objects.
+          // Detect deleted objects as objects with 'null' calendarData.
+          deletedHrefs = result.responses.filter(function (res) {
+            return res.status && res.status.indexOf('404') > -1;
+          }).map(function (res) {
+            return res.href;
+          });
+          newUpdatedHrefs = result.responses.filter(function (res) {
+            return !res.status || res.status.indexOf('404') === -1;
+          }).map(function (res) {
+            return res.href;
+          }); // Starting from Feb 2020, iCloud sends 500 if hrefs contain the calendar one, despite providing the other data correctly!
+          // TODO: Is this supposed to be the standard??
+
+          if (calendar.url.indexOf("icloud.com") > -1) {
+            newUpdatedHrefs = newUpdatedHrefs.filter(function (href) {
+              return href.indexOf(".ics") > -1;
+            });
+          }
+
+          req = request.calendarMultiget({
+            props: [{
+              name: 'getetag',
+              namespace: ns.DAV
+            }, {
+              name: 'calendar-data',
+              namespace: ns.CALDAV
+            }],
+            depth: 1,
+            hrefs: newUpdatedHrefs
+          });
+          _context12.next = 10;
+          return options.xhr.send(req, calendar.url, {
+            sandbox: options.sandbox
+          });
+
+        case 10:
+          results = _context12.sent;
+          results.forEach(function (response) {
+            // Find the calendar object that this response corresponds with.
+            var calendarObject = calendar.objects.filter(function (object) {
+              return (0, _fuzzy_url_equals["default"])(object.url, response.href);
+            })[0];
+
+            if (!calendarObject) {
+              // New
+              calendar.objects.push(new _model.CalendarObject({
+                data: response,
+                calendar: calendar,
+                url: _url["default"].resolve(calendar.account.rootUrl, response.href),
+                etag: response.props.getetag,
+                calendarData: response.props.calendarData
+              }));
+            } else {
+              // Update (perform in place)
+              calendarObject.etag = response.props.getetag;
+              calendarObject.calendarData = response.props.calendarData;
+            }
+          }); // Apply deleted
+
+          calendar.objects = calendar.objects.filter(function (object) {
+            return !deletedHrefs.some(function (del) {
+              return (0, _fuzzy_url_equals["default"])(object.url, del);
+            });
+          }); // Update token
+
+          calendar.syncToken = result.syncToken;
+          return _context12.abrupt("return", calendar);
+
+        case 15:
+        case "end":
+          return _context12.stop();
+      }
+    }
+  }, _callee12);
+}));
 },{"./debug":7,"./fuzzy_url_equals":8,"./model":10,"./namespace":11,"./request":13,"./webdav":25,"co":88,"url":undefined}],4:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports["default"] = camelize;
+
 /**
  * @fileoverview Camelcase something.
  */
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-exports['default'] = camelize;
-
 function camelize(str) {
-  var delimiter = arguments.length <= 1 || arguments[1] === undefined ? '_' : arguments[1];
-
+  var delimiter = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '_';
   var words = str.split(delimiter);
   return [words[0]].concat(words.slice(1).map(function (word) {
     return word.charAt(0).toUpperCase() + word.slice(1);
   })).join('');
 }
-
-module.exports = exports['default'];
 },{}],5:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.Client = void 0;
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _url = _interopRequireDefault(require("url"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+var accounts = _interopRequireWildcard(require("./accounts"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var calendars = _interopRequireWildcard(require("./calendars"));
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+var contacts = _interopRequireWildcard(require("./contacts"));
 
-var _url = require('url');
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 
-var _url2 = _interopRequireDefault(_url);
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
-var _accounts = require('./accounts');
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-var accounts = _interopRequireWildcard(_accounts);
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var _calendars = require('./calendars');
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
-var calendars = _interopRequireWildcard(_calendars);
-
-var _contacts = require('./contacts');
-
-var contacts = _interopRequireWildcard(_contacts);
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 /**
  * @param {dav.Transport} xhr - request sender.
@@ -1832,22 +1317,19 @@ var contacts = _interopRequireWildcard(_contacts);
  *
  *   (String) baseUrl - root url to resolve relative request urls with.
  */
-
-var Client = (function () {
+var Client = /*#__PURE__*/function () {
   function Client(xhr) {
-    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     _classCallCheck(this, Client);
 
     this.xhr = xhr;
-    Object.assign(this, options);
+    Object.assign(this, options); // Expose internal modules for unit testing
 
-    // Expose internal modules for unit testing
     this._accounts = accounts;
     this._calendars = calendars;
     this._contacts = contacts;
   }
-
   /**
    * @param {dav.Request} req - dav request.
    * @param {String} uri - where to send request.
@@ -1861,232 +1343,229 @@ var Client = (function () {
    *   (Object) sandbox - optional request sandbox.
    */
 
+
   _createClass(Client, [{
-    key: 'send',
+    key: "send",
     value: function send(req, uri, options) {
       if (this.baseUrl) {
-        var urlObj = _url2['default'].parse(uri);
-        uri = _url2['default'].resolve(this.baseUrl, urlObj.path);
+        var urlObj = _url["default"].parse(uri);
+
+        uri = _url["default"].resolve(this.baseUrl, urlObj.path);
       }
 
       return this.xhr.send(req, uri, options);
     }
   }, {
-    key: 'createAccount',
+    key: "createAccount",
     value: function createAccount() {
-      var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
       options.xhr = options.xhr || this.xhr;
       return accounts.createAccount(options);
     }
   }, {
-    key: 'getCalendar',
+    key: "getCalendar",
     value: function getCalendar(account, calendarUrl) {
-      var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
-
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
       options.xhr = options.xhr || this.xhr;
       return calendars.getCalendar(account, calendarUrl, options);
     }
   }, {
-    key: 'createCalendarObject',
+    key: "createCalendarObject",
     value: function createCalendarObject(calendar) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return calendars.createCalendarObject(calendar, options);
     }
   }, {
-    key: 'getCalendarObject',
+    key: "getCalendarObject",
     value: function getCalendarObject(calendar) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return calendars.getCalendarObject(calendar, options);
     }
   }, {
-    key: 'updateCalendarObject',
+    key: "updateCalendarObject",
     value: function updateCalendarObject(calendarObject) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return calendars.updateCalendarObject(calendarObject, options);
     }
   }, {
-    key: 'deleteCalendarObject',
+    key: "deleteCalendarObject",
     value: function deleteCalendarObject(calendarObject) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return calendars.deleteCalendarObject(calendarObject, options);
     }
   }, {
-    key: 'syncCalendar',
+    key: "syncCalendar",
     value: function syncCalendar(calendar) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return calendars.syncCalendar(calendar, options);
     }
   }, {
-    key: 'syncCaldavAccount',
+    key: "syncCaldavAccount",
     value: function syncCaldavAccount(account) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return calendars.syncCaldavAccount(account, options);
     }
   }, {
-    key: 'createCard',
+    key: "createCard",
     value: function createCard(addressBook) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return contacts.createCard(addressBook, options);
     }
   }, {
-    key: 'updateCard',
+    key: "updateCard",
     value: function updateCard(card) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return contacts.updateCard(card, options);
     }
   }, {
-    key: 'deleteCard',
+    key: "deleteCard",
     value: function deleteCard(card) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return contacts.deleteCard(card, options);
     }
   }, {
-    key: 'syncAddressBook',
+    key: "syncAddressBook",
     value: function syncAddressBook(addressBook) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return contacts.syncAddressBook(addressBook, options);
     }
   }, {
-    key: 'syncCarddavAccount',
+    key: "syncCarddavAccount",
     value: function syncCarddavAccount(account) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return contacts.syncCarddavAccount(account, options);
     }
   }]);
 
   return Client;
-})();
+}();
 
 exports.Client = Client;
 },{"./accounts":2,"./calendars":3,"./contacts":6,"url":undefined}],6:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.createCard = createCard;
 exports.updateCard = updateCard;
 exports.deleteCard = deleteCard;
 exports.syncAddressBook = syncAddressBook;
+exports.syncCarddavAccount = exports.listVCards = exports.listAddressBooks = void 0;
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+var _co = _interopRequireDefault(require("co"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var _url = _interopRequireDefault(require("url"));
 
-var _co = require('co');
+var _fuzzy_url_equals = _interopRequireDefault(require("./fuzzy_url_equals"));
 
-var _co2 = _interopRequireDefault(_co);
+var _model = require("./model");
 
-var _url = require('url');
+var ns = _interopRequireWildcard(require("./namespace"));
 
-var _url2 = _interopRequireDefault(_url);
+var request = _interopRequireWildcard(require("./request"));
 
-var _fuzzy_url_equals = require('./fuzzy_url_equals');
+var webdav = _interopRequireWildcard(require("./webdav"));
 
-var _fuzzy_url_equals2 = _interopRequireDefault(_fuzzy_url_equals);
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 
-var _model = require('./model');
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
-var _namespace = require('./namespace');
-
-var ns = _interopRequireWildcard(_namespace);
-
-var _request = require('./request');
-
-var request = _interopRequireWildcard(_request);
-
-var _webdav = require('./webdav');
-
-var webdav = _interopRequireWildcard(_webdav);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 var debug = require('./debug')('dav:contacts');
-
 /**
  * @param {dav.Account} account to fetch address books for.
  */
-var listAddressBooks = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(account, options) {
+
+
+var listAddressBooks = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(account, options) {
   var req, responses, addressBooks;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        debug('Fetch address books from home url ' + account.homeUrl);
-        req = request.propfind({
-          props: [{ name: 'displayname', namespace: ns.DAV }, { name: 'getctag', namespace: ns.CALENDAR_SERVER }, { name: 'resourcetype', namespace: ns.DAV }, { name: 'sync-token', namespace: ns.DAV }],
-          depth: 1
-        });
-        context$1$0.next = 4;
-        return options.xhr.send(req, account.homeUrl, {
-          sandbox: options.sandbox
-        });
-
-      case 4:
-        responses = context$1$0.sent;
-        addressBooks = responses.filter(function (res) {
-          return typeof res.props.displayname === 'string';
-        }).map(function (res) {
-          debug('Found address book named ' + res.props.displayname + ',\n             props: ' + JSON.stringify(res.props));
-          return new _model.AddressBook({
-            data: res,
-            account: account,
-            url: _url2['default'].resolve(account.rootUrl, res.href),
-            ctag: res.props.getctag,
-            displayName: res.props.displayname,
-            resourcetype: res.props.resourcetype,
-            syncToken: res.props.syncToken
+  return regeneratorRuntime.wrap(function _callee2$(_context2) {
+    while (1) {
+      switch (_context2.prev = _context2.next) {
+        case 0:
+          debug("Fetch address books from home url ".concat(account.homeUrl));
+          req = request.propfind({
+            props: [{
+              name: 'displayname',
+              namespace: ns.DAV
+            }, {
+              name: 'getctag',
+              namespace: ns.CALENDAR_SERVER
+            }, {
+              name: 'resourcetype',
+              namespace: ns.DAV
+            }, {
+              name: 'sync-token',
+              namespace: ns.DAV
+            }],
+            depth: 1
           });
-        });
-        context$1$0.next = 8;
-        return addressBooks.map(_co2['default'].wrap(regeneratorRuntime.mark(function callee$1$0(addressBook) {
-          return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
-            while (1) switch (context$2$0.prev = context$2$0.next) {
-              case 0:
-                context$2$0.next = 2;
-                return webdav.supportedReportSet(addressBook, options);
+          _context2.next = 4;
+          return options.xhr.send(req, account.homeUrl, {
+            sandbox: options.sandbox
+          });
 
-              case 2:
-                addressBook.reports = context$2$0.sent;
+        case 4:
+          responses = _context2.sent;
+          addressBooks = responses.filter(function (res) {
+            return typeof res.props.displayname === 'string';
+          }).map(function (res) {
+            debug("Found address book named ".concat(res.props.displayname, ",\n             props: ").concat(JSON.stringify(res.props)));
+            return new _model.AddressBook({
+              data: res,
+              account: account,
+              url: _url["default"].resolve(account.rootUrl, res.href),
+              ctag: res.props.getctag,
+              displayName: res.props.displayname,
+              resourcetype: res.props.resourcetype,
+              syncToken: res.props.syncToken
+            });
+          });
+          _context2.next = 8;
+          return addressBooks.map(_co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee(addressBook) {
+            return regeneratorRuntime.wrap(function _callee$(_context) {
+              while (1) {
+                switch (_context.prev = _context.next) {
+                  case 0:
+                    _context.next = 2;
+                    return webdav.supportedReportSet(addressBook, options);
 
-              case 3:
-              case 'end':
-                return context$2$0.stop();
-            }
-          }, callee$1$0, this);
-        })));
+                  case 2:
+                    addressBook.reports = _context.sent;
 
-      case 8:
-        return context$1$0.abrupt('return', addressBooks);
+                  case 3:
+                  case "end":
+                    return _context.stop();
+                }
+              }
+            }, _callee);
+          })));
 
-      case 9:
-      case 'end':
-        return context$1$0.stop();
+        case 8:
+          return _context2.abrupt("return", addressBooks);
+
+        case 9:
+        case "end":
+          return _context2.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee2);
 }));
-
-exports.listAddressBooks = listAddressBooks;
 /**
  * @param {dav.AddressBook} addressBook the address book to put the object on.
  * @return {Promise} promise will resolve when the card has been created.
@@ -2099,53 +1578,63 @@ exports.listAddressBooks = listAddressBooks;
  *   (dav.Transport) xhr - request sender.
  */
 
+
+exports.listAddressBooks = listAddressBooks;
+
 function createCard(addressBook, options) {
-  var objectUrl = _url2['default'].resolve(addressBook.url, options.filename);
+  var objectUrl = _url["default"].resolve(addressBook.url, options.filename);
+
   return webdav.createObject(objectUrl, options.data, options);
 }
-
 /**
  * Options:
  *
  *   (dav.Sandbox) sandbox - optional request sandbox.
  */
-var listVCards = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(addressBook, options) {
+
+
+var listVCards = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(addressBook, options) {
   var req, responses;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        debug('Doing REPORT on address book ' + addressBook.url + ' which belongs to\n        ' + addressBook.account.credentials.username);
-
-        req = request.addressBookQuery({
-          depth: 1,
-          props: [{ name: 'getetag', namespace: ns.DAV }, { name: 'address-data', namespace: ns.CARDDAV }]
-        });
-        context$1$0.next = 4;
-        return options.xhr.send(req, addressBook.url, {
-          sandbox: options.sandbox
-        });
-
-      case 4:
-        responses = context$1$0.sent;
-        return context$1$0.abrupt('return', responses.map(function (res) {
-          debug('Found vcard with url ' + res.href);
-          return new _model.VCard({
-            data: res,
-            addressBook: addressBook,
-            url: _url2['default'].resolve(addressBook.account.rootUrl, res.href),
-            etag: res.props.getetag,
-            addressData: res.props.addressData
+  return regeneratorRuntime.wrap(function _callee3$(_context3) {
+    while (1) {
+      switch (_context3.prev = _context3.next) {
+        case 0:
+          debug("Doing REPORT on address book ".concat(addressBook.url, " which belongs to\n        ").concat(addressBook.account.credentials.username));
+          req = request.addressBookQuery({
+            depth: 1,
+            props: [{
+              name: 'getetag',
+              namespace: ns.DAV
+            }, {
+              name: 'address-data',
+              namespace: ns.CARDDAV
+            }]
           });
-        }));
+          _context3.next = 4;
+          return options.xhr.send(req, addressBook.url, {
+            sandbox: options.sandbox
+          });
 
-      case 6:
-      case 'end':
-        return context$1$0.stop();
+        case 4:
+          responses = _context3.sent;
+          return _context3.abrupt("return", responses.map(function (res) {
+            debug("Found vcard with url ".concat(res.href));
+            return new _model.VCard({
+              data: res,
+              addressBook: addressBook,
+              url: _url["default"].resolve(addressBook.account.rootUrl, res.href),
+              etag: res.props.getetag,
+              addressData: res.props.addressData
+            });
+          }));
+
+        case 6:
+        case "end":
+          return _context3.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee3);
 }));
-
-exports.listVCards = listVCards;
 /**
  * @param {dav.VCard} card updated vcard object.
  * @return {Promise} promise will resolve when the card has been updated.
@@ -2156,10 +1645,12 @@ exports.listVCards = listVCards;
  *   (dav.Transport) xhr - request sender.
  */
 
+
+exports.listVCards = listVCards;
+
 function updateCard(card, options) {
   return webdav.updateObject(card.url, card.addressData, card.etag, options);
 }
-
 /**
  * @param {dav.VCard} card target vcard object.
  * @return {Promise} promise will resolve when the calendar has been deleted.
@@ -2170,10 +1661,10 @@ function updateCard(card, options) {
  *   (dav.Transport) xhr - request sender.
  */
 
+
 function deleteCard(card, options) {
   return webdav.deleteObject(card.url, card.etag, options);
 }
-
 /**
  * @param {dav.Calendar} calendar the calendar to fetch updates to.
  * @return {Promise} promise will resolve with updated calendar object.
@@ -2187,12 +1678,12 @@ function deleteCard(card, options) {
  *   (dav.Transport) xhr - request sender.
  */
 
+
 function syncAddressBook(addressBook, options) {
   options.basicSync = basicSync;
   options.webdavSync = webdavSync;
   return webdav.syncCollection(addressBook, options);
 }
-
 /**
  * @param {dav.Account} account the account to fetch updates for.
  * @return {Promise} promise will resolve with updated account.
@@ -2202,143 +1693,154 @@ function syncAddressBook(addressBook, options) {
  *   (dav.Sandbox) sandbox - optional request sandbox.
  *   (dav.Transport) xhr - request sender.
  */
-var syncCarddavAccount = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(account) {
-  var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-  var addressBooks;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        options.loadObjects = false;
 
-        if (!account.addressBooks) {
-          account.addressBooks = [];
-        }
 
-        context$1$0.next = 4;
-        return listAddressBooks(account, options);
+var syncCarddavAccount = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee5(account) {
+  var options,
+      addressBooks,
+      _args5 = arguments;
+  return regeneratorRuntime.wrap(function _callee5$(_context5) {
+    while (1) {
+      switch (_context5.prev = _context5.next) {
+        case 0:
+          options = _args5.length > 1 && _args5[1] !== undefined ? _args5[1] : {};
+          options.loadObjects = false;
 
-      case 4:
-        addressBooks = context$1$0.sent;
+          if (!account.addressBooks) {
+            account.addressBooks = [];
+          }
 
-        addressBooks.filter(function (addressBook) {
-          // Filter the address books not previously seen.
-          return account.addressBooks.every(function (prev) {
-            return !(0, _fuzzy_url_equals2['default'])(prev.url, addressBook.url);
+          _context5.next = 5;
+          return listAddressBooks(account, options);
+
+        case 5:
+          addressBooks = _context5.sent;
+          addressBooks.filter(function (addressBook) {
+            // Filter the address books not previously seen.
+            return account.addressBooks.every(function (prev) {
+              return !(0, _fuzzy_url_equals["default"])(prev.url, addressBook.url);
+            });
+          }).forEach(function (addressBook) {
+            return account.addressBooks.push(addressBook);
           });
-        }).forEach(function (addressBook) {
-          return account.addressBooks.push(addressBook);
-        });
+          options.loadObjects = true;
+          _context5.next = 10;
+          return account.addressBooks.map(_co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(addressBook, index) {
+            return regeneratorRuntime.wrap(function _callee4$(_context4) {
+              while (1) {
+                switch (_context4.prev = _context4.next) {
+                  case 0:
+                    _context4.prev = 0;
+                    _context4.next = 3;
+                    return syncAddressBook(addressBook, options);
 
-        options.loadObjects = true;
-        context$1$0.next = 9;
-        return account.addressBooks.map(_co2['default'].wrap(regeneratorRuntime.mark(function callee$1$0(addressBook, index) {
-          return regeneratorRuntime.wrap(function callee$1$0$(context$2$0) {
-            while (1) switch (context$2$0.prev = context$2$0.next) {
-              case 0:
-                context$2$0.prev = 0;
-                context$2$0.next = 3;
-                return syncAddressBook(addressBook, options);
+                  case 3:
+                    _context4.next = 9;
+                    break;
 
-              case 3:
-                context$2$0.next = 9;
-                break;
+                  case 5:
+                    _context4.prev = 5;
+                    _context4.t0 = _context4["catch"](0);
+                    debug("Syncing ".concat(addressBook.displayName, " failed with ").concat(_context4.t0));
+                    account.addressBooks.splice(index, 1);
 
-              case 5:
-                context$2$0.prev = 5;
-                context$2$0.t0 = context$2$0['catch'](0);
+                  case 9:
+                  case "end":
+                    return _context4.stop();
+                }
+              }
+            }, _callee4, null, [[0, 5]]);
+          })));
 
-                debug('Syncing ' + addressBook.displayName + ' failed with ' + context$2$0.t0);
-                account.addressBooks.splice(index, 1);
+        case 10:
+          return _context5.abrupt("return", account);
 
-              case 9:
-              case 'end':
-                return context$2$0.stop();
-            }
-          }, callee$1$0, this, [[0, 5]]);
-        })));
-
-      case 9:
-        return context$1$0.abrupt('return', account);
-
-      case 10:
-      case 'end':
-        return context$1$0.stop();
+        case 11:
+        case "end":
+          return _context5.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee5);
 }));
 
 exports.syncCarddavAccount = syncCarddavAccount;
-var basicSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(addressBook, options) {
+
+var basicSync = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee6(addressBook, options) {
   var sync;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        sync = webdav.isCollectionDirty(addressBook, options);
+  return regeneratorRuntime.wrap(function _callee6$(_context6) {
+    while (1) {
+      switch (_context6.prev = _context6.next) {
+        case 0:
+          sync = webdav.isCollectionDirty(addressBook, options);
 
-        if (sync) {
-          context$1$0.next = 4;
-          break;
-        }
+          if (sync) {
+            _context6.next = 4;
+            break;
+          }
 
-        debug('Local ctag matched remote! No need to sync :).');
-        return context$1$0.abrupt('return', addressBook);
+          debug('Local ctag matched remote! No need to sync :).');
+          return _context6.abrupt("return", addressBook);
 
-      case 4:
+        case 4:
+          debug('ctag changed so we need to fetch stuffs.');
+          _context6.next = 7;
+          return listVCards(addressBook, options);
 
-        debug('ctag changed so we need to fetch stuffs.');
-        context$1$0.next = 7;
-        return listVCards(addressBook, options);
+        case 7:
+          addressBook.objects = _context6.sent;
+          return _context6.abrupt("return", addressBook);
 
-      case 7:
-        addressBook.objects = context$1$0.sent;
-        return context$1$0.abrupt('return', addressBook);
-
-      case 9:
-      case 'end':
-        return context$1$0.stop();
+        case 9:
+        case "end":
+          return _context6.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee6);
 }));
 
-var webdavSync = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(addressBook, options) {
+var webdavSync = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee7(addressBook, options) {
   var req, result;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        req = request.syncCollection({
-          props: [{ name: 'getetag', namespace: ns.DAV }, { name: 'address-data', namespace: ns.CARDDAV }],
-          syncLevel: 1,
-          syncToken: addressBook.syncToken
-        });
-        context$1$0.next = 3;
-        return options.xhr.send(req, addressBook.url, {
-          sandbox: options.sandbox
-        });
+  return regeneratorRuntime.wrap(function _callee7$(_context7) {
+    while (1) {
+      switch (_context7.prev = _context7.next) {
+        case 0:
+          req = request.syncCollection({
+            props: [{
+              name: 'getetag',
+              namespace: ns.DAV
+            }, {
+              name: 'address-data',
+              namespace: ns.CARDDAV
+            }],
+            syncLevel: 1,
+            syncToken: addressBook.syncToken
+          });
+          _context7.next = 3;
+          return options.xhr.send(req, addressBook.url, {
+            sandbox: options.sandbox
+          });
 
-      case 3:
-        result = context$1$0.sent;
+        case 3:
+          result = _context7.sent;
+          // TODO(gareth): Handle creations and deletions.
+          result.responses.forEach(function (response) {
+            // Find the vcard that this response corresponds with.
+            var vcard = addressBook.objects.filter(function (object) {
+              return (0, _fuzzy_url_equals["default"])(object.url, response.href);
+            })[0];
+            if (!vcard) return;
+            vcard.etag = response.props.getetag;
+            vcard.addressData = response.props.addressData;
+          });
+          addressBook.syncToken = result.syncToken;
+          return _context7.abrupt("return", addressBook);
 
-        // TODO(gareth): Handle creations and deletions.
-        result.responses.forEach(function (response) {
-          // Find the vcard that this response corresponds with.
-          var vcard = addressBook.objects.filter(function (object) {
-            return (0, _fuzzy_url_equals2['default'])(object.url, response.href);
-          })[0];
-
-          if (!vcard) return;
-
-          vcard.etag = response.props.getetag;
-          vcard.addressData = response.props.addressData;
-        });
-
-        addressBook.syncToken = result.syncToken;
-        return context$1$0.abrupt('return', addressBook);
-
-      case 7:
-      case 'end':
-        return context$1$0.stop();
+        case 7:
+        case "end":
+          return _context7.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee7);
 }));
 },{"./debug":7,"./fuzzy_url_equals":8,"./model":10,"./namespace":11,"./request":13,"./webdav":25,"co":88,"url":undefined}],7:[function(require,module,exports){
 "use strict";
@@ -2351,18 +1853,17 @@ exports["default"] = debug;
 function debug(topic) {
   return function (message) {
     if (debug.enabled) {
-      console.log("[" + topic + "] " + message);
+      console.log("[".concat(topic, "] ").concat(message));
     }
   };
 }
-
-module.exports = exports["default"];
 },{}],8:[function(require,module,exports){
 'use strict';
-Object.defineProperty(exports, '__esModule', {
+
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports['default'] = fuzzyUrlEquals;
+exports["default"] = fuzzyUrlEquals;
 
 function fuzzyUrlEquals(one, other) {
   return fuzzyIncludes(one, other) || fuzzyIncludes(other, one);
@@ -2373,112 +1874,159 @@ function fuzzyUrlEquals(one, other) {
 function fuzzyIncludes(one, other) {
   return one.indexOf(other) !== -1 || other.charAt(other.length - 1) === '/' && one.indexOf(other.slice(0, -1)) !== -1;
 }
-module.exports = exports['default'];
 },{}],9:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
-
-function _interopExportWildcard(obj, defaults) { var newObj = defaults({}, obj); delete newObj['default']; return newObj; }
-
-function _defaults(obj, defaults) { var keys = Object.getOwnPropertyNames(defaults); for (var i = 0; i < keys.length; i++) { var key = keys[i]; var value = Object.getOwnPropertyDescriptor(defaults, key); if (value && value.configurable && obj[key] === undefined) { Object.defineProperty(obj, key, value); } } return obj; }
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
-
-var _debug = require('./debug');
-
-var _debug2 = _interopRequireDefault(_debug);
-
-var _namespace = require('./namespace');
-
-var ns = _interopRequireWildcard(_namespace);
-
-var _request = require('./request');
-
-var request = _interopRequireWildcard(_request);
-
-var _transport = require('./transport');
-
-var transport = _interopRequireWildcard(_transport);
-
-var _package = require('../package');
-
-Object.defineProperty(exports, 'version', {
+var _exportNames = {
+  debug: true,
+  ns: true,
+  Request: true,
+  request: true,
+  transport: true,
+  version: true,
+  createAccount: true,
+  Client: true,
+  Sandbox: true,
+  createSandbox: true
+};
+Object.defineProperty(exports, "debug", {
+  enumerable: true,
+  get: function get() {
+    return _debug["default"];
+  }
+});
+Object.defineProperty(exports, "Request", {
+  enumerable: true,
+  get: function get() {
+    return request.Request;
+  }
+});
+Object.defineProperty(exports, "version", {
   enumerable: true,
   get: function get() {
     return _package.version;
   }
 });
-
-var _accounts = require('./accounts');
-
-Object.defineProperty(exports, 'createAccount', {
+Object.defineProperty(exports, "createAccount", {
   enumerable: true,
   get: function get() {
     return _accounts.createAccount;
   }
 });
-
-var _calendars = require('./calendars');
-
-_defaults(exports, _interopExportWildcard(_calendars, _defaults));
-
-var _client = require('./client');
-
-Object.defineProperty(exports, 'Client', {
+Object.defineProperty(exports, "Client", {
   enumerable: true,
   get: function get() {
     return _client.Client;
   }
 });
-
-var _contacts = require('./contacts');
-
-_defaults(exports, _interopExportWildcard(_contacts, _defaults));
-
-var _model = require('./model');
-
-_defaults(exports, _interopExportWildcard(_model, _defaults));
-
-Object.defineProperty(exports, 'Request', {
-  enumerable: true,
-  get: function get() {
-    return _request.Request;
-  }
-});
-
-var _sandbox = require('./sandbox');
-
-Object.defineProperty(exports, 'Sandbox', {
+Object.defineProperty(exports, "Sandbox", {
   enumerable: true,
   get: function get() {
     return _sandbox.Sandbox;
   }
 });
-Object.defineProperty(exports, 'createSandbox', {
+Object.defineProperty(exports, "createSandbox", {
   enumerable: true,
   get: function get() {
     return _sandbox.createSandbox;
   }
 });
-exports.debug = _debug2['default'];
+exports.transport = exports.request = exports.ns = void 0;
+
+var _debug = _interopRequireDefault(require("./debug"));
+
+var ns = _interopRequireWildcard(require("./namespace"));
+
 exports.ns = ns;
+
+var request = _interopRequireWildcard(require("./request"));
+
 exports.request = request;
+
+var transport = _interopRequireWildcard(require("./transport"));
+
 exports.transport = transport;
+
+var _package = require("../package");
+
+var _accounts = require("./accounts");
+
+var _calendars = require("./calendars");
+
+Object.keys(_calendars).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _calendars[key];
+    }
+  });
+});
+
+var _client = require("./client");
+
+var _contacts = require("./contacts");
+
+Object.keys(_contacts).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _contacts[key];
+    }
+  });
+});
+
+var _model = require("./model");
+
+Object.keys(_model).forEach(function (key) {
+  if (key === "default" || key === "__esModule") return;
+  if (Object.prototype.hasOwnProperty.call(_exportNames, key)) return;
+  Object.defineProperty(exports, key, {
+    enumerable: true,
+    get: function get() {
+      return _model[key];
+    }
+  });
+});
+
+var _sandbox = require("./sandbox");
+
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 },{"../package":201,"./accounts":2,"./calendars":3,"./client":5,"./contacts":6,"./debug":7,"./model":10,"./namespace":11,"./request":13,"./sandbox":14,"./transport":24}],10:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.VCard = exports.CalendarObject = exports.DAVObject = exports.Calendar = exports.AddressBook = exports.DAVCollection = exports.Credentials = exports.Account = void 0;
 
-var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _createSuper(Derived) { return function () { var Super = _getPrototypeOf(Derived), result; if (_isNativeReflectConstruct()) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -2495,8 +2043,7 @@ var Account = function Account(options) {
     addressBooks: null,
     addresses: null
   }, options);
-}
-
+};
 /**
  * Options:
  *   (String) username - username (perhaps email) for calendar user.
@@ -2510,7 +2057,7 @@ var Account = function Account(options) {
  *   (String) refreshToken - oauth refresh token.
  *   (Number) expiration - unix time for access token expiration.
  */
-;
+
 
 exports.Account = Account;
 
@@ -2552,35 +2099,42 @@ var DAVCollection = function DAVCollection(options) {
 
 exports.DAVCollection = DAVCollection;
 
-var AddressBook = (function (_DAVCollection) {
+var AddressBook = /*#__PURE__*/function (_DAVCollection) {
   _inherits(AddressBook, _DAVCollection);
+
+  var _super = _createSuper(AddressBook);
 
   function AddressBook(options) {
     _classCallCheck(this, AddressBook);
 
-    _get(Object.getPrototypeOf(AddressBook.prototype), "constructor", this).call(this, options);
+    return _super.call(this, options);
   }
 
   return AddressBook;
-})(DAVCollection);
+}(DAVCollection);
 
 exports.AddressBook = AddressBook;
 
-var Calendar = (function (_DAVCollection2) {
+var Calendar = /*#__PURE__*/function (_DAVCollection2) {
   _inherits(Calendar, _DAVCollection2);
 
+  var _super2 = _createSuper(Calendar);
+
   function Calendar(options) {
+    var _this;
+
     _classCallCheck(this, Calendar);
 
-    _get(Object.getPrototypeOf(Calendar.prototype), "constructor", this).call(this, options);
-    Object.assign(this, {
+    _this = _super2.call(this, options);
+    Object.assign(_assertThisInitialized(_this), {
       components: null,
       timezone: null
     }, options);
+    return _this;
   }
 
   return Calendar;
-})(DAVCollection);
+}(DAVCollection);
 
 exports.Calendar = Calendar;
 
@@ -2596,47 +2150,58 @@ var DAVObject = function DAVObject(options) {
 
 exports.DAVObject = DAVObject;
 
-var CalendarObject = (function (_DAVObject) {
+var CalendarObject = /*#__PURE__*/function (_DAVObject) {
   _inherits(CalendarObject, _DAVObject);
 
+  var _super3 = _createSuper(CalendarObject);
+
   function CalendarObject(options) {
+    var _this2;
+
     _classCallCheck(this, CalendarObject);
 
-    _get(Object.getPrototypeOf(CalendarObject.prototype), "constructor", this).call(this, options);
-    Object.assign(this, {
+    _this2 = _super3.call(this, options);
+    Object.assign(_assertThisInitialized(_this2), {
       calendar: null,
       calendarData: null
     }, options);
+    return _this2;
   }
 
   return CalendarObject;
-})(DAVObject);
+}(DAVObject);
 
 exports.CalendarObject = CalendarObject;
 
-var VCard = (function (_DAVObject2) {
+var VCard = /*#__PURE__*/function (_DAVObject2) {
   _inherits(VCard, _DAVObject2);
 
+  var _super4 = _createSuper(VCard);
+
   function VCard(options) {
+    var _this3;
+
     _classCallCheck(this, VCard);
 
-    _get(Object.getPrototypeOf(VCard.prototype), "constructor", this).call(this, options);
-    Object.assign(this, {
+    _this3 = _super4.call(this, options);
+    Object.assign(_assertThisInitialized(_this3), {
       addressBook: null,
       addressData: null
     }, options);
+    return _this3;
   }
 
   return VCard;
-})(DAVObject);
+}(DAVObject);
 
 exports.VCard = VCard;
 },{}],11:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.DAV = exports.CARDDAV = exports.CALDAV = exports.APPLE = exports.CALENDAR_SERVER = void 0;
 var CALENDAR_SERVER = 'http://calendarserver.org/ns/';
 exports.CALENDAR_SERVER = CALENDAR_SERVER;
 var APPLE = "http://apple.com/ns/ical/";
@@ -2648,22 +2213,21 @@ exports.CARDDAV = CARDDAV;
 var DAV = 'DAV:';
 exports.DAV = DAV;
 },{}],12:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.multistatus = multistatus;
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var _camelize = _interopRequireDefault(require("./camelize"));
 
-var _camelize = require('./camelize');
-
-var _camelize2 = _interopRequireDefault(_camelize);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 var debug = require('./debug')('dav:parser');
 
-var DOMParser = undefined;
+var DOMParser;
+
 if (typeof self !== 'undefined' && 'DOMParser' in self) {
   // browser main thread
   DOMParser = self.DOMParser;
@@ -2676,26 +2240,31 @@ function multistatus(string) {
   var parser = new DOMParser();
   var doc = parser.parseFromString(string, 'text/xml');
   var result = traverse.multistatus(child(doc, 'multistatus'));
-  debug('input:\n' + string + '\noutput:\n' + JSON.stringify(result) + '\n');
+  debug("input:\n".concat(string, "\noutput:\n").concat(JSON.stringify(result), "\n"));
   return result;
 }
 
 var traverse = {
   // { response: [x, y, z] }
   multistatus: function multistatus(node) {
-    return complex(node, { response: true });
+    return complex(node, {
+      response: true
+    });
   },
-
   // { propstat: [x, y, z] }
   response: function response(node) {
-    return complex(node, { propstat: true, href: false, status: false });
+    return complex(node, {
+      propstat: true,
+      href: false,
+      status: false
+    });
   },
-
   // { prop: x }
   propstat: function propstat(node) {
-    return complex(node, { prop: false });
+    return complex(node, {
+      prop: false
+    });
   },
-
   // {
   //   resourcetype: x
   //   supportedCalendarComponentSet: y,
@@ -2711,69 +2280,70 @@ var traverse = {
       calendarUserAddressSet: false
     });
   },
-
   resourcetype: function resourcetype(node) {
     return childNodes(node).map(function (childNode) {
       return childNode.localName;
     });
   },
-
   // [x, y, z]
   supportedCalendarComponentSet: function supportedCalendarComponentSet(node) {
-    return complex(node, { comp: true }, 'comp');
+    return complex(node, {
+      comp: true
+    }, 'comp');
   },
-
   // [x, y, z]
   currentUserPrivilegeSet: function currentUserPrivilegeSet(node) {
-    return complex(node, { privilege: true }, 'privilege');
+    return complex(node, {
+      privilege: true
+    }, 'privilege');
   },
-
   // [x, y, z]
   calendarUserAddressSet: function calendarUserAddressSet(node) {
-    return complex(node, { href: true }, 'href');
+    return complex(node, {
+      href: true
+    }, 'href');
   },
-
   // [x, y, z]
   supportedReportSet: function supportedReportSet(node) {
-    return complex(node, { supportedReport: true }, 'supportedReport');
+    return complex(node, {
+      supportedReport: true
+    }, 'supportedReport');
   },
-
   comp: function comp(node) {
     return node.getAttribute('name');
   },
-
   // x
   supportedReport: function supportedReport(node) {
-    return complex(node, { report: false }, 'report');
+    return complex(node, {
+      report: false
+    }, 'report');
   },
-
   report: function report(node) {
     return childNodes(node).map(function (childNode) {
       return childNode.localName;
     });
   },
-
   privilege: function privilege(node) {
     return childNodes(node).map(function (childNode) {
       return childNode.localName;
     });
   },
-
   href: function href(node) {
     return decodeURIComponent(childNodes(node)[0].nodeValue);
   },
-
   status: function status(node) {
     return decodeURIComponent(childNodes(node)[0].nodeValue);
   },
-
   currentUserPrincipal: function currentUserPrincipal(node) {
-    return complex(node, { href: false }, 'href');
+    return complex(node, {
+      href: false
+    }, 'href');
   }
 };
 
 function complex(node, childspec, collapse) {
   var result = {};
+
   for (var key in childspec) {
     if (childspec[key]) {
       // Create array since we're expecting multiple.
@@ -2784,23 +2354,25 @@ function complex(node, childspec, collapse) {
   childNodes(node).forEach(function (childNode) {
     return traverseChild(node, childNode, childspec, result);
   });
-
   return maybeCollapse(result, childspec, collapse);
 }
-
 /**
  * Parse child childNode of node with childspec and write outcome to result.
  */
+
+
 function traverseChild(node, childNode, childspec, result) {
   if (childNode.nodeType === 3 && /^\s+$/.test(childNode.nodeValue)) {
     // Whitespace... nothing to do.
     return;
   }
 
-  var localName = (0, _camelize2['default'])(childNode.localName, '-');
+  var localName = (0, _camelize["default"])(childNode.localName, '-');
+
   if (!(localName in childspec)) {
     debug('Unexpected node of type ' + localName + ' encountered while ' + 'parsing ' + node.localName + ' node!');
     var value = childNode.textContent;
+
     if (localName in result) {
       if (!Array.isArray(result[camelCase])) {
         // Since we've already encountered this node type and we haven't yet
@@ -2810,14 +2382,15 @@ function traverseChild(node, childNode, childspec, result) {
 
       result[localName].push(value);
       return;
-    }
+    } // First time we're encountering this node.
 
-    // First time we're encountering this node.
+
     result[localName] = value;
     return;
   }
 
   var traversal = traverse[localName](childNode);
+
   if (childspec[localName]) {
     // Expect multiple.
     result[localName].push(traversal);
@@ -2834,9 +2407,9 @@ function maybeCollapse(result, childspec, collapse) {
 
   if (!childspec[collapse]) {
     return result[collapse];
-  }
+  } // Collapse array.
 
-  // Collapse array.
+
   return result[collapse].reduce(function (a, b) {
     return a.concat(b);
   }, []);
@@ -2844,6 +2417,7 @@ function maybeCollapse(result, childspec, collapse) {
 
 function childNodes(node) {
   var result = node.childNodes;
+
   if (!Array.isArray(result)) {
     result = Array.prototype.slice.call(result);
   }
@@ -2861,9 +2435,9 @@ function child(node, localName) {
   return children(node, localName)[0];
 }
 },{"./camelize":4,"./debug":7,"xmldom":198}],13:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.addressBookQuery = addressBookQuery;
@@ -2876,16 +2450,19 @@ exports.syncCollection = syncCollection;
 exports.mergeProps = mergeProps;
 exports.getProps = getProps;
 exports.setRequestHeaders = setRequestHeaders;
+exports.Request = void 0;
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+var _parser = require("./parser");
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+var template = _interopRequireWildcard(require("./template"));
 
-var _parser = require('./parser');
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 
-var _template = require('./template');
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
-var template = _interopRequireWildcard(_template);
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 /**
  * Options:
@@ -2893,11 +2470,13 @@ var template = _interopRequireWildcard(_template);
  *   (String) depth - optional value for Depth header.
  *   (Array.<Object>) props - list of props to request.
  */
-
 function addressBookQuery(options) {
-  return collectionQuery(template.addressBookQuery({ props: options.props || [] }), { depth: options.depth });
+  return collectionQuery(template.addressBookQuery({
+    props: options.props || []
+  }), {
+    depth: options.depth
+  });
 }
-
 /**
  * Options:
  *
@@ -2905,6 +2484,7 @@ function addressBookQuery(options) {
  *   (String) method - http method.
  *   (String) etag - cached calendar object etag.
  */
+
 
 function basic(options) {
   function transformRequest(xhr) {
@@ -2917,7 +2497,6 @@ function basic(options) {
     transformRequest: transformRequest
   });
 }
-
 /**
  * Options:
  *
@@ -2926,6 +2505,7 @@ function basic(options) {
  *   (Array.<Object>) props - list of props to request.
  *   (String) timezone - VTIMEZONE calendar object.
  */
+
 
 function calendarQuery(options) {
   return collectionQuery(template.calendarQuery({
@@ -2936,7 +2516,6 @@ function calendarQuery(options) {
     depth: options.depth
   });
 }
-
 /**
  * Options:
  *
@@ -2944,6 +2523,7 @@ function calendarQuery(options) {
  *   (Array.<Object>) props - list of props to request.
  *   (Array.String) hrefs - list of hrefs to request.
  */
+
 
 function calendarMultiget(options) {
   return collectionQuery(template.calendarMultiget({
@@ -2961,7 +2541,11 @@ function collectionQuery(requestData, options) {
 
   function transformResponse(xhr) {
     return (0, _parser.multistatus)(xhr.responseText).response.map(function (res) {
-      return { href: res.href, props: getProps(res.propstat), status: res.status };
+      return {
+        href: res.href,
+        props: getProps(res.propstat),
+        status: res.status
+      };
     });
   }
 
@@ -2972,7 +2556,6 @@ function collectionQuery(requestData, options) {
     transformResponse: transformResponse
   });
 }
-
 /**
  * Options:
  *
@@ -2980,8 +2563,11 @@ function collectionQuery(requestData, options) {
  *   (Array.<Object>) props - list of props to request.
  */
 
+
 function propfind(options) {
-  var requestData = template.propfind({ props: options.props });
+  var requestData = template.propfind({
+    props: options.props
+  });
 
   function transformRequest(xhr) {
     setRequestHeaders(xhr, options);
@@ -2989,21 +2575,28 @@ function propfind(options) {
 
   function transformResponse(xhr) {
     var responses = (0, _parser.multistatus)(xhr.responseText).response.map(function (res) {
-      return { href: res.href, props: getProps(res.propstat), status: res.status };
+      return {
+        href: res.href,
+        props: getProps(res.propstat),
+        status: res.status
+      };
     });
 
     if (!options.mergeResponses) {
       return responses;
-    }
+    } // Merge the props.
 
-    // Merge the props.
+
     var merged = mergeProps(responses.map(function (res) {
       return res.props;
     }));
     var hrefs = responses.map(function (res) {
       return res.href;
     });
-    return { props: merged, hrefs: hrefs };
+    return {
+      props: merged,
+      hrefs: hrefs
+    };
   }
 
   return new Request({
@@ -3013,7 +2606,6 @@ function propfind(options) {
     transformResponse: transformResponse
   });
 }
-
 /**
  * Options:
  *
@@ -3022,6 +2614,7 @@ function propfind(options) {
  *   (Number) syncLevel - indicates scope of the sync report request.
  *   (String) syncToken - synchronization token provided by the server.
  */
+
 
 function syncCollection(options) {
   var requestData = template.syncCollection({
@@ -3037,10 +2630,16 @@ function syncCollection(options) {
   function transformResponse(xhr) {
     var object = (0, _parser.multistatus)(xhr.responseText);
     var responses = object.response.map(function (res) {
-      return { href: res.href, props: getProps(res.propstat), status: res.status };
+      return {
+        href: res.href,
+        props: getProps(res.propstat),
+        status: res.status
+      };
     });
-
-    return { responses: responses, syncToken: object.syncToken };
+    return {
+      responses: responses,
+      syncToken: object.syncToken
+    };
   }
 
   return new Request({
@@ -3052,7 +2651,7 @@ function syncCollection(options) {
 }
 
 var Request = function Request() {
-  var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+  var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
   _classCallCheck(this, Request);
 
@@ -3071,6 +2670,7 @@ function getProp(propstat) {
   if (/404/g.test(propstat.status)) {
     return null;
   }
+
   if (/5\d{2}/g.test(propstat.status) || /4\d{2}/g.test(propstat.status)) {
     throw new Error('Bad status on propstat: ' + propstat.status);
   }
@@ -3083,14 +2683,14 @@ function mergeProps(props) {
     return Object.assign(a, b);
   }, {});
 }
-
 /**
  * Map propstats to props.
  */
 
+
 function getProps(propstats) {
   return mergeProps(propstats.map(getProp).filter(function (prop) {
-    return prop && typeof prop === 'object';
+    return prop && _typeof(prop) === 'object';
   }));
 }
 
@@ -3110,6 +2710,20 @@ function setRequestHeaders(request, options) {
   }
 }
 },{"./parser":12,"./template":20}],14:[function(require,module,exports){
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createSandbox = createSandbox;
+exports.Sandbox = void 0;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
 /**
  * @fileoverview Group requests together and then abort as a group.
  *
@@ -3123,21 +2737,9 @@ function setRequestHeaders(request, options) {
  *   sandbox.abort;
  * });
  */
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-exports.createSandbox = createSandbox;
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
 var debug = require('./debug')('dav:sandbox');
 
-var Sandbox = (function () {
+var Sandbox = /*#__PURE__*/function () {
   function Sandbox() {
     _classCallCheck(this, Sandbox);
 
@@ -3145,13 +2747,13 @@ var Sandbox = (function () {
   }
 
   _createClass(Sandbox, [{
-    key: 'add',
+    key: "add",
     value: function add(request) {
       debug('Adding request to sandbox.');
       this.requestList.push(request);
     }
   }, {
-    key: 'abort',
+    key: "abort",
     value: function abort() {
       debug('Aborting sandboxed requests.');
       this.requestList.forEach(function (request) {
@@ -3161,7 +2763,7 @@ var Sandbox = (function () {
   }]);
 
   return Sandbox;
-})();
+}();
 
 exports.Sandbox = Sandbox;
 
@@ -3169,115 +2771,99 @@ function createSandbox() {
   return new Sandbox();
 }
 },{"./debug":7}],15:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports['default'] = addressBookQuery;
+exports["default"] = addressBookQuery;
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var _prop = _interopRequireDefault(require("./prop"));
 
-var _prop = require('./prop');
-
-var _prop2 = _interopRequireDefault(_prop);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function addressBookQuery(object) {
-  return '<card:addressbook-query xmlns:card="urn:ietf:params:xml:ns:carddav"\n                          xmlns:d="DAV:">\n    <d:prop>\n      ' + object.props.map(_prop2['default']) + '\n    </d:prop>\n    <!-- According to http://stackoverflow.com/questions/23742568/google-carddav-api-addressbook-multiget-returns-400-bad-request,\n         Google\'s CardDAV server requires a filter element. I don\'t think all addressbook-query calls need a filter in the spec though? -->\n    <card:filter>\n      <card:prop-filter name="FN">\n      </card:prop-filter>\n    </card:filter>\n  </card:addressbook-query>';
+  return "<card:addressbook-query xmlns:card=\"urn:ietf:params:xml:ns:carddav\"\n                          xmlns:d=\"DAV:\">\n    <d:prop>\n      ".concat(object.props.map(_prop["default"]), "\n    </d:prop>\n    <!-- According to http://stackoverflow.com/questions/23742568/google-carddav-api-addressbook-multiget-returns-400-bad-request,\n         Google's CardDAV server requires a filter element. I don't think all addressbook-query calls need a filter in the spec though? -->\n    <card:filter>\n      <card:prop-filter name=\"FN\">\n      </card:prop-filter>\n    </card:filter>\n  </card:addressbook-query>");
 }
-
-module.exports = exports['default'];
 },{"./prop":21}],16:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports['default'] = calendarMultiget;
+exports["default"] = calendarMultiget;
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var _prop = _interopRequireDefault(require("./prop"));
 
-var _prop = require('./prop');
+var _href = _interopRequireDefault(require("./href"));
 
-var _prop2 = _interopRequireDefault(_prop);
-
-var _href = require('./href');
-
-var _href2 = _interopRequireDefault(_href);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function calendarMultiget(object) {
-  return '<c:calendar-multiget xmlns:d="DAV:"\n                               xmlns:c="urn:ietf:params:xml:ns:caldav">\n    <d:prop>\n      ' + object.props.map(_prop2['default']) + '\n    </d:prop>\n    ' + object.hrefs.map(_href2['default']) + '\n  </c:calendar-multiget>';
+  return "<c:calendar-multiget xmlns:d=\"DAV:\"\n                               xmlns:c=\"urn:ietf:params:xml:ns:caldav\">\n    <d:prop>\n      ".concat(object.props.map(_prop["default"]), "\n    </d:prop>\n    ").concat(object.hrefs.map(_href["default"]), "\n  </c:calendar-multiget>");
 }
-
-module.exports = exports['default'];
 },{"./href":19,"./prop":21}],17:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports['default'] = calendarQuery;
+exports["default"] = calendarQuery;
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var _filter = _interopRequireDefault(require("./filter"));
 
-var _filter = require('./filter');
+var _prop = _interopRequireDefault(require("./prop"));
 
-var _filter2 = _interopRequireDefault(_filter);
-
-var _prop = require('./prop');
-
-var _prop2 = _interopRequireDefault(_prop);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function calendarQuery(object) {
-  return '<c:calendar-query xmlns:c="urn:ietf:params:xml:ns:caldav"\n                    xmlns:cs="http://calendarserver.org/ns/"\n                    xmlns:d="DAV:">\n    <d:prop>\n      ' + object.props.map(_prop2['default']) + '\n    </d:prop>\n    <c:filter>\n      ' + object.filters.map(_filter2['default']) + '\n    </c:filter>\n    ' + (object.timezone ? '<c:timezone>' + object.timezone + '</c:timezone>' : '') + '\n  </c:calendar-query>';
+  return "<c:calendar-query xmlns:c=\"urn:ietf:params:xml:ns:caldav\"\n                    xmlns:cs=\"http://calendarserver.org/ns/\"\n                    xmlns:d=\"DAV:\">\n    <d:prop>\n      ".concat(object.props.map(_prop["default"]), "\n    </d:prop>\n    <c:filter>\n      ").concat(object.filters.map(_filter["default"]), "\n    </c:filter>\n    ").concat(object.timezone ? '<c:timezone>' + object.timezone + '</c:timezone>' : '', "\n  </c:calendar-query>");
 }
-
-module.exports = exports['default'];
 },{"./filter":18,"./prop":21}],18:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports['default'] = filter;
+exports["default"] = filter;
+
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function filter(item) {
   if (!item.children || !item.children.length) {
     if (typeof item.value === 'undefined') {
-      return '<c:' + item.type + ' ' + formatAttrs(item.attrs) + '/>';
+      return "<c:".concat(item.type, " ").concat(formatAttrs(item.attrs), "/>");
     }
-    return '<c:' + item.type + ' ' + formatAttrs(item.attrs) + '>' + item.value + '</c:' + item.type + '>';
+
+    return "<c:".concat(item.type, " ").concat(formatAttrs(item.attrs), ">").concat(item.value, "</c:").concat(item.type, ">");
   }
 
   var children = item.children.map(filter);
-  return '<c:' + item.type + ' ' + formatAttrs(item.attrs) + '>\n            ' + children + '\n          </c:' + item.type + '>';
+  return "<c:".concat(item.type, " ").concat(formatAttrs(item.attrs), ">\n            ").concat(children, "\n          </c:").concat(item.type, ">");
 }
 
 function formatAttrs(attrs) {
-  if (typeof attrs !== 'object') {
+  if (_typeof(attrs) !== 'object') {
     return '';
   }
 
   return Object.keys(attrs).map(function (attr) {
-    return attr + '="' + attrs[attr] + '"';
+    return "".concat(attr, "=\"").concat(attrs[attr], "\"");
   }).join(' ');
 }
-module.exports = exports['default'];
 },{}],19:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
-	value: true
+  value: true
 });
 exports["default"] = href;
 
 function href(item) {
-	return "<d:href>" + item + "</d:href>";
+  return "<d:href>".concat(item, "</d:href>");
 }
-
-module.exports = exports["default"];
 },{}],20:[function(require,module,exports){
-'use strict';
+"use strict";
 
 exports.addressBookQuery = require('./address_book_query');
 exports.calendarQuery = require('./calendar_query');
@@ -3285,18 +2871,20 @@ exports.calendarMultiget = require('./calendar_multiget');
 exports.propfind = require('./propfind');
 exports.syncCollection = require('./sync_collection');
 },{"./address_book_query":15,"./calendar_multiget":16,"./calendar_query":17,"./propfind":22,"./sync_collection":23}],21:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports['default'] = prop;
+exports["default"] = prop;
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+var ns = _interopRequireWildcard(require("../namespace"));
 
-var _namespace = require('../namespace');
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 
-var ns = _interopRequireWildcard(_namespace);
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 /**
  * @param {Object} filter looks like
@@ -3333,106 +2921,108 @@ var ns = _interopRequireWildcard(_namespace);
  *       }]
  *     }
  */
-
 function prop(item) {
-  return '<' + xmlnsPrefix(item.namespace) + ':' + item.name + ' />';
+  return "<".concat(xmlnsPrefix(item.namespace), ":").concat(item.name, " />");
 }
 
 function xmlnsPrefix(namespace) {
   switch (namespace) {
     case ns.DAV:
       return 'd';
+
     case ns.CALENDAR_SERVER:
       return 'cs';
+
     case ns.CALDAV:
       return 'c';
+
     case ns.CARDDAV:
       return 'card';
+
     case ns.APPLE:
       return 'x';
+
     default:
       throw new Error('Unrecognized xmlns ' + namespace);
   }
 }
-module.exports = exports['default'];
 },{"../namespace":11}],22:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports['default'] = propfind;
+exports["default"] = propfind;
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var _prop = _interopRequireDefault(require("./prop"));
 
-var _prop = require('./prop');
-
-var _prop2 = _interopRequireDefault(_prop);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function propfind(object) {
-  return '<d:propfind xmlns:c="urn:ietf:params:xml:ns:caldav"\n              xmlns:card="urn:ietf:params:xml:ns:carddav"\n              xmlns:cs="http://calendarserver.org/ns/"\n              xmlns:x="http://apple.com/ns/ical/"\n              xmlns:d="DAV:">\n    <d:prop>\n      ' + object.props.map(_prop2['default']) + '\n    </d:prop>\n  </d:propfind>';
+  return "<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\"\n              xmlns:card=\"urn:ietf:params:xml:ns:carddav\"\n              xmlns:cs=\"http://calendarserver.org/ns/\"\n              xmlns:x=\"http://apple.com/ns/ical/\"\n              xmlns:d=\"DAV:\">\n    <d:prop>\n      ".concat(object.props.map(_prop["default"]), "\n    </d:prop>\n  </d:propfind>");
 }
-
-module.exports = exports['default'];
 },{"./prop":21}],23:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports['default'] = syncCollection;
+exports["default"] = syncCollection;
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var _prop = _interopRequireDefault(require("./prop"));
 
-var _prop = require('./prop');
-
-var _prop2 = _interopRequireDefault(_prop);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function syncCollection(object) {
-  return '<d:sync-collection xmlns:c="urn:ietf:params:xml:ns:caldav"\n                     xmlns:card="urn:ietf:params:xml:ns:carddav"\n                     xmlns:d="DAV:">\n    <d:sync-level>' + object.syncLevel + '</d:sync-level>\n    <d:sync-token>' + object.syncToken + '</d:sync-token>\n    <d:prop>\n      ' + object.props.map(_prop2['default']) + '\n    </d:prop>\n  </d:sync-collection>';
+  return "<d:sync-collection xmlns:c=\"urn:ietf:params:xml:ns:caldav\"\n                     xmlns:card=\"urn:ietf:params:xml:ns:carddav\"\n                     xmlns:d=\"DAV:\">\n    <d:sync-level>".concat(object.syncLevel, "</d:sync-level>\n    <d:sync-token>").concat(object.syncToken, "</d:sync-token>\n    <d:prop>\n      ").concat(object.props.map(_prop["default"]), "\n    </d:prop>\n  </d:sync-collection>");
 }
-
-module.exports = exports['default'];
 },{"./prop":21}],24:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.OAuth2 = exports.Basic = exports.Transport = void 0;
 
-var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { var object = _x2, property = _x3, receiver = _x4; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _co = _interopRequireDefault(require("co"));
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _querystring = _interopRequireDefault(require("querystring"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var _XMLHttpRequestWrapper = _interopRequireDefault(require("./XMLHttpRequestWrapper"));
 
-function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-var _co = require('co');
+function _createSuper(Derived) { return function () { var Super = _getPrototypeOf(Derived), result; if (_isNativeReflectConstruct()) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
 
-var _co2 = _interopRequireDefault(_co);
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
-var _querystring = require('querystring');
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
-var _querystring2 = _interopRequireDefault(_querystring);
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
 
-var _XMLHttpRequestWrapper = require('./XMLHttpRequestWrapper');
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 
-var _XMLHttpRequestWrapper2 = _interopRequireDefault(_XMLHttpRequestWrapper);
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
-var Transport = (function () {
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var Transport = /*#__PURE__*/function () {
   /**
    * @param {dav.Credentials} credentials user authorization.
    */
-
   function Transport(credentials) {
     _classCallCheck(this, Transport);
 
     this.credentials = credentials || null;
   }
-
   /**
    * @param {dav.Request} request object with request info.
    * @return {Promise} a promise that will be resolved with an xhr request after
@@ -3444,174 +3034,175 @@ var Transport = (function () {
    *   (Object) sandbox - optional request sandbox.
    */
 
+
   _createClass(Transport, [{
-    key: 'send',
+    key: "send",
     value: function send() {}
   }]);
 
   return Transport;
-})();
+}();
 
 exports.Transport = Transport;
 
-var Basic = (function (_Transport) {
+var Basic = /*#__PURE__*/function (_Transport) {
   _inherits(Basic, _Transport);
+
+  var _super = _createSuper(Basic);
 
   /**
    * @param {dav.Credentials} credentials user authorization.
    */
-
   function Basic(credentials) {
     _classCallCheck(this, Basic);
 
-    _get(Object.getPrototypeOf(Basic.prototype), 'constructor', this).call(this, credentials);
+    return _super.call(this, credentials);
   }
 
-  /**
-   * @param {dav.Credentials} credentials user authorization.
-   */
-
   _createClass(Basic, [{
-    key: 'send',
+    key: "send",
     value: function send(request, url, options) {
-      return (0, _co2['default'])(regeneratorRuntime.mark(function callee$2$0() {
+      return (0, _co["default"])( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
         var sandbox, transformRequest, transformResponse, onerror, xhr, result;
-        return regeneratorRuntime.wrap(function callee$2$0$(context$3$0) {
-          while (1) switch (context$3$0.prev = context$3$0.next) {
-            case 0:
-              sandbox = options && options.sandbox;
-              transformRequest = request.transformRequest;
-              transformResponse = request.transformResponse;
-              onerror = request.onerror;
-              xhr = new _XMLHttpRequestWrapper2['default']();
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                sandbox = options && options.sandbox;
+                transformRequest = request.transformRequest;
+                transformResponse = request.transformResponse;
+                onerror = request.onerror;
+                xhr = new _XMLHttpRequestWrapper["default"]();
+                if (sandbox) sandbox.add(xhr);
+                xhr.open(request.method, url, true
+                /* async */
+                , this.credentials.username, this.credentials.password);
+                if (transformRequest) transformRequest(xhr);
+                _context.prev = 8;
+                _context.next = 11;
+                return xhr.send(request.requestData);
 
-              if (sandbox) sandbox.add(xhr);
-              xhr.open(request.method, url, true, /* async */
-              this.credentials.username, this.credentials.password);
+              case 11:
+                result = transformResponse ? transformResponse(xhr) : xhr;
+                _context.next = 18;
+                break;
 
-              if (transformRequest) transformRequest(xhr);
+              case 14:
+                _context.prev = 14;
+                _context.t0 = _context["catch"](8);
+                if (onerror) onerror(_context.t0);
+                throw _context.t0;
 
-              result = undefined;
-              context$3$0.prev = 9;
-              context$3$0.next = 12;
-              return xhr.send(request.requestData);
+              case 18:
+                return _context.abrupt("return", result);
 
-            case 12:
-              result = transformResponse ? transformResponse(xhr) : xhr;
-              context$3$0.next = 19;
-              break;
-
-            case 15:
-              context$3$0.prev = 15;
-              context$3$0.t0 = context$3$0['catch'](9);
-
-              if (onerror) onerror(context$3$0.t0);
-              throw context$3$0.t0;
-
-            case 19:
-              return context$3$0.abrupt('return', result);
-
-            case 20:
-            case 'end':
-              return context$3$0.stop();
+              case 19:
+              case "end":
+                return _context.stop();
+            }
           }
-        }, callee$2$0, this, [[9, 15]]);
+        }, _callee, this, [[8, 14]]);
       }).bind(this));
     }
   }]);
 
   return Basic;
-})(Transport);
+}(Transport);
+/**
+ * @param {dav.Credentials} credentials user authorization.
+ */
+
 
 exports.Basic = Basic;
 
-var OAuth2 = (function (_Transport2) {
+var OAuth2 = /*#__PURE__*/function (_Transport2) {
   _inherits(OAuth2, _Transport2);
+
+  var _super2 = _createSuper(OAuth2);
 
   function OAuth2(credentials) {
     _classCallCheck(this, OAuth2);
 
-    _get(Object.getPrototypeOf(OAuth2.prototype), 'constructor', this).call(this, credentials);
+    return _super2.call(this, credentials);
   }
 
-  /**
-   * @return {Promise} promise that will resolve with access token.
-   */
-
   _createClass(OAuth2, [{
-    key: 'send',
+    key: "send",
     value: function send(request, url) {
-      var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
-
-      return (0, _co2['default'])(regeneratorRuntime.mark(function callee$2$0() {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      return (0, _co["default"])( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
         var sandbox, transformRequest, transformResponse, onerror, result, xhr, token;
-        return regeneratorRuntime.wrap(function callee$2$0$(context$3$0) {
-          while (1) switch (context$3$0.prev = context$3$0.next) {
-            case 0:
-              sandbox = options.sandbox;
-              transformRequest = request.transformRequest;
-              transformResponse = request.transformResponse;
-              onerror = request.onerror;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                sandbox = options.sandbox;
+                transformRequest = request.transformRequest;
+                transformResponse = request.transformResponse;
+                onerror = request.onerror;
+                if (!('retry' in options)) options.retry = true;
+                _context2.prev = 5;
+                _context2.next = 8;
+                return access(this.credentials, options);
 
-              if (!('retry' in options)) options.retry = true;
+              case 8:
+                token = _context2.sent;
+                xhr = new _XMLHttpRequestWrapper["default"]();
+                if (sandbox) sandbox.add(xhr);
+                xhr.open(request.method, url, true
+                /* async */
+                );
+                xhr.setRequestHeader('Authorization', "Bearer ".concat(token));
+                if (transformRequest) transformRequest(xhr);
+                _context2.next = 16;
+                return xhr.send(request.requestData);
 
-              result = undefined, xhr = undefined;
-              context$3$0.prev = 6;
-              context$3$0.next = 9;
-              return access(this.credentials, options);
-
-            case 9:
-              token = context$3$0.sent;
-
-              xhr = new _XMLHttpRequestWrapper2['default']();
-              if (sandbox) sandbox.add(xhr);
-              xhr.open(request.method, url, true /* async */);
-              xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-              if (transformRequest) transformRequest(xhr);
-              context$3$0.next = 17;
-              return xhr.send(request.requestData);
-
-            case 17:
-              result = transformResponse ? transformResponse(xhr) : xhr;
-              context$3$0.next = 28;
-              break;
-
-            case 20:
-              context$3$0.prev = 20;
-              context$3$0.t0 = context$3$0['catch'](6);
-
-              if (!(options.retry && xhr.status === 401)) {
-                context$3$0.next = 26;
+              case 16:
+                result = transformResponse ? transformResponse(xhr) : xhr;
+                _context2.next = 27;
                 break;
-              }
 
-              // Force expiration.
-              this.credentials.expiration = 0;
-              // Retry once at most.
-              options.retry = false;
-              return context$3$0.abrupt('return', this.send(request, url, options));
+              case 19:
+                _context2.prev = 19;
+                _context2.t0 = _context2["catch"](5);
 
-            case 26:
+                if (!(options.retry && xhr.status === 401)) {
+                  _context2.next = 25;
+                  break;
+                }
 
-              if (onerror) onerror(context$3$0.t0);
-              throw context$3$0.t0;
+                // Force expiration.
+                this.credentials.expiration = 0; // Retry once at most.
 
-            case 28:
-              return context$3$0.abrupt('return', result);
+                options.retry = false;
+                return _context2.abrupt("return", this.send(request, url, options));
 
-            case 29:
-            case 'end':
-              return context$3$0.stop();
+              case 25:
+                if (onerror) onerror(_context2.t0);
+                throw _context2.t0;
+
+              case 27:
+                return _context2.abrupt("return", result);
+
+              case 28:
+              case "end":
+                return _context2.stop();
+            }
           }
-        }, callee$2$0, this, [[6, 20]]);
+        }, _callee2, this, [[5, 19]]);
       }).bind(this));
     }
   }]);
 
   return OAuth2;
-})(Transport);
+}(Transport);
+/**
+ * @return {Promise} promise that will resolve with access token.
+ */
+
 
 exports.OAuth2 = OAuth2;
+
 function access(credentials, options) {
   if (!credentials.accessToken) {
     return getAccessToken(credentials, options);
@@ -3628,136 +3219,152 @@ function isExpired(credentials) {
   return typeof credentials.expiration === 'number' && Date.now() > credentials.expiration;
 }
 
-var getAccessToken = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(credentials, options) {
+var getAccessToken = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(credentials, options) {
   var sandbox, xhr, data, now, response;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        sandbox = options.sandbox;
-        xhr = new _XMLHttpRequestWrapper2['default']();
+  return regeneratorRuntime.wrap(function _callee3$(_context3) {
+    while (1) {
+      switch (_context3.prev = _context3.next) {
+        case 0:
+          sandbox = options.sandbox;
+          xhr = new _XMLHttpRequestWrapper["default"]();
+          if (sandbox) sandbox.add(xhr);
+          xhr.open('POST', credentials.tokenUrl, true
+          /* async */
+          );
+          xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+          data = _querystring["default"].stringify({
+            code: credentials.authorizationCode,
+            redirect_uri: credentials.redirectUrl,
+            client_id: credentials.clientId,
+            client_secret: credentials.clientSecret,
+            grant_type: 'authorization_code'
+          });
+          now = Date.now();
+          _context3.next = 9;
+          return xhr.send(data);
 
-        if (sandbox) sandbox.add(xhr);
-        xhr.open('POST', credentials.tokenUrl, true /* async */);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        case 9:
+          response = JSON.parse(xhr.responseText);
+          credentials.accessToken = response.access_token;
+          credentials.refreshToken = 'refresh_token' in response ? response.refresh_token : null;
+          credentials.expiration = 'expires_in' in response ? now + response.expires_in : null;
+          return _context3.abrupt("return", response.access_token);
 
-        data = _querystring2['default'].stringify({
-          code: credentials.authorizationCode,
-          redirect_uri: credentials.redirectUrl,
-          client_id: credentials.clientId,
-          client_secret: credentials.clientSecret,
-          grant_type: 'authorization_code'
-        });
-        now = Date.now();
-        context$1$0.next = 9;
-        return xhr.send(data);
-
-      case 9:
-        response = JSON.parse(xhr.responseText);
-
-        credentials.accessToken = response.access_token;
-        credentials.refreshToken = 'refresh_token' in response ? response.refresh_token : null;
-        credentials.expiration = 'expires_in' in response ? now + response.expires_in : null;
-
-        return context$1$0.abrupt('return', response.access_token);
-
-      case 14:
-      case 'end':
-        return context$1$0.stop();
+        case 14:
+        case "end":
+          return _context3.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee3);
 }));
 
-var refreshAccessToken = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(credentials, options) {
+var refreshAccessToken = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(credentials, options) {
   var sandbox, xhr, data, now, response;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        sandbox = options.sandbox;
-        xhr = new _XMLHttpRequestWrapper2['default']();
+  return regeneratorRuntime.wrap(function _callee4$(_context4) {
+    while (1) {
+      switch (_context4.prev = _context4.next) {
+        case 0:
+          sandbox = options.sandbox;
+          xhr = new _XMLHttpRequestWrapper["default"]();
+          if (sandbox) sandbox.add(xhr);
+          xhr.open('POST', credentials.tokenUrl, true
+          /* async */
+          );
+          xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+          data = _querystring["default"].stringify({
+            client_id: credentials.clientId,
+            client_secret: credentials.clientSecret,
+            refresh_token: credentials.refreshToken,
+            grant_type: 'refresh_token'
+          });
+          now = Date.now();
+          _context4.next = 9;
+          return xhr.send(data);
 
-        if (sandbox) sandbox.add(xhr);
-        xhr.open('POST', credentials.tokenUrl, true /* async */);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        case 9:
+          response = JSON.parse(xhr.responseText);
+          credentials.accessToken = response.access_token;
+          credentials.expiration = 'expires_in' in response ? now + response.expires_in : null;
+          return _context4.abrupt("return", response.access_token);
 
-        data = _querystring2['default'].stringify({
-          client_id: credentials.clientId,
-          client_secret: credentials.clientSecret,
-          refresh_token: credentials.refreshToken,
-          grant_type: 'refresh_token'
-        });
-        now = Date.now();
-        context$1$0.next = 9;
-        return xhr.send(data);
-
-      case 9:
-        response = JSON.parse(xhr.responseText);
-
-        credentials.accessToken = response.access_token;
-        credentials.expiration = 'expires_in' in response ? now + response.expires_in : null;
-
-        return context$1$0.abrupt('return', response.access_token);
-
-      case 13:
-      case 'end':
-        return context$1$0.stop();
+        case 13:
+        case "end":
+          return _context4.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee4);
 }));
 },{"./XMLHttpRequestWrapper":1,"co":88,"querystring":undefined}],25:[function(require,module,exports){
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.createObject = createObject;
 exports.updateObject = updateObject;
 exports.deleteObject = deleteObject;
 exports.syncCollection = syncCollection;
+exports.isCollectionDirty = exports.supportedReportSet = void 0;
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+var _co = _interopRequireDefault(require("co"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var _fuzzy_url_equals = _interopRequireDefault(require("./fuzzy_url_equals"));
 
-var _co = require('co');
+var ns = _interopRequireWildcard(require("./namespace"));
 
-var _co2 = _interopRequireDefault(_co);
+var request = _interopRequireWildcard(require("./request"));
 
-var _fuzzy_url_equals = require('./fuzzy_url_equals');
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 
-var _fuzzy_url_equals2 = _interopRequireDefault(_fuzzy_url_equals);
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
-var _namespace = require('./namespace');
-
-var ns = _interopRequireWildcard(_namespace);
-
-var _request = require('./request');
-
-var request = _interopRequireWildcard(_request);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 var debug = require('./debug')('dav:webdav');
-
 /**
  * @param {String} objectUrl url for webdav object.
  * @param {String} objectData webdav object data.
  */
 
+
 function createObject(objectUrl, objectData, options) {
-  var req = request.basic({ method: 'PUT', contentType: options.contentType, data: objectData });
-  return options.xhr.send(req, objectUrl, { sandbox: options.sandbox });
+  var req = request.basic({
+    method: 'PUT',
+    contentType: options.contentType,
+    data: objectData
+  });
+  return options.xhr.send(req, objectUrl, {
+    sandbox: options.sandbox
+  });
 }
 
 function updateObject(objectUrl, objectData, etag, options) {
-  var req = request.basic({ method: 'PUT', contentType: options.contentType, data: objectData, etag: etag });
-  return options.xhr.send(req, objectUrl, { sandbox: options.sandbox });
+  var req = request.basic({
+    method: 'PUT',
+    contentType: options.contentType,
+    data: objectData,
+    etag: etag
+  });
+  return options.xhr.send(req, objectUrl, {
+    sandbox: options.sandbox
+  });
 }
 
 function deleteObject(objectUrl, etag, options) {
-  var req = request.basic({ method: 'DELETE', etag: etag });
-  return options.xhr.send(req, objectUrl, { sandbox: options.sandbox });
+  var req = request.basic({
+    method: 'DELETE',
+    etag: etag
+  });
+  return options.xhr.send(req, objectUrl, {
+    sandbox: options.sandbox
+  });
 }
 
 function syncCollection(collection, options) {
-  var syncMethod = undefined;
+  var syncMethod;
+
   if ('syncMethod' in options) {
     syncMethod = options.syncMethod;
   } else if (collection.reports && collection.reports.indexOf('sync-collection') !== -1) {
@@ -3774,89 +3381,99 @@ function syncCollection(collection, options) {
     return options.basicSync(collection, options);
   }
 }
-
 /**
  * @param {dav.DAVCollection} collection to fetch report set for.
  */
-var supportedReportSet = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(collection, options) {
+
+
+var supportedReportSet = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee(collection, options) {
   var req, response;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        debug('Checking supported report set for collection at ' + collection.url);
-        req = request.propfind({
-          props: [{ name: 'supported-report-set', namespace: ns.DAV }],
-          depth: 0,
-          mergeResponses: true
-        });
-        context$1$0.next = 4;
-        return options.xhr.send(req, collection.url, {
-          sandbox: options.sandbox
-        });
+  return regeneratorRuntime.wrap(function _callee$(_context) {
+    while (1) {
+      switch (_context.prev = _context.next) {
+        case 0:
+          debug('Checking supported report set for collection at ' + collection.url);
+          req = request.propfind({
+            props: [{
+              name: 'supported-report-set',
+              namespace: ns.DAV
+            }],
+            depth: 0,
+            mergeResponses: true
+          });
+          _context.next = 4;
+          return options.xhr.send(req, collection.url, {
+            sandbox: options.sandbox
+          });
 
-      case 4:
-        response = context$1$0.sent;
-        return context$1$0.abrupt('return', response.props.supportedReportSet);
+        case 4:
+          response = _context.sent;
+          return _context.abrupt("return", response.props.supportedReportSet);
 
-      case 6:
-      case 'end':
-        return context$1$0.stop();
+        case 6:
+        case "end":
+          return _context.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee);
 }));
 
 exports.supportedReportSet = supportedReportSet;
-var isCollectionDirty = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(collection, options) {
+
+var isCollectionDirty = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee2(collection, options) {
   var req, responses, response;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        if (collection.ctag) {
-          context$1$0.next = 3;
-          break;
-        }
+  return regeneratorRuntime.wrap(function _callee2$(_context2) {
+    while (1) {
+      switch (_context2.prev = _context2.next) {
+        case 0:
+          if (collection.ctag) {
+            _context2.next = 3;
+            break;
+          }
 
-        debug('Missing ctag.');
-        return context$1$0.abrupt('return', true);
+          debug('Missing ctag.');
+          return _context2.abrupt("return", true);
 
-      case 3:
-        // of course, if ctag is missing the collection needs sync
+        case 3:
+          debug('Fetch remote getctag prop.');
+          req = request.propfind({
+            props: [{
+              name: 'getctag',
+              namespace: ns.CALENDAR_SERVER
+            }],
+            depth: 0
+          });
+          _context2.next = 7;
+          return options.xhr.send(req, collection.url, {
+            sandbox: options.sandbox
+          });
 
-        debug('Fetch remote getctag prop.');
-        req = request.propfind({
-          props: [{ name: 'getctag', namespace: ns.CALENDAR_SERVER }],
-          depth: 0
-        });
-        context$1$0.next = 7;
-        return options.xhr.send(req, collection.url, {
-          sandbox: options.sandbox
-        });
+        case 7:
+          responses = _context2.sent;
+          response = responses.filter(function (response) {
+            // Find the response that corresponds to the parameter collection.
+            return (0, _fuzzy_url_equals["default"])(collection.url, response.href);
+          })[0];
 
-      case 7:
-        responses = context$1$0.sent;
-        response = responses.filter(function (response) {
-          // Find the response that corresponds to the parameter collection.
-          return (0, _fuzzy_url_equals2['default'])(collection.url, response.href);
-        })[0];
+          if (response) {
+            _context2.next = 11;
+            break;
+          }
 
-        if (response) {
-          context$1$0.next = 11;
-          break;
-        }
+          throw new Error('Could not find collection on remote. Was it deleted?');
 
-        throw new Error('Could not find collection on remote. Was it deleted?');
+        case 11:
+          debug('Check whether cached ctag matches remote.');
+          return _context2.abrupt("return", collection.ctag !== response.props.getctag);
 
-      case 11:
-
-        debug('Check whether cached ctag matches remote.');
-        return context$1$0.abrupt('return', collection.ctag !== response.props.getctag);
-
-      case 13:
-      case 'end':
-        return context$1$0.stop();
+        case 13:
+        case "end":
+          return _context2.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee2);
 }));
+
 exports.isCollectionDirty = isCollectionDirty;
 },{"./debug":7,"./fuzzy_url_equals":8,"./namespace":11,"./request":13,"co":88}],26:[function(require,module,exports){
 'use strict';
@@ -4413,7 +4030,7 @@ function setLogger(self) {
 
 function noop() {}
 
-},{"./$data":26,"./cache":28,"./compile":33,"./compile/async":30,"./compile/error_classes":31,"./compile/formats":32,"./compile/resolve":34,"./compile/rules":35,"./compile/schema_obj":36,"./compile/util":38,"./keyword":62,"./patternGroups":63,"./refs/$data.json":64,"./refs/json-schema-draft-06.json":65,"co":88,"fast-json-stable-stringify":99}],28:[function(require,module,exports){
+},{"./$data":26,"./cache":28,"./compile":33,"./compile/async":30,"./compile/error_classes":31,"./compile/formats":32,"./compile/resolve":34,"./compile/rules":35,"./compile/schema_obj":36,"./compile/util":38,"./keyword":62,"./patternGroups":63,"./refs/$data.json":64,"./refs/json-schema-draft-06.json":65,"co":88,"fast-json-stable-stringify":98}],28:[function(require,module,exports){
 'use strict';
 
 
@@ -5121,7 +4738,7 @@ function vars(arr, statement) {
   return code;
 }
 
-},{"../dotjs/validate":61,"./error_classes":31,"./resolve":34,"./util":38,"co":88,"fast-deep-equal":98,"fast-json-stable-stringify":99}],34:[function(require,module,exports){
+},{"../dotjs/validate":61,"./error_classes":31,"./resolve":34,"./util":38,"co":88,"fast-deep-equal":97,"fast-json-stable-stringify":98}],34:[function(require,module,exports){
 'use strict';
 
 var url = require('url')
@@ -5394,7 +5011,7 @@ function resolveIds(schema) {
   return localRefs;
 }
 
-},{"./schema_obj":36,"./util":38,"fast-deep-equal":98,"json-schema-traverse":132,"url":undefined}],35:[function(require,module,exports){
+},{"./schema_obj":36,"./util":38,"fast-deep-equal":97,"json-schema-traverse":131,"url":undefined}],35:[function(require,module,exports){
 'use strict';
 
 var ruleModules = require('./_rules')
@@ -5756,7 +5373,7 @@ function unescapeJsonPointer(str) {
   return str.replace(/~1/g, '/').replace(/~0/g, '~');
 }
 
-},{"./ucs2length":37,"fast-deep-equal":98}],39:[function(require,module,exports){
+},{"./ucs2length":37,"fast-deep-equal":97}],39:[function(require,module,exports){
 'use strict';
 module.exports = function generate__limit(it, $keyword, $ruleType) {
   var out = ' ';
@@ -9613,7 +9230,7 @@ Reader.prototype._readTag = function (tag) {
 
 module.exports = Reader;
 
-},{"./errors":66,"./types":69,"assert":undefined,"safer-buffer":160}],69:[function(require,module,exports){
+},{"./errors":66,"./types":69,"assert":undefined,"safer-buffer":159}],69:[function(require,module,exports){
 // Copyright 2011 Mark Cavage <mcavage@gmail.com> All rights reserved.
 
 
@@ -9970,7 +9587,7 @@ Writer.prototype._ensure = function (len) {
 
 module.exports = Writer;
 
-},{"./errors":66,"./types":69,"assert":undefined,"safer-buffer":160}],71:[function(require,module,exports){
+},{"./errors":66,"./types":69,"assert":undefined,"safer-buffer":159}],71:[function(require,module,exports){
 // Copyright 2011 Mark Cavage <mcavage@gmail.com> All rights reserved.
 
 // If you have no idea what ASN.1 or BER is, see this:
@@ -12112,7 +11729,6 @@ function isObject(val) {
 var util = require('util');
 var Stream = require('stream').Stream;
 var DelayedStream = require('delayed-stream');
-var defer = require('./defer.js');
 
 module.exports = CombinedStream;
 function CombinedStream() {
@@ -12125,6 +11741,8 @@ function CombinedStream() {
   this._released = false;
   this._streams = [];
   this._currentStream = null;
+  this._insideLoop = false;
+  this._pendingNext = false;
 }
 util.inherits(CombinedStream, Stream);
 
@@ -12179,6 +11797,24 @@ CombinedStream.prototype.pipe = function(dest, options) {
 
 CombinedStream.prototype._getNext = function() {
   this._currentStream = null;
+
+  if (this._insideLoop) {
+    this._pendingNext = true;
+    return; // defer call
+  }
+
+  this._insideLoop = true;
+  try {
+    do {
+      this._pendingNext = false;
+      this._realGetNext();
+    } while (this._pendingNext);
+  } finally {
+    this._insideLoop = false;
+  }
+};
+
+CombinedStream.prototype._realGetNext = function() {
   var stream = this._streams.shift();
 
 
@@ -12200,7 +11836,7 @@ CombinedStream.prototype._getNext = function() {
       this._handleErrors(stream);
     }
 
-    defer(this._pipeNext.bind(this, stream));
+    this._pipeNext(stream);
   }.bind(this));
 };
 
@@ -12299,9 +11935,7 @@ CombinedStream.prototype._emitError = function(err) {
   this.emit('error', err);
 };
 
-},{"./defer.js":90,"delayed-stream":92,"stream":undefined,"util":undefined}],90:[function(require,module,exports){
-arguments[4][76][0].apply(exports,arguments)
-},{"dup":76}],91:[function(require,module,exports){
+},{"delayed-stream":91,"stream":undefined,"util":undefined}],90:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -12410,7 +12044,7 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 
-},{}],92:[function(require,module,exports){
+},{}],91:[function(require,module,exports){
 var Stream = require('stream').Stream;
 var util = require('util');
 
@@ -12519,7 +12153,7 @@ DelayedStream.prototype._checkIfMaxDataSizeExceeded = function() {
   this.emit('error', new Error(message));
 };
 
-},{"stream":undefined,"util":undefined}],93:[function(require,module,exports){
+},{"stream":undefined,"util":undefined}],92:[function(require,module,exports){
 var crypto = require("crypto");
 var BigInteger = require("jsbn").BigInteger;
 var ECPointFp = require("./lib/ec.js").ECPointFp;
@@ -12579,7 +12213,7 @@ exports.ECKey = function(curve, key, isPublic)
 }
 
 
-},{"./lib/ec.js":94,"./lib/sec.js":95,"crypto":undefined,"jsbn":131,"safer-buffer":160}],94:[function(require,module,exports){
+},{"./lib/ec.js":93,"./lib/sec.js":94,"crypto":undefined,"jsbn":130,"safer-buffer":159}],93:[function(require,module,exports){
 // Basic Javascript Elliptic Curve implementation
 // Ported loosely from BouncyCastle's Java EC code
 // Only Fp curves implemented for now
@@ -13142,7 +12776,7 @@ var exports = {
 
 module.exports = exports
 
-},{"jsbn":131}],95:[function(require,module,exports){
+},{"jsbn":130}],94:[function(require,module,exports){
 // Named EC curves
 
 // Requires ec.js, jsbn.js, and jsbn2.js
@@ -13314,7 +12948,7 @@ module.exports = {
   "secp256r1":secp256r1
 }
 
-},{"./ec.js":94,"jsbn":131}],96:[function(require,module,exports){
+},{"./ec.js":93,"jsbn":130}],95:[function(require,module,exports){
 'use strict';
 
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -13433,7 +13067,7 @@ module.exports = function extend() {
 	return target;
 };
 
-},{}],97:[function(require,module,exports){
+},{}],96:[function(require,module,exports){
 /*
  * extsprintf.js: extended POSIX-style sprintf
  */
@@ -13618,7 +13252,7 @@ function dumpException(ex)
 	return (ret);
 }
 
-},{"assert":undefined,"util":undefined}],98:[function(require,module,exports){
+},{"assert":undefined,"util":undefined}],97:[function(require,module,exports){
 'use strict';
 
 var isArray = Array.isArray;
@@ -13675,7 +13309,7 @@ module.exports = function equal(a, b) {
   return false;
 };
 
-},{}],99:[function(require,module,exports){
+},{}],98:[function(require,module,exports){
 'use strict';
 
 module.exports = function (data, opts) {
@@ -13736,7 +13370,7 @@ module.exports = function (data, opts) {
     })(data);
 };
 
-},{}],100:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 module.exports = ForeverAgent
 ForeverAgent.SSL = ForeverAgentSSL
 
@@ -13876,7 +13510,7 @@ function createConnectionSSL (port, host, options) {
   return tls.connect(options);
 }
 
-},{"http":undefined,"https":undefined,"net":undefined,"tls":undefined,"util":undefined}],101:[function(require,module,exports){
+},{"http":undefined,"https":undefined,"net":undefined,"tls":undefined,"util":undefined}],100:[function(require,module,exports){
 var CombinedStream = require('combined-stream');
 var util = require('util');
 var path = require('path');
@@ -14335,7 +13969,7 @@ FormData.prototype.toString = function () {
   return '[object FormData]';
 };
 
-},{"./populate.js":102,"asynckit":73,"combined-stream":89,"fs":undefined,"http":undefined,"https":undefined,"mime-types":138,"path":undefined,"url":undefined,"util":undefined}],102:[function(require,module,exports){
+},{"./populate.js":101,"asynckit":73,"combined-stream":89,"fs":undefined,"http":undefined,"https":undefined,"mime-types":137,"path":undefined,"url":undefined,"util":undefined}],101:[function(require,module,exports){
 // populates missing values
 module.exports = function(dst, src) {
 
@@ -14347,7 +13981,7 @@ module.exports = function(dst, src) {
   return dst;
 };
 
-},{}],103:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 module.exports={
   "$id": "afterRequest.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14379,7 +14013,7 @@ module.exports={
   }
 }
 
-},{}],104:[function(require,module,exports){
+},{}],103:[function(require,module,exports){
 module.exports={
   "$id": "beforeRequest.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14411,7 +14045,7 @@ module.exports={
   }
 }
 
-},{}],105:[function(require,module,exports){
+},{}],104:[function(require,module,exports){
 module.exports={
   "$id": "browser.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14433,7 +14067,7 @@ module.exports={
   }
 }
 
-},{}],106:[function(require,module,exports){
+},{}],105:[function(require,module,exports){
 module.exports={
   "$id": "cache.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14456,7 +14090,7 @@ module.exports={
   }
 }
 
-},{}],107:[function(require,module,exports){
+},{}],106:[function(require,module,exports){
 module.exports={
   "$id": "content.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14487,7 +14121,7 @@ module.exports={
   }
 }
 
-},{}],108:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 module.exports={
   "$id": "cookie.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14525,7 +14159,7 @@ module.exports={
   }
 }
 
-},{}],109:[function(require,module,exports){
+},{}],108:[function(require,module,exports){
 module.exports={
   "$id": "creator.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14547,7 +14181,7 @@ module.exports={
   }
 }
 
-},{}],110:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 module.exports={
   "$id": "entry.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14602,7 +14236,7 @@ module.exports={
   }
 }
 
-},{}],111:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 module.exports={
   "$id": "har.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14617,7 +14251,7 @@ module.exports={
   }
 }
 
-},{}],112:[function(require,module,exports){
+},{}],111:[function(require,module,exports){
 module.exports={
   "$id": "header.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14639,7 +14273,7 @@ module.exports={
   }
 }
 
-},{}],113:[function(require,module,exports){
+},{}],112:[function(require,module,exports){
 'use strict'
 
 module.exports = {
@@ -14663,7 +14297,7 @@ module.exports = {
   timings: require('./timings.json')
 }
 
-},{"./afterRequest.json":103,"./beforeRequest.json":104,"./browser.json":105,"./cache.json":106,"./content.json":107,"./cookie.json":108,"./creator.json":109,"./entry.json":110,"./har.json":111,"./header.json":112,"./log.json":114,"./page.json":115,"./pageTimings.json":116,"./postData.json":117,"./query.json":118,"./request.json":119,"./response.json":120,"./timings.json":121}],114:[function(require,module,exports){
+},{"./afterRequest.json":102,"./beforeRequest.json":103,"./browser.json":104,"./cache.json":105,"./content.json":106,"./cookie.json":107,"./creator.json":108,"./entry.json":109,"./har.json":110,"./header.json":111,"./log.json":113,"./page.json":114,"./pageTimings.json":115,"./postData.json":116,"./query.json":117,"./request.json":118,"./response.json":119,"./timings.json":120}],113:[function(require,module,exports){
 module.exports={
   "$id": "log.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14701,7 +14335,7 @@ module.exports={
   }
 }
 
-},{}],115:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 module.exports={
   "$id": "page.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14735,7 +14369,7 @@ module.exports={
   }
 }
 
-},{}],116:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 module.exports={
   "$id": "pageTimings.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14755,7 +14389,7 @@ module.exports={
   }
 }
 
-},{}],117:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 module.exports={
   "$id": "postData.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14800,7 +14434,7 @@ module.exports={
   }
 }
 
-},{}],118:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 module.exports={
   "$id": "query.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14822,7 +14456,7 @@ module.exports={
   }
 }
 
-},{}],119:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 module.exports={
   "$id": "request.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14881,7 +14515,7 @@ module.exports={
   }
 }
 
-},{}],120:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 module.exports={
   "$id": "response.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14937,7 +14571,7 @@ module.exports={
   }
 }
 
-},{}],121:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 module.exports={
   "$id": "timings.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -14981,7 +14615,7 @@ module.exports={
   }
 }
 
-},{}],122:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 function HARError (errors) {
   var message = 'validation failed'
 
@@ -15000,7 +14634,7 @@ HARError.prototype = Error.prototype
 
 module.exports = HARError
 
-},{}],123:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 var Ajv = require('ajv')
 var HARError = require('./error')
 var schemas = require('har-schema')
@@ -15097,7 +14731,7 @@ exports.timings = function (data) {
   return validate('timings', data)
 }
 
-},{"./error":122,"ajv":27,"har-schema":113}],124:[function(require,module,exports){
+},{"./error":121,"ajv":27,"har-schema":112}],123:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 var parser = require('./parser');
@@ -15128,7 +14762,7 @@ module.exports = {
   verifyHMAC: verify.verifyHMAC
 };
 
-},{"./parser":125,"./signer":126,"./utils":127,"./verify":128}],125:[function(require,module,exports){
+},{"./parser":124,"./signer":125,"./utils":126,"./verify":127}],124:[function(require,module,exports){
 // Copyright 2012 Joyent, Inc.  All rights reserved.
 
 var assert = require('assert-plus');
@@ -15445,7 +15079,7 @@ module.exports = {
 
 };
 
-},{"./utils":127,"assert-plus":72,"util":undefined}],126:[function(require,module,exports){
+},{"./utils":126,"assert-plus":72,"util":undefined}],125:[function(require,module,exports){
 // Copyright 2012 Joyent, Inc.  All rights reserved.
 
 var assert = require('assert-plus');
@@ -15848,7 +15482,7 @@ module.exports = {
 
 };
 
-},{"./utils":127,"assert-plus":72,"crypto":undefined,"http":undefined,"jsprim":135,"sshpk":179,"util":undefined}],127:[function(require,module,exports){
+},{"./utils":126,"assert-plus":72,"crypto":undefined,"http":undefined,"jsprim":134,"sshpk":179,"util":undefined}],126:[function(require,module,exports){
 // Copyright 2012 Joyent, Inc.  All rights reserved.
 
 var assert = require('assert-plus');
@@ -15962,7 +15596,7 @@ module.exports = {
   }
 };
 
-},{"assert-plus":72,"sshpk":179,"util":undefined}],128:[function(require,module,exports){
+},{"assert-plus":72,"sshpk":179,"util":undefined}],127:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 var assert = require('assert-plus');
@@ -16052,7 +15686,7 @@ module.exports = {
   }
 };
 
-},{"./utils":127,"assert-plus":72,"crypto":undefined,"sshpk":179}],129:[function(require,module,exports){
+},{"./utils":126,"assert-plus":72,"crypto":undefined,"sshpk":179}],128:[function(require,module,exports){
 module.exports      = isTypedArray
 isTypedArray.strict = isStrictTypedArray
 isTypedArray.loose  = isLooseTypedArray
@@ -16095,7 +15729,7 @@ function isLooseTypedArray(arr) {
   return names[toString.call(arr)]
 }
 
-},{}],130:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 var stream = require('stream')
 
 
@@ -16124,7 +15758,7 @@ module.exports.isReadable = isReadable
 module.exports.isWritable = isWritable
 module.exports.isDuplex   = isDuplex
 
-},{"stream":undefined}],131:[function(require,module,exports){
+},{"stream":undefined}],130:[function(require,module,exports){
 (function(){
 
     // Copyright (c) 2005  Tom Wu
@@ -17483,7 +17117,7 @@ module.exports.isDuplex   = isDuplex
 
 }).call(this);
 
-},{}],132:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 'use strict';
 
 var traverse = module.exports = function (schema, opts, cb) {
@@ -17566,7 +17200,7 @@ function escapeJsonPtr(str) {
   return str.replace(/~/g, '~0').replace(/\//g, '~1');
 }
 
-},{}],133:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 /**
  * JSONSchema Validator - Validates JavaScript objects using JSON Schemas
  *	(http://www.json.com/json-schema-proposal/)
@@ -17841,7 +17475,7 @@ exports.mustBeValid = function(result){
 return exports;
 }));
 
-},{}],134:[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 exports = module.exports = stringify
 exports.getSerialize = serializer
 
@@ -17870,7 +17504,7 @@ function serializer(replacer, cycleReplacer) {
   }
 }
 
-},{}],135:[function(require,module,exports){
+},{}],134:[function(require,module,exports){
 /*
  * lib/jsprim.js: utilities for primitive JavaScript types
  */
@@ -18607,7 +18241,7 @@ function mergeObjects(provided, overrides, defaults)
 	return (rv);
 }
 
-},{"assert-plus":72,"extsprintf":97,"json-schema":133,"util":undefined,"verror":197}],136:[function(require,module,exports){
+},{"assert-plus":72,"extsprintf":96,"json-schema":132,"util":undefined,"verror":197}],135:[function(require,module,exports){
 module.exports={
   "application/1d-interleaved-parityfec": {
     "source": "iana"
@@ -18711,6 +18345,18 @@ module.exports={
     "source": "iana",
     "compressible": true,
     "extensions": ["atomsvc"]
+  },
+  "application/atsc-dwd+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/atsc-held+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/atsc-rsat+xml": {
+    "source": "iana",
+    "compressible": true
   },
   "application/atxml": {
     "source": "iana"
@@ -18920,6 +18566,9 @@ module.exports={
     "source": "iana",
     "compressible": true
   },
+  "application/dns-message": {
+    "source": "iana"
+  },
   "application/docbook+xml": {
     "source": "apache",
     "compressible": true,
@@ -19019,6 +18668,10 @@ module.exports={
     "source": "iana",
     "extensions": ["exi"]
   },
+  "application/expect-ct-report+json": {
+    "source": "iana",
+    "compressible": true
+  },
   "application/fastinfoset": {
     "source": "iana"
   },
@@ -19041,6 +18694,9 @@ module.exports={
     "compressible": true
   },
   "application/fits": {
+    "source": "iana"
+  },
+  "application/flexfec": {
     "source": "iana"
   },
   "application/font-sfnt": {
@@ -19404,6 +19060,13 @@ module.exports={
   "application/mikey": {
     "source": "iana"
   },
+  "application/mipc": {
+    "source": "iana"
+  },
+  "application/mmt-aei+xml": {
+    "source": "iana",
+    "compressible": true
+  },
   "application/mmt-usd+xml": {
     "source": "iana",
     "compressible": true
@@ -19472,10 +19135,12 @@ module.exports={
     "extensions": ["mxf"]
   },
   "application/n-quads": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["nq"]
   },
   "application/n-triples": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["nt"]
   },
   "application/nasdata": {
     "source": "iana"
@@ -19514,6 +19179,10 @@ module.exports={
     "source": "iana",
     "extensions": ["oda"]
   },
+  "application/odm+xml": {
+    "source": "iana",
+    "compressible": true
+  },
   "application/odx": {
     "source": "iana"
   },
@@ -19535,6 +19204,9 @@ module.exports={
   "application/onenote": {
     "source": "apache",
     "extensions": ["onetoc","onetoc2","onetmp","onepkg"]
+  },
+  "application/oscore": {
+    "source": "iana"
   },
   "application/oxps": {
     "source": "iana",
@@ -19561,6 +19233,9 @@ module.exports={
     "extensions": ["pdf"]
   },
   "application/pdx": {
+    "source": "iana"
+  },
+  "application/pem-certificate-chain": {
     "source": "iana"
   },
   "application/pgp-encrypted": {
@@ -19908,7 +19583,8 @@ module.exports={
     "extensions": ["shf"]
   },
   "application/sieve": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["siv","sieve"]
   },
   "application/simple-filter+xml": {
     "source": "iana",
@@ -19918,6 +19594,9 @@ module.exports={
     "source": "iana"
   },
   "application/simplesymbolcontainer": {
+    "source": "iana"
+  },
+  "application/sipc": {
     "source": "iana"
   },
   "application/slate": {
@@ -19985,6 +19664,10 @@ module.exports={
     "source": "iana",
     "compressible": true
   },
+  "application/swid+xml": {
+    "source": "iana",
+    "compressible": true
+  },
   "application/tamp-apex-update": {
     "source": "iana"
   },
@@ -20030,6 +19713,9 @@ module.exports={
     "compressible": true,
     "extensions": ["tei","teicorpus"]
   },
+  "application/tetra_isi": {
+    "source": "iana"
+  },
   "application/thraud+xml": {
     "source": "iana",
     "compressible": true,
@@ -20055,6 +19741,10 @@ module.exports={
   "application/tnauthlist": {
     "source": "iana"
   },
+  "application/toml": {
+    "compressible": true,
+    "extensions": ["toml"]
+  },
   "application/trickle-ice-sdpfrag": {
     "source": "iana"
   },
@@ -20066,6 +19756,12 @@ module.exports={
     "compressible": true
   },
   "application/tve-trigger": {
+    "source": "iana"
+  },
+  "application/tzif": {
+    "source": "iana"
+  },
+  "application/tzif-leap": {
     "source": "iana"
   },
   "application/ulpfec": {
@@ -20131,11 +19827,31 @@ module.exports={
   "application/vnd.3gpp.mc-signalling-ear": {
     "source": "iana"
   },
+  "application/vnd.3gpp.mcdata-affiliation-command+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.3gpp.mcdata-info+xml": {
+    "source": "iana",
+    "compressible": true
+  },
   "application/vnd.3gpp.mcdata-payload": {
     "source": "iana"
   },
+  "application/vnd.3gpp.mcdata-service-config+xml": {
+    "source": "iana",
+    "compressible": true
+  },
   "application/vnd.3gpp.mcdata-signalling": {
     "source": "iana"
+  },
+  "application/vnd.3gpp.mcdata-ue-config+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.3gpp.mcdata-user-profile+xml": {
+    "source": "iana",
+    "compressible": true
   },
   "application/vnd.3gpp.mcptt-affiliation-command+xml": {
     "source": "iana",
@@ -20157,7 +19873,59 @@ module.exports={
     "source": "iana",
     "compressible": true
   },
+  "application/vnd.3gpp.mcptt-service-config+xml": {
+    "source": "iana",
+    "compressible": true
+  },
   "application/vnd.3gpp.mcptt-signed+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.3gpp.mcptt-ue-config+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.3gpp.mcptt-ue-init-config+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.3gpp.mcptt-user-profile+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.3gpp.mcvideo-affiliation-command+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.3gpp.mcvideo-affiliation-info+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.3gpp.mcvideo-info+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.3gpp.mcvideo-location-info+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.3gpp.mcvideo-mbms-usage-info+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.3gpp.mcvideo-service-config+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.3gpp.mcvideo-transmission-request+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.3gpp.mcvideo-ue-config+xml": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.3gpp.mcvideo-user-profile+xml": {
     "source": "iana",
     "compressible": true
   },
@@ -20309,6 +20077,9 @@ module.exports={
     "source": "iana",
     "compressible": true
   },
+  "application/vnd.android.ota": {
+    "source": "iana"
+  },
   "application/vnd.android.package-archive": {
     "source": "apache",
     "compressible": false,
@@ -20414,6 +20185,9 @@ module.exports={
   "application/vnd.banana-accounting": {
     "source": "iana"
   },
+  "application/vnd.bbf.usp.error": {
+    "source": "iana"
+  },
   "application/vnd.bbf.usp.msg": {
     "source": "iana"
   },
@@ -20448,6 +20222,12 @@ module.exports={
   "application/vnd.bmi": {
     "source": "iana",
     "extensions": ["bmi"]
+  },
+  "application/vnd.bpf": {
+    "source": "iana"
+  },
+  "application/vnd.bpf3": {
+    "source": "iana"
   },
   "application/vnd.businessobjects": {
     "source": "iana",
@@ -20487,6 +20267,9 @@ module.exports={
   "application/vnd.chipnuts.karaoke-mmd": {
     "source": "iana",
     "extensions": ["mmd"]
+  },
+  "application/vnd.ciedi": {
+    "source": "iana"
   },
   "application/vnd.cinderella": {
     "source": "iana",
@@ -20603,6 +20386,13 @@ module.exports={
     "source": "iana",
     "compressible": true,
     "extensions": ["wbs"]
+  },
+  "application/vnd.cryptii.pipe+json": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.crypto-shade-file": {
+    "source": "iana"
   },
   "application/vnd.ctc-posml": {
     "source": "iana",
@@ -21001,6 +20791,13 @@ module.exports={
   "application/vnd.evolv.ecig.theme": {
     "source": "iana"
   },
+  "application/vnd.exstream-empower+zip": {
+    "source": "iana",
+    "compressible": false
+  },
+  "application/vnd.exstream-package": {
+    "source": "iana"
+  },
   "application/vnd.ezpix-album": {
     "source": "iana",
     "extensions": ["ez2"]
@@ -21029,6 +20826,10 @@ module.exports={
   },
   "application/vnd.ffsns": {
     "source": "iana"
+  },
+  "application/vnd.ficlab.flb+zip": {
+    "source": "iana",
+    "compressible": false
   },
   "application/vnd.filmit.zfc": {
     "source": "iana"
@@ -21111,6 +20912,9 @@ module.exports={
     "source": "iana"
   },
   "application/vnd.fut-misnet": {
+    "source": "iana"
+  },
+  "application/vnd.futoin+cbor": {
     "source": "iana"
   },
   "application/vnd.futoin+json": {
@@ -21491,6 +21295,10 @@ module.exports={
     "source": "iana",
     "extensions": ["fcs"]
   },
+  "application/vnd.iso11783-10+zip": {
+    "source": "iana",
+    "compressible": false
+  },
   "application/vnd.jam": {
     "source": "iana",
     "extensions": ["jam"]
@@ -21590,6 +21398,9 @@ module.exports={
     "source": "iana",
     "extensions": ["sse"]
   },
+  "application/vnd.las": {
+    "source": "iana"
+  },
   "application/vnd.las.las+json": {
     "source": "iana",
     "compressible": true
@@ -21598,6 +21409,9 @@ module.exports={
     "source": "iana",
     "compressible": true,
     "extensions": ["lasxml"]
+  },
+  "application/vnd.laszip": {
+    "source": "iana"
   },
   "application/vnd.leap+json": {
     "source": "iana",
@@ -21615,6 +21429,13 @@ module.exports={
     "source": "iana",
     "compressible": true,
     "extensions": ["lbe"]
+  },
+  "application/vnd.logipipe.circuit+zip": {
+    "source": "iana",
+    "compressible": false
+  },
+  "application/vnd.loom": {
+    "source": "iana"
   },
   "application/vnd.lotus-1-2-3": {
     "source": "iana",
@@ -22791,6 +22612,9 @@ module.exports={
   "application/vnd.patentdive": {
     "source": "iana"
   },
+  "application/vnd.patientecommsdoc": {
+    "source": "iana"
+  },
   "application/vnd.pawaafile": {
     "source": "iana",
     "extensions": ["paw"]
@@ -23067,6 +22891,9 @@ module.exports={
     "source": "iana",
     "extensions": ["semf"]
   },
+  "application/vnd.shade-save-file": {
+    "source": "iana"
+  },
   "application/vnd.shana.informed.formdata": {
     "source": "iana",
     "extensions": ["ifm"]
@@ -23084,6 +22911,10 @@ module.exports={
     "extensions": ["ipk"]
   },
   "application/vnd.shootproof+json": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/vnd.shopkick+json": {
     "source": "iana",
     "compressible": true
   },
@@ -23399,6 +23230,12 @@ module.exports={
     "compressible": true
   },
   "application/vnd.verimatrix.vcas": {
+    "source": "iana"
+  },
+  "application/vnd.veryant.thin": {
+    "source": "iana"
+  },
+  "application/vnd.ves.encrypted": {
     "source": "iana"
   },
   "application/vnd.vidsoft.vidconference": {
@@ -24469,6 +24306,9 @@ module.exports={
   "audio/evs": {
     "source": "iana"
   },
+  "audio/flexfec": {
+    "source": "iana"
+  },
   "audio/fwdred": {
     "source": "iana"
   },
@@ -24675,6 +24515,9 @@ module.exports={
   "audio/telephone-event": {
     "source": "iana"
   },
+  "audio/tetra_acelp": {
+    "source": "iana"
+  },
   "audio/tone": {
     "source": "iana"
   },
@@ -24763,6 +24606,9 @@ module.exports={
   "audio/vnd.dts.hd": {
     "source": "iana",
     "extensions": ["dtshd"]
+  },
+  "audio/vnd.dts.uhd": {
+    "source": "iana"
   },
   "audio/vnd.dvb.file": {
     "source": "iana"
@@ -24949,6 +24795,7 @@ module.exports={
   },
   "font/ttf": {
     "source": "iana",
+    "compressible": true,
     "extensions": ["ttf"]
   },
   "font/woff": {
@@ -25004,16 +24851,28 @@ module.exports={
     "extensions": ["gif"]
   },
   "image/heic": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["heic"]
   },
   "image/heic-sequence": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["heics"]
   },
   "image/heif": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["heif"]
   },
   "image/heif-sequence": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["heifs"]
+  },
+  "image/hej2k": {
+    "source": "iana",
+    "extensions": ["hej2"]
+  },
+  "image/hsj2": {
+    "source": "iana",
+    "extensions": ["hsj2"]
   },
   "image/ief": {
     "source": "iana",
@@ -25033,6 +24892,14 @@ module.exports={
     "compressible": false,
     "extensions": ["jpeg","jpg","jpe"]
   },
+  "image/jph": {
+    "source": "iana",
+    "extensions": ["jph"]
+  },
+  "image/jphc": {
+    "source": "iana",
+    "extensions": ["jhc"]
+  },
   "image/jpm": {
     "source": "iana",
     "compressible": false,
@@ -25042,6 +24909,34 @@ module.exports={
     "source": "iana",
     "compressible": false,
     "extensions": ["jpx","jpf"]
+  },
+  "image/jxr": {
+    "source": "iana",
+    "extensions": ["jxr"]
+  },
+  "image/jxra": {
+    "source": "iana",
+    "extensions": ["jxra"]
+  },
+  "image/jxrs": {
+    "source": "iana",
+    "extensions": ["jxrs"]
+  },
+  "image/jxs": {
+    "source": "iana",
+    "extensions": ["jxs"]
+  },
+  "image/jxsc": {
+    "source": "iana",
+    "extensions": ["jxsc"]
+  },
+  "image/jxsi": {
+    "source": "iana",
+    "extensions": ["jxsi"]
+  },
+  "image/jxss": {
+    "source": "iana",
+    "extensions": ["jxss"]
   },
   "image/ktx": {
     "source": "iana",
@@ -25155,6 +25050,9 @@ module.exports={
   },
   "image/vnd.mozilla.apng": {
     "source": "iana"
+  },
+  "image/vnd.ms-dds": {
+    "extensions": ["dds"]
   },
   "image/vnd.ms-modi": {
     "source": "iana",
@@ -25366,7 +25264,8 @@ module.exports={
     "extensions": ["wsc"]
   },
   "model/3mf": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["3mf"]
   },
   "model/gltf+json": {
     "source": "iana",
@@ -25389,7 +25288,8 @@ module.exports={
     "extensions": ["msh","mesh","silo"]
   },
   "model/stl": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["stl"]
   },
   "model/vnd.collada+xml": {
     "source": "iana",
@@ -25426,23 +25326,28 @@ module.exports={
     "extensions": ["mts"]
   },
   "model/vnd.opengex": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["ogex"]
   },
   "model/vnd.parasolid.transmit.binary": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["x_b"]
   },
   "model/vnd.parasolid.transmit.text": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["x_t"]
   },
   "model/vnd.rosette.annotated-data-model": {
     "source": "iana"
   },
   "model/vnd.usdz+zip": {
     "source": "iana",
-    "compressible": false
+    "compressible": false,
+    "extensions": ["usdz"]
   },
   "model/vnd.valve.source.compiled-map": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["bsp"]
   },
   "model/vnd.vtu": {
     "source": "iana",
@@ -25459,7 +25364,8 @@ module.exports={
     "extensions": ["x3db","x3dbz"]
   },
   "model/x3d+fastinfoset": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["x3db"]
   },
   "model/x3d+vrml": {
     "source": "apache",
@@ -25472,7 +25378,8 @@ module.exports={
     "extensions": ["x3d","x3dz"]
   },
   "model/x3d-vrml": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["x3dv"]
   },
   "multipart/alternative": {
     "source": "iana",
@@ -25499,8 +25406,7 @@ module.exports={
     "source": "iana"
   },
   "multipart/mixed": {
-    "source": "iana",
-    "compressible": false
+    "source": "iana"
   },
   "multipart/multilingual": {
     "source": "iana"
@@ -25578,6 +25484,9 @@ module.exports={
   "text/enriched": {
     "source": "iana"
   },
+  "text/flexfec": {
+    "source": "iana"
+  },
   "text/fwdred": {
     "source": "iana"
   },
@@ -25604,6 +25513,7 @@ module.exports={
     "extensions": ["jsx"]
   },
   "text/less": {
+    "compressible": true,
     "extensions": ["less"]
   },
   "text/markdown": {
@@ -25614,6 +25524,10 @@ module.exports={
   "text/mathml": {
     "source": "nginx",
     "extensions": ["mml"]
+  },
+  "text/mdx": {
+    "compressible": true,
+    "extensions": ["mdx"]
   },
   "text/mizar": {
     "source": "iana"
@@ -25759,6 +25673,9 @@ module.exports={
   "text/vnd.esmertec.theme-descriptor": {
     "source": "iana"
   },
+  "text/vnd.ficlab.flt": {
+    "source": "iana"
+  },
   "text/vnd.fly": {
     "source": "iana",
     "extensions": ["fly"]
@@ -25806,7 +25723,13 @@ module.exports={
   "text/vnd.radisys.msml-basic-layout": {
     "source": "iana"
   },
+  "text/vnd.senx.warpscript": {
+    "source": "iana"
+  },
   "text/vnd.si.uricatalogue": {
+    "source": "iana"
+  },
+  "text/vnd.sosi": {
     "source": "iana"
   },
   "text/vnd.sun.j2me.app-descriptor": {
@@ -25961,6 +25884,9 @@ module.exports={
   "video/encaprtp": {
     "source": "iana"
   },
+  "video/flexfec": {
+    "source": "iana"
+  },
   "video/h261": {
     "source": "iana",
     "extensions": ["h261"]
@@ -26081,6 +26007,9 @@ module.exports={
   "video/vc1": {
     "source": "iana"
   },
+  "video/vc2": {
+    "source": "iana"
+  },
   "video/vnd.cctv": {
     "source": "iana"
   },
@@ -26197,6 +26126,9 @@ module.exports={
     "source": "iana",
     "extensions": ["viv"]
   },
+  "video/vnd.youtube.yt": {
+    "source": "iana"
+  },
   "video/vp8": {
     "source": "iana"
   },
@@ -26280,7 +26212,7 @@ module.exports={
   }
 }
 
-},{}],137:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 /*!
  * mime-db
  * Copyright(c) 2014 Jonathan Ong
@@ -26293,7 +26225,7 @@ module.exports={
 
 module.exports = require('./db.json')
 
-},{"./db.json":136}],138:[function(require,module,exports){
+},{"./db.json":135}],137:[function(require,module,exports){
 /*!
  * mime-types
  * Copyright(c) 2014 Jonathan Ong
@@ -26483,7 +26415,7 @@ function populateMaps (extensions, types) {
   })
 }
 
-},{"mime-db":137,"path":undefined}],139:[function(require,module,exports){
+},{"mime-db":136,"path":undefined}],138:[function(require,module,exports){
 var crypto = require('crypto')
 
 function sha (key, body, algorithm) {
@@ -26630,7 +26562,7 @@ exports.plaintext = plaintext
 exports.sign = sign
 exports.rfc3986 = rfc3986
 exports.generateBase = generateBase
-},{"crypto":undefined}],140:[function(require,module,exports){
+},{"crypto":undefined}],139:[function(require,module,exports){
 // Generated by CoffeeScript 1.12.2
 (function() {
   var getNanoSeconds, hrtime, loadTime, moduleLoadTime, nodeLoadTime, upTime;
@@ -26668,7 +26600,7 @@ exports.generateBase = generateBase
 
 
 
-},{}],141:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 'use strict';
 
 var replace = String.prototype.replace;
@@ -26688,7 +26620,7 @@ module.exports = {
     RFC3986: 'RFC3986'
 };
 
-},{}],142:[function(require,module,exports){
+},{}],141:[function(require,module,exports){
 'use strict';
 
 var stringify = require('./stringify');
@@ -26701,7 +26633,7 @@ module.exports = {
     stringify: stringify
 };
 
-},{"./formats":141,"./parse":143,"./stringify":144}],143:[function(require,module,exports){
+},{"./formats":140,"./parse":142,"./stringify":143}],142:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -26877,7 +26809,7 @@ module.exports = function (str, opts) {
     return utils.compact(obj);
 };
 
-},{"./utils":145}],144:[function(require,module,exports){
+},{"./utils":144}],143:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -27089,7 +27021,7 @@ module.exports = function (object, opts) {
     return joined.length > 0 ? prefix + joined : '';
 };
 
-},{"./formats":141,"./utils":145}],145:[function(require,module,exports){
+},{"./formats":140,"./utils":144}],144:[function(require,module,exports){
 'use strict';
 
 var has = Object.prototype.hasOwnProperty;
@@ -27126,7 +27058,7 @@ var compactQueue = function compactQueue(queue) {
     return obj;
 };
 
-exports.arrayToObject = function arrayToObject(source, options) {
+var arrayToObject = function arrayToObject(source, options) {
     var obj = options && options.plainObjects ? Object.create(null) : {};
     for (var i = 0; i < source.length; ++i) {
         if (typeof source[i] !== 'undefined') {
@@ -27137,7 +27069,7 @@ exports.arrayToObject = function arrayToObject(source, options) {
     return obj;
 };
 
-exports.merge = function merge(target, source, options) {
+var merge = function merge(target, source, options) {
     if (!source) {
         return target;
     }
@@ -27162,14 +27094,14 @@ exports.merge = function merge(target, source, options) {
 
     var mergeTarget = target;
     if (Array.isArray(target) && !Array.isArray(source)) {
-        mergeTarget = exports.arrayToObject(target, options);
+        mergeTarget = arrayToObject(target, options);
     }
 
     if (Array.isArray(target) && Array.isArray(source)) {
         source.forEach(function (item, i) {
             if (has.call(target, i)) {
                 if (target[i] && typeof target[i] === 'object') {
-                    target[i] = exports.merge(target[i], item, options);
+                    target[i] = merge(target[i], item, options);
                 } else {
                     target.push(item);
                 }
@@ -27184,7 +27116,7 @@ exports.merge = function merge(target, source, options) {
         var value = source[key];
 
         if (has.call(acc, key)) {
-            acc[key] = exports.merge(acc[key], value, options);
+            acc[key] = merge(acc[key], value, options);
         } else {
             acc[key] = value;
         }
@@ -27192,14 +27124,14 @@ exports.merge = function merge(target, source, options) {
     }, mergeTarget);
 };
 
-exports.assign = function assignSingleSource(target, source) {
+var assign = function assignSingleSource(target, source) {
     return Object.keys(source).reduce(function (acc, key) {
         acc[key] = source[key];
         return acc;
     }, target);
 };
 
-exports.decode = function (str) {
+var decode = function (str) {
     try {
         return decodeURIComponent(str.replace(/\+/g, ' '));
     } catch (e) {
@@ -27207,7 +27139,7 @@ exports.decode = function (str) {
     }
 };
 
-exports.encode = function encode(str) {
+var encode = function encode(str) {
     // This code was originally written by Brian White (mscdex) for the io.js core querystring library.
     // It has been adapted here for stricter adherence to RFC 3986
     if (str.length === 0) {
@@ -27259,7 +27191,7 @@ exports.encode = function encode(str) {
     return out;
 };
 
-exports.compact = function compact(value) {
+var compact = function compact(value) {
     var queue = [{ obj: { o: value }, prop: 'o' }];
     var refs = [];
 
@@ -27281,11 +27213,11 @@ exports.compact = function compact(value) {
     return compactQueue(queue);
 };
 
-exports.isRegExp = function isRegExp(obj) {
+var isRegExp = function isRegExp(obj) {
     return Object.prototype.toString.call(obj) === '[object RegExp]';
 };
 
-exports.isBuffer = function isBuffer(obj) {
+var isBuffer = function isBuffer(obj) {
     if (obj === null || typeof obj === 'undefined') {
         return false;
     }
@@ -27293,7 +27225,18 @@ exports.isBuffer = function isBuffer(obj) {
     return !!(obj.constructor && obj.constructor.isBuffer && obj.constructor.isBuffer(obj));
 };
 
-},{}],146:[function(require,module,exports){
+module.exports = {
+    arrayToObject: arrayToObject,
+    assign: assign,
+    compact: compact,
+    decode: decode,
+    encode: encode,
+    isBuffer: isBuffer,
+    isRegExp: isRegExp,
+    merge: merge
+};
+
+},{}],145:[function(require,module,exports){
 // Copyright 2010-2012 Mikeal Rogers
 //
 //    Licensed under the Apache License, Version 2.0 (the "License");
@@ -27450,7 +27393,7 @@ Object.defineProperty(request, 'debug', {
   }
 })
 
-},{"./lib/cookies":148,"./lib/helpers":152,"./request":158,"extend":96}],147:[function(require,module,exports){
+},{"./lib/cookies":147,"./lib/helpers":151,"./request":157,"extend":95}],146:[function(require,module,exports){
 'use strict'
 
 var caseless = require('caseless')
@@ -27622,7 +27565,7 @@ Auth.prototype.onResponse = function (response) {
 
 exports.Auth = Auth
 
-},{"./helpers":152,"caseless":87,"uuid/v4":196}],148:[function(require,module,exports){
+},{"./helpers":151,"caseless":87,"uuid/v4":196}],147:[function(require,module,exports){
 'use strict'
 
 var tough = require('tough-cookie')
@@ -27662,7 +27605,7 @@ exports.jar = function (store) {
   return new RequestJar(store)
 }
 
-},{"tough-cookie":185}],149:[function(require,module,exports){
+},{"tough-cookie":185}],148:[function(require,module,exports){
 'use strict'
 
 function formatHostname (hostname) {
@@ -27743,7 +27686,7 @@ function getProxyFromURI (uri) {
 
 module.exports = getProxyFromURI
 
-},{}],150:[function(require,module,exports){
+},{}],149:[function(require,module,exports){
 'use strict'
 
 var fs = require('fs')
@@ -27950,7 +27893,7 @@ Har.prototype.options = function (options) {
 
 exports.Har = Har
 
-},{"extend":96,"fs":undefined,"har-validator":123,"querystring":undefined}],151:[function(require,module,exports){
+},{"extend":95,"fs":undefined,"har-validator":122,"querystring":undefined}],150:[function(require,module,exports){
 'use strict'
 
 var crypto = require('crypto')
@@ -28041,7 +27984,7 @@ exports.header = function (uri, method, opts) {
   return header
 }
 
-},{"crypto":undefined}],152:[function(require,module,exports){
+},{"crypto":undefined}],151:[function(require,module,exports){
 'use strict'
 
 var jsonSafeStringify = require('json-stringify-safe')
@@ -28109,7 +28052,7 @@ exports.copy = copy
 exports.version = version
 exports.defer = defer
 
-},{"crypto":undefined,"json-stringify-safe":134,"safe-buffer":159}],153:[function(require,module,exports){
+},{"crypto":undefined,"json-stringify-safe":133,"safe-buffer":158}],152:[function(require,module,exports){
 'use strict'
 
 var uuid = require('uuid/v4')
@@ -28223,7 +28166,7 @@ Multipart.prototype.onRequest = function (options) {
 
 exports.Multipart = Multipart
 
-},{"combined-stream":89,"isstream":130,"safe-buffer":159,"uuid/v4":196}],154:[function(require,module,exports){
+},{"combined-stream":89,"isstream":129,"safe-buffer":158,"uuid/v4":196}],153:[function(require,module,exports){
 'use strict'
 
 var url = require('url')
@@ -28373,7 +28316,7 @@ OAuth.prototype.onRequest = function (_oauth) {
 
 exports.OAuth = OAuth
 
-},{"caseless":87,"crypto":undefined,"oauth-sign":139,"qs":142,"safe-buffer":159,"url":undefined,"uuid/v4":196}],155:[function(require,module,exports){
+},{"caseless":87,"crypto":undefined,"oauth-sign":138,"qs":141,"safe-buffer":158,"url":undefined,"uuid/v4":196}],154:[function(require,module,exports){
 'use strict'
 
 var qs = require('qs')
@@ -28425,7 +28368,7 @@ Querystring.prototype.unescape = querystring.unescape
 
 exports.Querystring = Querystring
 
-},{"qs":142,"querystring":undefined}],156:[function(require,module,exports){
+},{"qs":141,"querystring":undefined}],155:[function(require,module,exports){
 'use strict'
 
 var url = require('url')
@@ -28581,7 +28524,7 @@ Redirect.prototype.onResponse = function (response) {
 
 exports.Redirect = Redirect
 
-},{"url":undefined}],157:[function(require,module,exports){
+},{"url":undefined}],156:[function(require,module,exports){
 'use strict'
 
 var url = require('url')
@@ -28758,7 +28701,7 @@ Tunnel.defaultProxyHeaderWhiteList = defaultProxyHeaderWhiteList
 Tunnel.defaultProxyHeaderExclusiveList = defaultProxyHeaderExclusiveList
 exports.Tunnel = Tunnel
 
-},{"tunnel-agent":192,"url":undefined}],158:[function(require,module,exports){
+},{"tunnel-agent":192,"url":undefined}],157:[function(require,module,exports){
 'use strict'
 
 var http = require('http')
@@ -30311,7 +30254,7 @@ Request.defaultProxyHeaderExclusiveList =
 Request.prototype.toJSON = requestToJSON
 module.exports = Request
 
-},{"./lib/auth":147,"./lib/cookies":148,"./lib/getProxyFromURI":149,"./lib/har":150,"./lib/hawk":151,"./lib/helpers":152,"./lib/multipart":153,"./lib/oauth":154,"./lib/querystring":155,"./lib/redirect":156,"./lib/tunnel":157,"aws-sign2":83,"aws4":84,"caseless":87,"extend":96,"forever-agent":100,"form-data":101,"http":undefined,"http-signature":124,"https":undefined,"is-typedarray":129,"isstream":130,"mime-types":138,"performance-now":140,"safe-buffer":159,"stream":undefined,"url":undefined,"util":undefined,"zlib":undefined}],159:[function(require,module,exports){
+},{"./lib/auth":146,"./lib/cookies":147,"./lib/getProxyFromURI":148,"./lib/har":149,"./lib/hawk":150,"./lib/helpers":151,"./lib/multipart":152,"./lib/oauth":153,"./lib/querystring":154,"./lib/redirect":155,"./lib/tunnel":156,"aws-sign2":83,"aws4":84,"caseless":87,"extend":95,"forever-agent":99,"form-data":100,"http":undefined,"http-signature":123,"https":undefined,"is-typedarray":128,"isstream":129,"mime-types":137,"performance-now":139,"safe-buffer":158,"stream":undefined,"url":undefined,"util":undefined,"zlib":undefined}],158:[function(require,module,exports){
 /* eslint-disable node/no-deprecated-api */
 var buffer = require('buffer')
 var Buffer = buffer.Buffer
@@ -30333,6 +30276,8 @@ if (Buffer.from && Buffer.alloc && Buffer.allocUnsafe && Buffer.allocUnsafeSlow)
 function SafeBuffer (arg, encodingOrOffset, length) {
   return Buffer(arg, encodingOrOffset, length)
 }
+
+SafeBuffer.prototype = Object.create(Buffer.prototype)
 
 // Copy static methods from Buffer
 copyProps(Buffer, SafeBuffer)
@@ -30375,7 +30320,7 @@ SafeBuffer.allocUnsafeSlow = function (size) {
   return buffer.SlowBuffer(size)
 }
 
-},{"buffer":undefined}],160:[function(require,module,exports){
+},{"buffer":undefined}],159:[function(require,module,exports){
 /* eslint-disable node/no-deprecated-api */
 
 'use strict'
@@ -30454,7 +30399,7 @@ if (!safer.constants) {
 
 module.exports = safer
 
-},{"buffer":undefined}],161:[function(require,module,exports){
+},{"buffer":undefined}],160:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 var Buffer = require('safer-buffer').Buffer;
@@ -30624,7 +30569,7 @@ module.exports = {
 	curves: curves
 };
 
-},{"safer-buffer":160}],162:[function(require,module,exports){
+},{"safer-buffer":159}],161:[function(require,module,exports){
 // Copyright 2016 Joyent, Inc.
 
 module.exports = Certificate;
@@ -30745,6 +30690,37 @@ Certificate.prototype.isSignedBy = function (issuerCert) {
 	}
 
 	return (this.isSignedByKey(issuerCert.subjectKey));
+};
+
+Certificate.prototype.getExtension = function (keyOrOid) {
+	assert.string(keyOrOid, 'keyOrOid');
+	var ext = this.getExtensions().filter(function (maybeExt) {
+		if (maybeExt.format === 'x509')
+			return (maybeExt.oid === keyOrOid);
+		if (maybeExt.format === 'openssh')
+			return (maybeExt.name === keyOrOid);
+		return (false);
+	})[0];
+	return (ext);
+};
+
+Certificate.prototype.getExtensions = function () {
+	var exts = [];
+	var x509 = this.signatures.x509;
+	if (x509 && x509.extras && x509.extras.exts) {
+		x509.extras.exts.forEach(function (ext) {
+			ext.format = 'x509';
+			exts.push(ext);
+		});
+	}
+	var openssh = this.signatures.openssh;
+	if (openssh && openssh.exts) {
+		openssh.exts.forEach(function (ext) {
+			ext.format = 'openssh';
+			exts.push(ext);
+		});
+	}
+	return (exts);
 };
 
 Certificate.prototype.isSignedByKey = function (issuerKey) {
@@ -30997,14 +30973,15 @@ Certificate.isCertificate = function (obj, ver) {
 /*
  * API versions for Certificate:
  * [1,0] -- initial ver
+ * [1,1] -- openssh format now unpacks extensions
  */
-Certificate.prototype._sshpkApiVersion = [1, 0];
+Certificate.prototype._sshpkApiVersion = [1, 1];
 
 Certificate._oldVersionDetect = function (obj) {
 	return ([1, 0]);
 };
 
-},{"./algs":161,"./errors":165,"./fingerprint":166,"./formats/openssh-cert":169,"./formats/x509":177,"./formats/x509-pem":176,"./identity":178,"./key":180,"./private-key":181,"./signature":182,"./utils":184,"assert-plus":72,"crypto":undefined,"safer-buffer":160,"util":undefined}],163:[function(require,module,exports){
+},{"./algs":160,"./errors":164,"./fingerprint":165,"./formats/openssh-cert":168,"./formats/x509":177,"./formats/x509-pem":176,"./identity":178,"./key":180,"./private-key":181,"./signature":182,"./utils":184,"assert-plus":72,"crypto":undefined,"safer-buffer":159,"util":undefined}],162:[function(require,module,exports){
 // Copyright 2017 Joyent, Inc.
 
 module.exports = {
@@ -31018,14 +30995,16 @@ var crypto = require('crypto');
 var Buffer = require('safer-buffer').Buffer;
 var algs = require('./algs');
 var utils = require('./utils');
-var nacl;
+var nacl = require('tweetnacl');
 
 var Key = require('./key');
 var PrivateKey = require('./private-key');
 
 var CRYPTO_HAVE_ECDH = (crypto.createECDH !== undefined);
 
-var ecdh, ec, jsbn;
+var ecdh = require('ecc-jsbn');
+var ec = require('ecc-jsbn/lib/ec');
+var jsbn = require('jsbn').BigInteger;
 
 function DiffieHellman(key) {
 	utils.assertCompatible(key, Key, [1, 4], 'key');
@@ -31050,13 +31029,6 @@ function DiffieHellman(key) {
 
 	} else if (key.type === 'ecdsa') {
 		if (!CRYPTO_HAVE_ECDH) {
-			if (ecdh === undefined)
-				ecdh = require('ecc-jsbn');
-			if (ec === undefined)
-				ec = require('ecc-jsbn/lib/ec');
-			if (jsbn === undefined)
-				jsbn = require('jsbn').BigInteger;
-
 			this._ecParams = new X9ECParameters(this._curve);
 
 			if (this._isPriv) {
@@ -31083,9 +31055,6 @@ function DiffieHellman(key) {
 		this._dh.setPublicKey(key.part.Q.data);
 
 	} else if (key.type === 'curve25519') {
-		if (nacl === undefined)
-			nacl = require('tweetnacl');
-
 		if (this._isPriv) {
 			utils.assertCompatible(key, PrivateKey, [1, 5], 'key');
 			this._priv = key.part.k.data;
@@ -31328,9 +31297,6 @@ ECPrivate.prototype.deriveSharedSecret = function (pubKey) {
 };
 
 function generateED25519() {
-	if (nacl === undefined)
-		nacl = require('tweetnacl');
-
 	var pair = nacl.sign.keyPair();
 	var priv = Buffer.from(pair.secretKey);
 	var pub = Buffer.from(pair.publicKey);
@@ -31381,12 +31347,6 @@ function generateECDSA(curve) {
 		});
 		return (key);
 	} else {
-		if (ecdh === undefined)
-			ecdh = require('ecc-jsbn');
-		if (ec === undefined)
-			ec = require('ecc-jsbn/lib/ec');
-		if (jsbn === undefined)
-			jsbn = require('jsbn').BigInteger;
 
 		var ecParams = new X9ECParameters(curve);
 
@@ -31420,7 +31380,7 @@ function generateECDSA(curve) {
 	}
 }
 
-},{"./algs":161,"./key":180,"./private-key":181,"./utils":184,"assert-plus":72,"crypto":undefined,"ecc-jsbn":93,"ecc-jsbn/lib/ec":94,"jsbn":131,"safer-buffer":160,"tweetnacl":193}],164:[function(require,module,exports){
+},{"./algs":160,"./key":180,"./private-key":181,"./utils":184,"assert-plus":72,"crypto":undefined,"ecc-jsbn":92,"ecc-jsbn/lib/ec":93,"jsbn":130,"safer-buffer":159,"tweetnacl":193}],163:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = {
@@ -31428,7 +31388,7 @@ module.exports = {
 	Signer: Signer
 };
 
-var nacl;
+var nacl = require('tweetnacl');
 var stream = require('stream');
 var util = require('util');
 var assert = require('assert-plus');
@@ -31436,9 +31396,6 @@ var Buffer = require('safer-buffer').Buffer;
 var Signature = require('./signature');
 
 function Verifier(key, hashAlgo) {
-	if (nacl === undefined)
-		nacl = require('tweetnacl');
-
 	if (hashAlgo.toLowerCase() !== 'sha512')
 		throw (new Error('ED25519 only supports the use of ' +
 		    'SHA-512 hashes'));
@@ -31484,9 +31441,6 @@ Verifier.prototype.verify = function (signature, fmt) {
 };
 
 function Signer(key, hashAlgo) {
-	if (nacl === undefined)
-		nacl = require('tweetnacl');
-
 	if (hashAlgo.toLowerCase() !== 'sha512')
 		throw (new Error('ED25519 only supports the use of ' +
 		    'SHA-512 hashes'));
@@ -31520,7 +31474,7 @@ Signer.prototype.sign = function () {
 	return (sigObj);
 };
 
-},{"./signature":182,"assert-plus":72,"safer-buffer":160,"stream":undefined,"tweetnacl":193,"util":undefined}],165:[function(require,module,exports){
+},{"./signature":182,"assert-plus":72,"safer-buffer":159,"stream":undefined,"tweetnacl":193,"util":undefined}],164:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 var assert = require('assert-plus');
@@ -31606,8 +31560,8 @@ module.exports = {
 	CertificateParseError: CertificateParseError
 };
 
-},{"assert-plus":72,"util":undefined}],166:[function(require,module,exports){
-// Copyright 2015 Joyent, Inc.
+},{"assert-plus":72,"util":undefined}],165:[function(require,module,exports){
+// Copyright 2018 Joyent, Inc.
 
 module.exports = Fingerprint;
 
@@ -31617,6 +31571,7 @@ var algs = require('./algs');
 var crypto = require('crypto');
 var errs = require('./errors');
 var Key = require('./key');
+var PrivateKey = require('./private-key');
 var Certificate = require('./certificate');
 var utils = require('./utils');
 
@@ -31635,11 +31590,12 @@ function Fingerprint(opts) {
 
 	this.hash = opts.hash;
 	this.type = opts.type;
+	this.hashType = opts.hashType;
 }
 
 Fingerprint.prototype.toString = function (format) {
 	if (format === undefined) {
-		if (this.algorithm === 'md5')
+		if (this.algorithm === 'md5' || this.hashType === 'spki')
 			format = 'hex';
 		else
 			format = 'base64';
@@ -31648,8 +31604,12 @@ Fingerprint.prototype.toString = function (format) {
 
 	switch (format) {
 	case 'hex':
+		if (this.hashType === 'spki')
+			return (this.hash.toString('hex'));
 		return (addColons(this.hash.toString('hex')));
 	case 'base64':
+		if (this.hashType === 'spki')
+			return (this.hash.toString('base64'));
 		return (sshBase64Format(this.algorithm,
 		    this.hash.toString('base64')));
 	default:
@@ -31659,14 +31619,20 @@ Fingerprint.prototype.toString = function (format) {
 
 Fingerprint.prototype.matches = function (other) {
 	assert.object(other, 'key or certificate');
-	if (this.type === 'key') {
+	if (this.type === 'key' && this.hashType !== 'ssh') {
+		utils.assertCompatible(other, Key, [1, 7], 'key with spki');
+		if (PrivateKey.isPrivateKey(other)) {
+			utils.assertCompatible(other, PrivateKey, [1, 6],
+			    'privatekey with spki support');
+		}
+	} else if (this.type === 'key') {
 		utils.assertCompatible(other, Key, [1, 0], 'key');
 	} else {
 		utils.assertCompatible(other, Certificate, [1, 0],
 		    'certificate');
 	}
 
-	var theirHash = other.hash(this.algorithm);
+	var theirHash = other.hash(this.algorithm, this.hashType);
 	var theirHash2 = crypto.createHash(this.algorithm).
 	    update(theirHash).digest('base64');
 
@@ -31676,6 +31642,11 @@ Fingerprint.prototype.matches = function (other) {
 
 	return (this.hash2 === theirHash2);
 };
+
+/*JSSTYLED*/
+var base64RE = /^[A-Za-z0-9+\/=]+$/;
+/*JSSTYLED*/
+var hexRE = /^[a-fA-F0-9]+$/;
 
 Fingerprint.parse = function (fp, options) {
 	assert.string(fp, 'fingerprint');
@@ -31690,13 +31661,18 @@ Fingerprint.parse = function (fp, options) {
 		options = {};
 	if (options.enAlgs !== undefined)
 		enAlgs = options.enAlgs;
+	if (options.algorithms !== undefined)
+		enAlgs = options.algorithms;
 	assert.optionalArrayOfString(enAlgs, 'algorithms');
+
+	var hashType = 'ssh';
+	if (options.hashType !== undefined)
+		hashType = options.hashType;
+	assert.string(hashType, 'options.hashType');
 
 	var parts = fp.split(':');
 	if (parts.length == 2) {
 		alg = parts[0].toLowerCase();
-		/*JSSTYLED*/
-		var base64RE = /^[A-Za-z0-9+\/=]+$/;
 		if (!base64RE.test(parts[1]))
 			throw (new FingerprintFormatError(fp));
 		try {
@@ -31708,16 +31684,50 @@ Fingerprint.parse = function (fp, options) {
 		alg = 'md5';
 		if (parts[0].toLowerCase() === 'md5')
 			parts = parts.slice(1);
+		parts = parts.map(function (p) {
+			while (p.length < 2)
+				p = '0' + p;
+			if (p.length > 2)
+				throw (new FingerprintFormatError(fp));
+			return (p);
+		});
 		parts = parts.join('');
-		/*JSSTYLED*/
-		var md5RE = /^[a-fA-F0-9]+$/;
-		if (!md5RE.test(parts))
+		if (!hexRE.test(parts) || parts.length % 2 !== 0)
 			throw (new FingerprintFormatError(fp));
 		try {
 			hash = Buffer.from(parts, 'hex');
 		} catch (e) {
 			throw (new FingerprintFormatError(fp));
 		}
+	} else {
+		if (hexRE.test(fp)) {
+			hash = Buffer.from(fp, 'hex');
+		} else if (base64RE.test(fp)) {
+			hash = Buffer.from(fp, 'base64');
+		} else {
+			throw (new FingerprintFormatError(fp));
+		}
+
+		switch (hash.length) {
+		case 32:
+			alg = 'sha256';
+			break;
+		case 16:
+			alg = 'md5';
+			break;
+		case 20:
+			alg = 'sha1';
+			break;
+		case 64:
+			alg = 'sha512';
+			break;
+		default:
+			throw (new FingerprintFormatError(fp));
+		}
+
+		/* Plain hex/base64: guess it's probably SPKI unless told. */
+		if (options.hashType === undefined)
+			hashType = 'spki';
 	}
 
 	if (alg === undefined)
@@ -31735,7 +31745,8 @@ Fingerprint.parse = function (fp, options) {
 	return (new Fingerprint({
 		algorithm: alg,
 		hash: hash,
-		type: options.type || 'key'
+		type: options.type || 'key',
+		hashType: hashType
 	}));
 };
 
@@ -31761,8 +31772,9 @@ Fingerprint.isFingerprint = function (obj, ver) {
  * API versions for Fingerprint:
  * [1,0] -- initial ver
  * [1,1] -- first tagged ver
+ * [1,2] -- hashType and spki support
  */
-Fingerprint.prototype._sshpkApiVersion = [1, 1];
+Fingerprint.prototype._sshpkApiVersion = [1, 2];
 
 Fingerprint._oldVersionDetect = function (obj) {
 	assert.func(obj.toString);
@@ -31770,8 +31782,8 @@ Fingerprint._oldVersionDetect = function (obj) {
 	return ([1, 0]);
 };
 
-},{"./algs":161,"./certificate":162,"./errors":165,"./key":180,"./utils":184,"assert-plus":72,"crypto":undefined,"safer-buffer":160}],167:[function(require,module,exports){
-// Copyright 2015 Joyent, Inc.
+},{"./algs":160,"./certificate":161,"./errors":164,"./key":180,"./private-key":181,"./utils":184,"assert-plus":72,"crypto":undefined,"safer-buffer":159}],166:[function(require,module,exports){
+// Copyright 2018 Joyent, Inc.
 
 module.exports = {
 	read: read,
@@ -31788,6 +31800,7 @@ var pem = require('./pem');
 var ssh = require('./ssh');
 var rfc4253 = require('./rfc4253');
 var dnssec = require('./dnssec');
+var putty = require('./putty');
 
 var DNSSEC_PRIVKEY_HEADER_PREFIX = 'Private-key-format: v1';
 
@@ -31799,6 +31812,8 @@ function read(buf, options) {
 			return (ssh.read(buf, options));
 		if (buf.match(/^\s*ecdsa-/))
 			return (ssh.read(buf, options));
+		if (buf.match(/^putty-user-key-file-2:/i))
+			return (putty.read(buf, options));
 		if (findDNSSECHeader(buf))
 			return (dnssec.read(buf, options));
 		buf = Buffer.from(buf, 'binary');
@@ -31808,12 +31823,26 @@ function read(buf, options) {
 			return (pem.read(buf, options));
 		if (findSSHHeader(buf))
 			return (ssh.read(buf, options));
+		if (findPuTTYHeader(buf))
+			return (putty.read(buf, options));
 		if (findDNSSECHeader(buf))
 			return (dnssec.read(buf, options));
 	}
 	if (buf.readUInt32BE(0) < buf.length)
 		return (rfc4253.read(buf, options));
 	throw (new Error('Failed to auto-detect format of key'));
+}
+
+function findPuTTYHeader(buf) {
+	var offset = 0;
+	while (offset < buf.length &&
+	    (buf[offset] === 32 || buf[offset] === 10 || buf[offset] === 9))
+		++offset;
+	if (offset + 22 <= buf.length &&
+	    buf.slice(offset, offset + 22).toString('ascii').toLowerCase() ===
+	    'putty-user-key-file-2:')
+		return (true);
+	return (false);
 }
 
 function findSSHHeader(buf) {
@@ -31879,7 +31908,7 @@ function write(key, options) {
 	throw (new Error('"auto" format cannot be used for writing'));
 }
 
-},{"../key":180,"../private-key":181,"../utils":184,"./dnssec":168,"./pem":170,"./rfc4253":173,"./ssh":175,"assert-plus":72,"safer-buffer":160}],168:[function(require,module,exports){
+},{"../key":180,"../private-key":181,"../utils":184,"./dnssec":167,"./pem":169,"./putty":172,"./rfc4253":173,"./ssh":175,"assert-plus":72,"safer-buffer":159}],167:[function(require,module,exports){
 // Copyright 2017 Joyent, Inc.
 
 module.exports = {
@@ -32168,7 +32197,7 @@ function write(key, options) {
 	}
 }
 
-},{"../dhe":163,"../key":180,"../private-key":181,"../ssh-buffer":183,"../utils":184,"assert-plus":72,"safer-buffer":160}],169:[function(require,module,exports){
+},{"../dhe":162,"../key":180,"../private-key":181,"../ssh-buffer":183,"../utils":184,"assert-plus":72,"safer-buffer":159}],168:[function(require,module,exports){
 // Copyright 2017 Joyent, Inc.
 
 module.exports = {
@@ -32293,8 +32322,23 @@ function fromBuffer(data, algo, partial) {
 	cert.validFrom = int64ToDate(sshbuf.readInt64());
 	cert.validUntil = int64ToDate(sshbuf.readInt64());
 
-	cert.signatures.openssh.critical = sshbuf.readBuffer();
-	cert.signatures.openssh.exts = sshbuf.readBuffer();
+	var exts = [];
+	var extbuf = new SSHBuffer({ buffer: sshbuf.readBuffer() });
+	var ext;
+	while (!extbuf.atEnd()) {
+		ext = { critical: true };
+		ext.name = extbuf.readString();
+		ext.data = extbuf.readBuffer();
+		exts.push(ext);
+	}
+	extbuf = new SSHBuffer({ buffer: sshbuf.readBuffer() });
+	while (!extbuf.atEnd()) {
+		ext = { critical: false };
+		ext.name = extbuf.readString();
+		ext.data = extbuf.readBuffer();
+		exts.push(ext);
+	}
+	cert.signatures.openssh.exts = exts;
 
 	/* reserved */
 	sshbuf.readBuffer();
@@ -32449,13 +32493,27 @@ function toBuffer(cert, noSig) {
 	buf.writeInt64(dateToInt64(cert.validFrom));
 	buf.writeInt64(dateToInt64(cert.validUntil));
 
-	if (sig.critical === undefined)
-		sig.critical = Buffer.alloc(0);
-	buf.writeBuffer(sig.critical);
+	var exts = sig.exts;
+	if (exts === undefined)
+		exts = [];
 
-	if (sig.exts === undefined)
-		sig.exts = Buffer.alloc(0);
-	buf.writeBuffer(sig.exts);
+	var extbuf = new SSHBuffer({});
+	exts.forEach(function (ext) {
+		if (ext.critical !== true)
+			return;
+		extbuf.writeString(ext.name);
+		extbuf.writeBuffer(ext.data);
+	});
+	buf.writeBuffer(extbuf.toBuffer());
+
+	extbuf = new SSHBuffer({});
+	exts.forEach(function (ext) {
+		if (ext.critical === true)
+			return;
+		extbuf.writeString(ext.name);
+		extbuf.writeBuffer(ext.data);
+	});
+	buf.writeBuffer(extbuf.toBuffer());
 
 	/* reserved */
 	buf.writeBuffer(Buffer.alloc(0));
@@ -32493,8 +32551,8 @@ function getCertType(key) {
 	throw (new Error('Unsupported key type ' + key.type));
 }
 
-},{"../algs":161,"../certificate":162,"../identity":178,"../key":180,"../private-key":181,"../signature":182,"../ssh-buffer":183,"../utils":184,"./rfc4253":173,"assert-plus":72,"crypto":undefined,"safer-buffer":160}],170:[function(require,module,exports){
-// Copyright 2015 Joyent, Inc.
+},{"../algs":160,"../certificate":161,"../identity":178,"../key":180,"../private-key":181,"../signature":182,"../ssh-buffer":183,"../utils":184,"./rfc4253":173,"assert-plus":72,"crypto":undefined,"safer-buffer":159}],169:[function(require,module,exports){
+// Copyright 2018 Joyent, Inc.
 
 module.exports = {
 	read: read,
@@ -32517,6 +32575,29 @@ var rfc4253 = require('./rfc4253');
 
 var errors = require('../errors');
 
+var OID_PBES2 = '1.2.840.113549.1.5.13';
+var OID_PBKDF2 = '1.2.840.113549.1.5.12';
+
+var OID_TO_CIPHER = {
+	'1.2.840.113549.3.7': '3des-cbc',
+	'2.16.840.1.101.3.4.1.2': 'aes128-cbc',
+	'2.16.840.1.101.3.4.1.42': 'aes256-cbc'
+};
+var CIPHER_TO_OID = {};
+Object.keys(OID_TO_CIPHER).forEach(function (k) {
+	CIPHER_TO_OID[OID_TO_CIPHER[k]] = k;
+});
+
+var OID_TO_HASH = {
+	'1.2.840.113549.2.7': 'sha1',
+	'1.2.840.113549.2.9': 'sha256',
+	'1.2.840.113549.2.11': 'sha512'
+};
+var HASH_TO_OID = {};
+Object.keys(OID_TO_HASH).forEach(function (k) {
+	HASH_TO_OID[OID_TO_HASH[k]] = k;
+});
+
 /*
  * For reading we support both PKCS#1 and PKCS#8. If we find a private key,
  * we just take the public component of it and use that.
@@ -32528,14 +32609,22 @@ function read(buf, options, forceType) {
 		buf = buf.toString('ascii');
 	}
 
-	var lines = buf.trim().split('\n');
+	var lines = buf.trim().split(/[\r\n]+/g);
 
-	var m = lines[0].match(/*JSSTYLED*/
-	    /[-]+[ ]*BEGIN ([A-Z0-9][A-Za-z0-9]+ )?(PUBLIC|PRIVATE) KEY[ ]*[-]+/);
+	var m;
+	var si = -1;
+	while (!m && si < lines.length) {
+		m = lines[++si].match(/*JSSTYLED*/
+		    /[-]+[ ]*BEGIN ([A-Z0-9][A-Za-z0-9]+ )?(PUBLIC|PRIVATE) KEY[ ]*[-]+/);
+	}
 	assert.ok(m, 'invalid PEM header');
 
-	var m2 = lines[lines.length - 1].match(/*JSSTYLED*/
-	    /[-]+[ ]*END ([A-Z0-9][A-Za-z0-9]+ )?(PUBLIC|PRIVATE) KEY[ ]*[-]+/);
+	var m2;
+	var ei = lines.length;
+	while (!m2 && ei > 0) {
+		m2 = lines[--ei].match(/*JSSTYLED*/
+		    /[-]+[ ]*END ([A-Z0-9][A-Za-z0-9]+ )?(PUBLIC|PRIVATE) KEY[ ]*[-]+/);
+	}
 	assert.ok(m2, 'invalid PEM footer');
 
 	/* Begin and end banners must match key type */
@@ -32549,6 +32638,8 @@ function read(buf, options, forceType) {
 		alg = m[1].trim();
 	}
 
+	lines = lines.slice(si, ei + 1);
+
 	var headers = {};
 	while (true) {
 		lines = lines.slice(1);
@@ -32558,6 +32649,10 @@ function read(buf, options, forceType) {
 			break;
 		headers[m[1].toLowerCase()] = m[2];
 	}
+
+	/* Chop off the first and last lines */
+	lines = lines.slice(0, -1).join('');
+	buf = Buffer.from(lines, 'base64');
 
 	var cipher, key, iv;
 	if (headers['proc-type']) {
@@ -32581,9 +32676,70 @@ function read(buf, options, forceType) {
 		}
 	}
 
-	/* Chop off the first and last lines */
-	lines = lines.slice(0, -1).join('');
-	buf = Buffer.from(lines, 'base64');
+	if (alg && alg.toLowerCase() === 'encrypted') {
+		var eder = new asn1.BerReader(buf);
+		var pbesEnd;
+		eder.readSequence();
+
+		eder.readSequence();
+		pbesEnd = eder.offset + eder.length;
+
+		var method = eder.readOID();
+		if (method !== OID_PBES2) {
+			throw (new Error('Unsupported PEM/PKCS8 encryption ' +
+			    'scheme: ' + method));
+		}
+
+		eder.readSequence();	/* PBES2-params */
+
+		eder.readSequence();	/* keyDerivationFunc */
+		var kdfEnd = eder.offset + eder.length;
+		var kdfOid = eder.readOID();
+		if (kdfOid !== OID_PBKDF2)
+			throw (new Error('Unsupported PBES2 KDF: ' + kdfOid));
+		eder.readSequence();
+		var salt = eder.readString(asn1.Ber.OctetString, true);
+		var iterations = eder.readInt();
+		var hashAlg = 'sha1';
+		if (eder.offset < kdfEnd) {
+			eder.readSequence();
+			var hashAlgOid = eder.readOID();
+			hashAlg = OID_TO_HASH[hashAlgOid];
+			if (hashAlg === undefined) {
+				throw (new Error('Unsupported PBKDF2 hash: ' +
+				    hashAlgOid));
+			}
+		}
+		eder._offset = kdfEnd;
+
+		eder.readSequence();	/* encryptionScheme */
+		var cipherOid = eder.readOID();
+		cipher = OID_TO_CIPHER[cipherOid];
+		if (cipher === undefined) {
+			throw (new Error('Unsupported PBES2 cipher: ' +
+			    cipherOid));
+		}
+		iv = eder.readString(asn1.Ber.OctetString, true);
+
+		eder._offset = pbesEnd;
+		buf = eder.readString(asn1.Ber.OctetString, true);
+
+		if (typeof (options.passphrase) === 'string') {
+			options.passphrase = Buffer.from(
+			    options.passphrase, 'utf-8');
+		}
+		if (!Buffer.isBuffer(options.passphrase)) {
+			throw (new errors.KeyEncryptedError(
+			    options.filename, 'PEM'));
+		}
+
+		var cinfo = utils.opensshCipherInfo(cipher);
+
+		cipher = cinfo.opensslName;
+		key = utils.pbkdf2(hashAlg, salt, iterations, cinfo.keySize,
+		    options.passphrase);
+		alg = undefined;
+	}
 
 	if (cipher && key && iv) {
 		var cipherStream = crypto.createDecipheriv(cipher, key, iv);
@@ -32687,7 +32843,7 @@ function write(key, options, type) {
 	return (buf.slice(0, o));
 }
 
-},{"../algs":161,"../errors":165,"../key":180,"../private-key":181,"../utils":184,"./pkcs1":171,"./pkcs8":172,"./rfc4253":173,"./ssh-private":174,"asn1":71,"assert-plus":72,"crypto":undefined,"safer-buffer":160}],171:[function(require,module,exports){
+},{"../algs":160,"../errors":164,"../key":180,"../private-key":181,"../utils":184,"./pkcs1":170,"./pkcs8":171,"./rfc4253":173,"./ssh-private":174,"asn1":71,"assert-plus":72,"crypto":undefined,"safer-buffer":159}],170:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = {
@@ -33062,14 +33218,15 @@ function writePkcs1EdDSAPublic(der, key) {
 	throw (new Error('Public keys are not supported for EdDSA PKCS#1'));
 }
 
-},{"../algs":161,"../key":180,"../private-key":181,"../utils":184,"./pem":170,"./pkcs8":172,"asn1":71,"assert-plus":72,"safer-buffer":160}],172:[function(require,module,exports){
-// Copyright 2015 Joyent, Inc.
+},{"../algs":160,"../key":180,"../private-key":181,"../utils":184,"./pem":169,"./pkcs8":171,"asn1":71,"assert-plus":72,"safer-buffer":159}],171:[function(require,module,exports){
+// Copyright 2018 Joyent, Inc.
 
 module.exports = {
 	read: read,
 	readPkcs8: readPkcs8,
 	write: write,
 	writePkcs8: writePkcs8,
+	pkcs8ToBuffer: pkcs8ToBuffer,
 
 	readECDSACurve: readECDSACurve,
 	writeECDSACurve: writeECDSACurve
@@ -33365,10 +33522,22 @@ function readPkcs8ECDSAPrivate(der) {
 	assert.equal(version[0], 1, 'unknown version of ECDSA key');
 
 	var d = der.readString(asn1.Ber.OctetString, true);
-	der.readSequence(0xa1);
+	var Q;
 
-	var Q = der.readString(asn1.Ber.BitString, true);
-	Q = utils.ecNormalize(Q);
+	if (der.peek() == 0xa0) {
+		der.readSequence(0xa0);
+		der._offset += der.length;
+	}
+	if (der.peek() == 0xa1) {
+		der.readSequence(0xa1);
+		Q = der.readString(asn1.Ber.BitString, true);
+		Q = utils.ecNormalize(Q);
+	}
+
+	if (Q === undefined) {
+		var pub = utils.publicFromPrivateECDSA(curveName, d);
+		Q = pub.part.Q.data;
+	}
 
 	var key = {
 		type: 'ecdsa',
@@ -33475,6 +33644,12 @@ function readPkcs8X25519Private(der) {
 	};
 
 	return (new PrivateKey(key));
+}
+
+function pkcs8ToBuffer(key) {
+	var der = new asn1.BerWriter();
+	writePkcs8(der, key);
+	return (der.buffer);
 }
 
 function writePkcs8(der, key) {
@@ -33676,7 +33851,108 @@ function writePkcs8EdDSAPrivate(key, der) {
 	der.endSequence();
 }
 
-},{"../algs":161,"../key":180,"../private-key":181,"../utils":184,"./pem":170,"asn1":71,"assert-plus":72,"safer-buffer":160}],173:[function(require,module,exports){
+},{"../algs":160,"../key":180,"../private-key":181,"../utils":184,"./pem":169,"asn1":71,"assert-plus":72,"safer-buffer":159}],172:[function(require,module,exports){
+// Copyright 2018 Joyent, Inc.
+
+module.exports = {
+	read: read,
+	write: write
+};
+
+var assert = require('assert-plus');
+var Buffer = require('safer-buffer').Buffer;
+var rfc4253 = require('./rfc4253');
+var Key = require('../key');
+
+var errors = require('../errors');
+
+function read(buf, options) {
+	var lines = buf.toString('ascii').split(/[\r\n]+/);
+	var found = false;
+	var parts;
+	var si = 0;
+	while (si < lines.length) {
+		parts = splitHeader(lines[si++]);
+		if (parts &&
+		    parts[0].toLowerCase() === 'putty-user-key-file-2') {
+			found = true;
+			break;
+		}
+	}
+	if (!found) {
+		throw (new Error('No PuTTY format first line found'));
+	}
+	var alg = parts[1];
+
+	parts = splitHeader(lines[si++]);
+	assert.equal(parts[0].toLowerCase(), 'encryption');
+
+	parts = splitHeader(lines[si++]);
+	assert.equal(parts[0].toLowerCase(), 'comment');
+	var comment = parts[1];
+
+	parts = splitHeader(lines[si++]);
+	assert.equal(parts[0].toLowerCase(), 'public-lines');
+	var publicLines = parseInt(parts[1], 10);
+	if (!isFinite(publicLines) || publicLines < 0 ||
+	    publicLines > lines.length) {
+		throw (new Error('Invalid public-lines count'));
+	}
+
+	var publicBuf = Buffer.from(
+	    lines.slice(si, si + publicLines).join(''), 'base64');
+	var keyType = rfc4253.algToKeyType(alg);
+	var key = rfc4253.read(publicBuf);
+	if (key.type !== keyType) {
+		throw (new Error('Outer key algorithm mismatch'));
+	}
+	key.comment = comment;
+	return (key);
+}
+
+function splitHeader(line) {
+	var idx = line.indexOf(':');
+	if (idx === -1)
+		return (null);
+	var header = line.slice(0, idx);
+	++idx;
+	while (line[idx] === ' ')
+		++idx;
+	var rest = line.slice(idx);
+	return ([header, rest]);
+}
+
+function write(key, options) {
+	assert.object(key);
+	if (!Key.isKey(key))
+		throw (new Error('Must be a public key'));
+
+	var alg = rfc4253.keyTypeToAlg(key);
+	var buf = rfc4253.write(key);
+	var comment = key.comment || '';
+
+	var b64 = buf.toString('base64');
+	var lines = wrap(b64, 64);
+
+	lines.unshift('Public-Lines: ' + lines.length);
+	lines.unshift('Comment: ' + comment);
+	lines.unshift('Encryption: none');
+	lines.unshift('PuTTY-User-Key-File-2: ' + alg);
+
+	return (Buffer.from(lines.join('\n') + '\n'));
+}
+
+function wrap(txt, len) {
+	var lines = [];
+	var pos = 0;
+	while (pos < txt.length) {
+		lines.push(txt.slice(pos, pos + 64));
+		pos += 64;
+	}
+	return (lines);
+}
+
+},{"../errors":164,"../key":180,"./rfc4253":173,"assert-plus":72,"safer-buffer":159}],173:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = {
@@ -33844,7 +34120,7 @@ function write(key, options) {
 	return (buf.toBuffer());
 }
 
-},{"../algs":161,"../key":180,"../private-key":181,"../ssh-buffer":183,"../utils":184,"assert-plus":72,"safer-buffer":160}],174:[function(require,module,exports){
+},{"../algs":160,"../key":180,"../private-key":181,"../ssh-buffer":183,"../utils":184,"assert-plus":72,"safer-buffer":159}],174:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = {
@@ -34108,7 +34384,7 @@ function write(key, options) {
 	return (buf.slice(0, o));
 }
 
-},{"../algs":161,"../errors":165,"../key":180,"../private-key":181,"../ssh-buffer":183,"../utils":184,"./pem":170,"./rfc4253":173,"asn1":71,"assert-plus":72,"bcrypt-pbkdf":86,"crypto":undefined,"safer-buffer":160}],175:[function(require,module,exports){
+},{"../algs":160,"../errors":164,"../key":180,"../private-key":181,"../ssh-buffer":183,"../utils":184,"./pem":169,"./rfc4253":173,"asn1":71,"assert-plus":72,"bcrypt-pbkdf":86,"crypto":undefined,"safer-buffer":159}],175:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = {
@@ -34225,7 +34501,7 @@ function write(key, options) {
 	return (Buffer.from(parts.join(' ')));
 }
 
-},{"../key":180,"../private-key":181,"../utils":184,"./rfc4253":173,"./ssh-private":174,"assert-plus":72,"safer-buffer":160}],176:[function(require,module,exports){
+},{"../key":180,"../private-key":181,"../utils":184,"./rfc4253":173,"./ssh-private":174,"assert-plus":72,"safer-buffer":159}],176:[function(require,module,exports){
 // Copyright 2016 Joyent, Inc.
 
 var x509 = require('./x509');
@@ -34257,13 +34533,23 @@ function read(buf, options) {
 
 	var lines = buf.trim().split(/[\r\n]+/g);
 
-	var m = lines[0].match(/*JSSTYLED*/
-	    /[-]+[ ]*BEGIN CERTIFICATE[ ]*[-]+/);
+	var m;
+	var si = -1;
+	while (!m && si < lines.length) {
+		m = lines[++si].match(/*JSSTYLED*/
+		    /[-]+[ ]*BEGIN CERTIFICATE[ ]*[-]+/);
+	}
 	assert.ok(m, 'invalid PEM header');
 
-	var m2 = lines[lines.length - 1].match(/*JSSTYLED*/
-	    /[-]+[ ]*END CERTIFICATE[ ]*[-]+/);
+	var m2;
+	var ei = lines.length;
+	while (!m2 && ei > 0) {
+		m2 = lines[--ei].match(/*JSSTYLED*/
+		    /[-]+[ ]*END CERTIFICATE[ ]*[-]+/);
+	}
 	assert.ok(m2, 'invalid PEM footer');
+
+	lines = lines.slice(si, ei + 1);
 
 	var headers = {};
 	while (true) {
@@ -34305,7 +34591,7 @@ function write(cert, options) {
 	return (buf.slice(0, o));
 }
 
-},{"../algs":161,"../certificate":162,"../identity":178,"../key":180,"../private-key":181,"../signature":182,"../utils":184,"./pem":170,"./x509":177,"asn1":71,"assert-plus":72,"safer-buffer":160}],177:[function(require,module,exports){
+},{"../algs":160,"../certificate":161,"../identity":178,"../key":180,"../private-key":181,"../signature":182,"../utils":184,"./pem":169,"./x509":177,"asn1":71,"assert-plus":72,"safer-buffer":159}],177:[function(require,module,exports){
 // Copyright 2017 Joyent, Inc.
 
 module.exports = {
@@ -34511,6 +34797,14 @@ function readDate(der) {
 	}
 }
 
+function writeDate(der, date) {
+	if (date.getUTCFullYear() >= 2050 || date.getUTCFullYear() < 1950) {
+		der.writeString(dateToGTime(date), asn1.Ber.GeneralizedTime);
+	} else {
+		der.writeString(dateToUTCTime(date), asn1.Ber.UTCTime);
+	}
+}
+
 /* RFC5280, section 4.2.1.6 (GeneralName type) */
 var ALTNAME = {
 	OtherName: Local(0),
@@ -34550,7 +34844,8 @@ function readExtension(cert, buf, der) {
 	var extId = der.readOID();
 	var id;
 	var sig = cert.signatures.x509;
-	sig.extras.exts = [];
+	if (!sig.extras.exts)
+		sig.extras.exts = [];
 
 	var critical;
 	if (der.peek() === asn1.Ber.Boolean)
@@ -34722,9 +35017,11 @@ function gTimeToDate(t) {
 	return (d);
 }
 
-function zeroPad(n) {
+function zeroPad(n, m) {
+	if (m === undefined)
+		m = 2;
 	var s = '' + n;
-	while (s.length < 2)
+	while (s.length < m)
 		s = '0' + s;
 	return (s);
 }
@@ -34732,6 +35029,18 @@ function zeroPad(n) {
 function dateToUTCTime(d) {
 	var s = '';
 	s += zeroPad(d.getUTCFullYear() % 100);
+	s += zeroPad(d.getUTCMonth() + 1);
+	s += zeroPad(d.getUTCDate());
+	s += zeroPad(d.getUTCHours());
+	s += zeroPad(d.getUTCMinutes());
+	s += zeroPad(d.getUTCSeconds());
+	s += 'Z';
+	return (s);
+}
+
+function dateToGTime(d) {
+	var s = '';
+	s += zeroPad(d.getUTCFullYear(), 4);
 	s += zeroPad(d.getUTCMonth() + 1);
 	s += zeroPad(d.getUTCDate());
 	s += zeroPad(d.getUTCHours());
@@ -34839,8 +35148,8 @@ function writeTBSCert(cert, der) {
 	cert.issuer.toAsn1(der);
 
 	der.startSequence();
-	der.writeString(dateToUTCTime(cert.validFrom), asn1.Ber.UTCTime);
-	der.writeString(dateToUTCTime(cert.validUntil), asn1.Ber.UTCTime);
+	writeDate(der, cert.validFrom);
+	writeDate(der, cert.validUntil);
 	der.endSequence();
 
 	var subject = cert.subjects[0];
@@ -35036,7 +35345,7 @@ function writeBitField(setBits, bitIndex) {
 	return (bits);
 }
 
-},{"../algs":161,"../certificate":162,"../identity":178,"../key":180,"../private-key":181,"../signature":182,"../utils":184,"./pem":170,"./pkcs8":172,"asn1":71,"assert-plus":72,"safer-buffer":160}],178:[function(require,module,exports){
+},{"../algs":160,"../certificate":161,"../identity":178,"../key":180,"../private-key":181,"../signature":182,"../utils":184,"./pem":169,"./pkcs8":171,"asn1":71,"assert-plus":72,"safer-buffer":159}],178:[function(require,module,exports){
 // Copyright 2017 Joyent, Inc.
 
 module.exports = Identity;
@@ -35063,9 +35372,21 @@ oids.l = '2.5.4.7';
 oids.s = '2.5.4.8';
 oids.c = '2.5.4.6';
 oids.sn = '2.5.4.4';
+oids.postalCode = '2.5.4.17';
+oids.serialNumber = '2.5.4.5';
+oids.street = '2.5.4.9';
+oids.x500UniqueIdentifier = '2.5.4.45';
+oids.role = '2.5.4.72';
+oids.telephoneNumber = '2.5.4.20';
+oids.description = '2.5.4.13';
 oids.dc = '0.9.2342.19200300.100.1.25';
 oids.uid = '0.9.2342.19200300.100.1.1';
 oids.mail = '0.9.2342.19200300.100.1.3';
+oids.title = '2.5.4.12';
+oids.gn = '2.5.4.42';
+oids.initials = '2.5.4.43';
+oids.pseudonym = '2.5.4.65';
+oids.emailAddress = '1.2.840.113549.1.9.1';
 
 var unoids = {};
 Object.keys(oids).forEach(function (k) {
@@ -35152,8 +35473,37 @@ function Identity(opts) {
 
 Identity.prototype.toString = function () {
 	return (this.components.map(function (c) {
-		return (c.name.toUpperCase() + '=' + c.value);
+		var n = c.name.toUpperCase();
+		/*JSSTYLED*/
+		n = n.replace(/=/g, '\\=');
+		var v = c.value;
+		/*JSSTYLED*/
+		v = v.replace(/,/g, '\\,');
+		return (n + '=' + v);
 	}).join(', '));
+};
+
+Identity.prototype.get = function (name, asArray) {
+	assert.string(name, 'name');
+	var arr = this.componentLookup[name];
+	if (arr === undefined || arr.length === 0)
+		return (undefined);
+	if (!asArray && arr.length > 1)
+		throw (new Error('Multiple values for attribute ' + name));
+	if (!asArray)
+		return (arr[0].value);
+	return (arr.map(function (c) {
+		return (c.value);
+	}));
+};
+
+Identity.prototype.toArray = function (idx) {
+	return (this.components.map(function (c) {
+		return ({
+			name: c.name,
+			value: c.value
+		});
+	}));
 };
 
 /*
@@ -35263,15 +35613,58 @@ Identity.forEmail = function (email) {
 
 Identity.parseDN = function (dn) {
 	assert.string(dn, 'dn');
-	var parts = dn.split(',');
+	var parts = [''];
+	var idx = 0;
+	var rem = dn;
+	while (rem.length > 0) {
+		var m;
+		/*JSSTYLED*/
+		if ((m = /^,/.exec(rem)) !== null) {
+			parts[++idx] = '';
+			rem = rem.slice(m[0].length);
+		/*JSSTYLED*/
+		} else if ((m = /^\\,/.exec(rem)) !== null) {
+			parts[idx] += ',';
+			rem = rem.slice(m[0].length);
+		/*JSSTYLED*/
+		} else if ((m = /^\\./.exec(rem)) !== null) {
+			parts[idx] += m[0];
+			rem = rem.slice(m[0].length);
+		/*JSSTYLED*/
+		} else if ((m = /^[^\\,]+/.exec(rem)) !== null) {
+			parts[idx] += m[0];
+			rem = rem.slice(m[0].length);
+		} else {
+			throw (new Error('Failed to parse DN'));
+		}
+	}
 	var cmps = parts.map(function (c) {
 		c = c.trim();
 		var eqPos = c.indexOf('=');
-		var name = c.slice(0, eqPos).toLowerCase();
+		while (eqPos > 0 && c.charAt(eqPos - 1) === '\\')
+			eqPos = c.indexOf('=', eqPos + 1);
+		if (eqPos === -1) {
+			throw (new Error('Failed to parse DN'));
+		}
+		/*JSSTYLED*/
+		var name = c.slice(0, eqPos).toLowerCase().replace(/\\=/g, '=');
 		var value = c.slice(eqPos + 1);
 		return ({ name: name, value: value });
 	});
 	return (new Identity({ components: cmps }));
+};
+
+Identity.fromArray = function (components) {
+	assert.arrayOfObject(components, 'components');
+	components.forEach(function (cmp) {
+		assert.object(cmp, 'component');
+		assert.string(cmp.name, 'component.name');
+		if (!Buffer.isBuffer(cmp.value) &&
+		    !(typeof (cmp.value) === 'string')) {
+			throw (new Error('Invalid component value'));
+		}
+	});
+	return (new Identity({ components: components }));
 };
 
 Identity.parseAsn1 = function (der, top) {
@@ -35327,7 +35720,7 @@ Identity._oldVersionDetect = function (obj) {
 	return ([1, 0]);
 };
 
-},{"./algs":161,"./errors":165,"./fingerprint":166,"./signature":182,"./utils":184,"asn1":71,"assert-plus":72,"crypto":undefined,"safer-buffer":160,"util":undefined}],179:[function(require,module,exports){
+},{"./algs":160,"./errors":164,"./fingerprint":165,"./signature":182,"./utils":184,"asn1":71,"assert-plus":72,"crypto":undefined,"safer-buffer":159,"util":undefined}],179:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 var Key = require('./key');
@@ -35358,6 +35751,7 @@ module.exports = {
 	identityForHost: Identity.forHost,
 	identityForUser: Identity.forUser,
 	identityForEmail: Identity.forEmail,
+	identityFromArray: Identity.fromArray,
 
 	/* errors */
 	FingerprintFormatError: errs.FingerprintFormatError,
@@ -35368,8 +35762,8 @@ module.exports = {
 	CertificateParseError: errs.CertificateParseError
 };
 
-},{"./certificate":162,"./errors":165,"./fingerprint":166,"./identity":178,"./key":180,"./private-key":181,"./signature":182}],180:[function(require,module,exports){
-// Copyright 2017 Joyent, Inc.
+},{"./certificate":161,"./errors":164,"./fingerprint":165,"./identity":178,"./key":180,"./private-key":181,"./signature":182}],180:[function(require,module,exports){
+// Copyright 2018 Joyent, Inc.
 
 module.exports = Key;
 
@@ -35403,6 +35797,8 @@ formats['ssh'] = require('./formats/ssh');
 formats['ssh-private'] = require('./formats/ssh-private');
 formats['openssh'] = formats['ssh-private'];
 formats['dnssec'] = require('./formats/dnssec');
+formats['putty'] = require('./formats/putty');
+formats['ppk'] = formats['putty'];
 
 function Key(opts) {
 	assert.object(opts, 'options');
@@ -35469,28 +35865,44 @@ Key.prototype.toString = function (format, options) {
 	return (this.toBuffer(format, options).toString());
 };
 
-Key.prototype.hash = function (algo) {
+Key.prototype.hash = function (algo, type) {
 	assert.string(algo, 'algorithm');
+	assert.optionalString(type, 'type');
+	if (type === undefined)
+		type = 'ssh';
 	algo = algo.toLowerCase();
 	if (algs.hashAlgs[algo] === undefined)
 		throw (new InvalidAlgorithmError(algo));
 
-	if (this._hashCache[algo])
-		return (this._hashCache[algo]);
-	var hash = crypto.createHash(algo).
-	    update(this.toBuffer('rfc4253')).digest();
-	this._hashCache[algo] = hash;
+	var cacheKey = algo + '||' + type;
+	if (this._hashCache[cacheKey])
+		return (this._hashCache[cacheKey]);
+
+	var buf;
+	if (type === 'ssh') {
+		buf = this.toBuffer('rfc4253');
+	} else if (type === 'spki') {
+		buf = formats.pkcs8.pkcs8ToBuffer(this);
+	} else {
+		throw (new Error('Hash type ' + type + ' not supported'));
+	}
+	var hash = crypto.createHash(algo).update(buf).digest();
+	this._hashCache[cacheKey] = hash;
 	return (hash);
 };
 
-Key.prototype.fingerprint = function (algo) {
+Key.prototype.fingerprint = function (algo, type) {
 	if (algo === undefined)
 		algo = 'sha256';
+	if (type === undefined)
+		type = 'ssh';
 	assert.string(algo, 'algorithm');
+	assert.string(type, 'type');
 	var opts = {
 		type: 'key',
-		hash: this.hash(algo),
-		algorithm: algo
+		hash: this.hash(algo, type),
+		algorithm: algo,
+		hashType: type
 	};
 	return (new Fingerprint(opts));
 };
@@ -35628,8 +36040,9 @@ Key.isKey = function (obj, ver) {
  * [1,4] -- added ed support, createDH
  * [1,5] -- first explicitly tagged version
  * [1,6] -- changed ed25519 part names
+ * [1,7] -- spki hash types
  */
-Key.prototype._sshpkApiVersion = [1, 6];
+Key.prototype._sshpkApiVersion = [1, 7];
 
 Key._oldVersionDetect = function (obj) {
 	assert.func(obj.toBuffer);
@@ -35645,7 +36058,7 @@ Key._oldVersionDetect = function (obj) {
 	return ([1, 0]);
 };
 
-},{"./algs":161,"./dhe":163,"./ed-compat":164,"./errors":165,"./fingerprint":166,"./formats/auto":167,"./formats/dnssec":168,"./formats/pem":170,"./formats/pkcs1":171,"./formats/pkcs8":172,"./formats/rfc4253":173,"./formats/ssh":175,"./formats/ssh-private":174,"./private-key":181,"./signature":182,"./utils":184,"assert-plus":72,"crypto":undefined}],181:[function(require,module,exports){
+},{"./algs":160,"./dhe":162,"./ed-compat":163,"./errors":164,"./fingerprint":165,"./formats/auto":166,"./formats/dnssec":167,"./formats/pem":169,"./formats/pkcs1":170,"./formats/pkcs8":171,"./formats/putty":172,"./formats/rfc4253":173,"./formats/ssh":175,"./formats/ssh-private":174,"./private-key":181,"./signature":182,"./utils":184,"assert-plus":72,"crypto":undefined}],181:[function(require,module,exports){
 // Copyright 2017 Joyent, Inc.
 
 module.exports = PrivateKey;
@@ -35662,14 +36075,8 @@ var utils = require('./utils');
 var dhe = require('./dhe');
 var generateECDSA = dhe.generateECDSA;
 var generateED25519 = dhe.generateED25519;
-var edCompat;
-var nacl;
-
-try {
-	edCompat = require('./ed-compat');
-} catch (e) {
-	/* Just continue through, and bail out if we try to use it. */
-}
+var edCompat = require('./ed-compat');
+var nacl = require('tweetnacl');
 
 var Key = require('./key');
 
@@ -35708,8 +36115,12 @@ PrivateKey.prototype.toBuffer = function (format, options) {
 	return (formats[format].write(this, options));
 };
 
-PrivateKey.prototype.hash = function (algo) {
-	return (this.toPublic().hash(algo));
+PrivateKey.prototype.hash = function (algo, type) {
+	return (this.toPublic().hash(algo, type));
+};
+
+PrivateKey.prototype.fingerprint = function (algo, type) {
+	return (this.toPublic().fingerprint(algo, type));
 };
 
 PrivateKey.prototype.toPublic = function () {
@@ -35738,9 +36149,6 @@ PrivateKey.prototype.derive = function (newType) {
 	var priv, pub, pair;
 
 	if (this.type === 'ed25519' && newType === 'curve25519') {
-		if (nacl === undefined)
-			nacl = require('tweetnacl');
-
 		priv = this.part.k.data;
 		if (priv[0] === 0x00)
 			priv = priv.slice(1);
@@ -35756,9 +36164,6 @@ PrivateKey.prototype.derive = function (newType) {
 			]
 		}));
 	} else if (this.type === 'curve25519' && newType === 'ed25519') {
-		if (nacl === undefined)
-			nacl = require('tweetnacl');
-
 		priv = this.part.k.data;
 		if (priv[0] === 0x00)
 			priv = priv.slice(1);
@@ -35885,8 +36290,9 @@ PrivateKey.generate = function (type, options) {
  * [1,3] -- added derive, ed, createDH
  * [1,4] -- first tagged version
  * [1,5] -- changed ed25519 part names and format
+ * [1,6] -- type arguments for hash() and fingerprint()
  */
-PrivateKey.prototype._sshpkApiVersion = [1, 5];
+PrivateKey.prototype._sshpkApiVersion = [1, 6];
 
 PrivateKey._oldVersionDetect = function (obj) {
 	assert.func(obj.toPublic);
@@ -35900,7 +36306,7 @@ PrivateKey._oldVersionDetect = function (obj) {
 	return ([1, 0]);
 };
 
-},{"./algs":161,"./dhe":163,"./ed-compat":164,"./errors":165,"./fingerprint":166,"./formats/auto":167,"./formats/dnssec":168,"./formats/pem":170,"./formats/pkcs1":171,"./formats/pkcs8":172,"./formats/rfc4253":173,"./formats/ssh-private":174,"./key":180,"./signature":182,"./utils":184,"assert-plus":72,"crypto":undefined,"safer-buffer":160,"tweetnacl":193,"util":undefined}],182:[function(require,module,exports){
+},{"./algs":160,"./dhe":162,"./ed-compat":163,"./errors":164,"./fingerprint":165,"./formats/auto":166,"./formats/dnssec":167,"./formats/pem":169,"./formats/pkcs1":170,"./formats/pkcs8":171,"./formats/rfc4253":173,"./formats/ssh-private":174,"./key":180,"./signature":182,"./utils":184,"assert-plus":72,"crypto":undefined,"safer-buffer":159,"tweetnacl":193,"util":undefined}],182:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = Signature;
@@ -36216,7 +36622,7 @@ Signature._oldVersionDetect = function (obj) {
 	return ([1, 0]);
 };
 
-},{"./algs":161,"./errors":165,"./ssh-buffer":183,"./utils":184,"asn1":71,"assert-plus":72,"crypto":undefined,"safer-buffer":160}],183:[function(require,module,exports){
+},{"./algs":160,"./errors":164,"./ssh-buffer":183,"./utils":184,"asn1":71,"assert-plus":72,"crypto":undefined,"safer-buffer":159}],183:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = SSHBuffer;
@@ -36367,7 +36773,7 @@ SSHBuffer.prototype.write = function (buf) {
 	this._offset += buf.length;
 };
 
-},{"assert-plus":72,"safer-buffer":160}],184:[function(require,module,exports){
+},{"assert-plus":72,"safer-buffer":159}],184:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = {
@@ -36387,7 +36793,8 @@ module.exports = {
 	publicFromPrivateECDSA: publicFromPrivateECDSA,
 	zeroPadToLength: zeroPadToLength,
 	writeBitString: writeBitString,
-	readBitString: readBitString
+	readBitString: readBitString,
+	pbkdf2: pbkdf2
 };
 
 var assert = require('assert-plus');
@@ -36398,8 +36805,9 @@ var crypto = require('crypto');
 var algs = require('./algs');
 var asn1 = require('asn1');
 
-var ec, jsbn;
-var nacl;
+var ec = require('ecc-jsbn/lib/ec');
+var jsbn = require('jsbn').BigInteger;
+var nacl = require('tweetnacl');
 
 var MAX_CLASS_DEPTH = 3;
 
@@ -36456,8 +36864,9 @@ function assertCompatible(obj, klass, needVer, name) {
 }
 
 var CIPHER_LEN = {
-	'des-ede3-cbc': { key: 7, iv: 8 },
-	'aes-128-cbc': { key: 16, iv: 16 }
+	'des-ede3-cbc': { key: 24, iv: 8 },
+	'aes-128-cbc': { key: 16, iv: 16 },
+	'aes-256-cbc': { key: 32, iv: 16 }
 };
 var PKCS5_SALT_LEN = 8;
 
@@ -36490,6 +36899,40 @@ function opensslKeyDeriv(cipher, salt, passphrase, count) {
 	    key: material.slice(0, clen.key),
 	    iv: material.slice(clen.key, clen.key + clen.iv)
 	});
+}
+
+/* See: RFC2898 */
+function pbkdf2(hashAlg, salt, iterations, size, passphrase) {
+	var hkey = Buffer.alloc(salt.length + 4);
+	salt.copy(hkey);
+
+	var gen = 0, ts = [];
+	var i = 1;
+	while (gen < size) {
+		var t = T(i++);
+		gen += t.length;
+		ts.push(t);
+	}
+	return (Buffer.concat(ts).slice(0, size));
+
+	function T(I) {
+		hkey.writeUInt32BE(I, hkey.length - 4);
+
+		var hmac = crypto.createHmac(hashAlg, passphrase);
+		hmac.update(hkey);
+
+		var Ti = hmac.digest();
+		var Uc = Ti;
+		var c = 1;
+		while (c++ < iterations) {
+			hmac = crypto.createHmac(hashAlg, passphrase);
+			hmac.update(Uc);
+			Uc = hmac.digest();
+			for (var x = 0; x < Ti.length; ++x)
+				Ti[x] ^= Uc[x];
+		}
+		return (Ti);
+	}
 }
 
 /* Count leading zero bits on a buffer */
@@ -36626,15 +37069,9 @@ function calculateDSAPublic(g, p, x) {
 	assert.buffer(g);
 	assert.buffer(p);
 	assert.buffer(x);
-	try {
-		var bigInt = require('jsbn').BigInteger;
-	} catch (e) {
-		throw (new Error('To load a PKCS#8 format DSA private key, ' +
-		    'the node jsbn library is required.'));
-	}
-	g = new bigInt(g);
-	p = new bigInt(p);
-	x = new bigInt(x);
+	g = new jsbn(g);
+	p = new jsbn(p);
+	x = new jsbn(x);
 	var y = g.modPow(x, p);
 	var ybuf = bigintToMpBuf(y);
 	return (ybuf);
@@ -36643,18 +37080,12 @@ function calculateDSAPublic(g, p, x) {
 function calculateED25519Public(k) {
 	assert.buffer(k);
 
-	if (nacl === undefined)
-		nacl = require('tweetnacl');
-
 	var kp = nacl.sign.keyPair.fromSeed(new Uint8Array(k));
 	return (Buffer.from(kp.publicKey));
 }
 
 function calculateX25519Public(k) {
 	assert.buffer(k);
-
-	if (nacl === undefined)
-		nacl = require('tweetnacl');
 
 	var kp = nacl.box.keyPair.fromSeed(new Uint8Array(k));
 	return (Buffer.from(kp.publicKey));
@@ -36663,18 +37094,12 @@ function calculateX25519Public(k) {
 function addRSAMissing(key) {
 	assert.object(key);
 	assertCompatible(key, PrivateKey, [1, 1]);
-	try {
-		var bigInt = require('jsbn').BigInteger;
-	} catch (e) {
-		throw (new Error('To write a PEM private key from ' +
-		    'this source, the node jsbn lib is required.'));
-	}
 
-	var d = new bigInt(key.part.d.data);
+	var d = new jsbn(key.part.d.data);
 	var buf;
 
 	if (!key.part.dmodp) {
-		var p = new bigInt(key.part.p.data);
+		var p = new jsbn(key.part.p.data);
 		var dmodp = d.mod(p.subtract(1));
 
 		buf = bigintToMpBuf(dmodp);
@@ -36682,7 +37107,7 @@ function addRSAMissing(key) {
 		key.parts.push(key.part.dmodp);
 	}
 	if (!key.part.dmodq) {
-		var q = new bigInt(key.part.q.data);
+		var q = new jsbn(key.part.q.data);
 		var dmodq = d.mod(q.subtract(1));
 
 		buf = bigintToMpBuf(dmodq);
@@ -36694,10 +37119,6 @@ function addRSAMissing(key) {
 function publicFromPrivateECDSA(curveName, priv) {
 	assert.string(curveName, 'curveName');
 	assert.buffer(priv);
-	if (ec === undefined)
-		ec = require('ecc-jsbn/lib/ec');
-	if (jsbn === undefined)
-		jsbn = require('jsbn').BigInteger;
 	var params = algs.curves[curveName];
 	var p = new jsbn(params.p);
 	var a = new jsbn(params.a);
@@ -36758,7 +37179,7 @@ function opensshCipherInfo(cipher) {
 	return (inf);
 }
 
-},{"./algs":161,"./key":180,"./private-key":181,"asn1":71,"assert-plus":72,"crypto":undefined,"ecc-jsbn/lib/ec":94,"jsbn":131,"safer-buffer":160,"tweetnacl":193}],185:[function(require,module,exports){
+},{"./algs":160,"./key":180,"./private-key":181,"asn1":71,"assert-plus":72,"crypto":undefined,"ecc-jsbn/lib/ec":93,"jsbn":130,"safer-buffer":159,"tweetnacl":193}],185:[function(require,module,exports){
 /*!
  * Copyright (c) 2015, Salesforce.com, Inc.
  * All rights reserved.
@@ -38654,29 +39075,34 @@ Store.prototype.getAllCookies = function(cb) {
 
 },{}],191:[function(require,module,exports){
 module.exports={
-  "_from": "tough-cookie@~2.3.3",
+  "_args": [
+    [
+      "tough-cookie@2.3.4",
+      "/Users/anconam/Documents/projects/dav"
+    ]
+  ],
+  "_from": "tough-cookie@2.3.4",
   "_id": "tough-cookie@2.3.4",
   "_inBundle": false,
   "_integrity": "sha512-TZ6TTfI5NtZnuyy/Kecv+CnoROnyXn2DN97LontgQpCwsX2XyLYCC0ENhYkehSOwAp8rTQKc/NUIF7BkQ5rKLA==",
   "_location": "/tough-cookie",
   "_phantomChildren": {},
   "_requested": {
-    "type": "range",
+    "type": "version",
     "registry": true,
-    "raw": "tough-cookie@~2.3.3",
+    "raw": "tough-cookie@2.3.4",
     "name": "tough-cookie",
     "escapedName": "tough-cookie",
-    "rawSpec": "~2.3.3",
+    "rawSpec": "2.3.4",
     "saveSpec": null,
-    "fetchSpec": "~2.3.3"
+    "fetchSpec": "2.3.4"
   },
   "_requiredBy": [
     "/request"
   ],
   "_resolved": "https://registry.npmjs.org/tough-cookie/-/tough-cookie-2.3.4.tgz",
-  "_shasum": "ec60cee38ac675063ffc97a5c18970578ee83655",
-  "_spec": "tough-cookie@~2.3.3",
-  "_where": "/home/anconam/projects/dav/node_modules/request",
+  "_spec": "2.3.4",
+  "_where": "/Users/anconam/Documents/projects/dav",
   "author": {
     "name": "Jeremy Stashewsky",
     "email": "jstashewsky@salesforce.com"
@@ -38684,7 +39110,6 @@ module.exports={
   "bugs": {
     "url": "https://github.com/salesforce/tough-cookie/issues"
   },
-  "bundleDependencies": false,
   "contributors": [
     {
       "name": "Alexander Savin"
@@ -38708,7 +39133,6 @@ module.exports={
   "dependencies": {
     "punycode": "^1.4.1"
   },
-  "deprecated": false,
   "description": "RFC6265 Cookies and Cookie Jar for node.js",
   "devDependencies": {
     "async": "^1.4.2",
@@ -38992,7 +39416,7 @@ if (process.env.NODE_DEBUG && /\btunnel\b/.test(process.env.NODE_DEBUG)) {
 }
 exports.debug = debug // for test
 
-},{"assert":undefined,"events":undefined,"http":undefined,"https":undefined,"net":undefined,"safe-buffer":159,"tls":undefined,"util":undefined}],193:[function(require,module,exports){
+},{"assert":undefined,"events":undefined,"http":undefined,"https":undefined,"net":undefined,"safe-buffer":158,"tls":undefined,"util":undefined}],193:[function(require,module,exports){
 (function(nacl) {
 'use strict';
 
@@ -41902,7 +42326,7 @@ WError.prototype.cause = function we_cause(c)
 	return (this.jse_cause);
 };
 
-},{"assert-plus":72,"core-util-is":91,"extsprintf":97,"util":undefined}],198:[function(require,module,exports){
+},{"assert-plus":72,"core-util-is":90,"extsprintf":96,"util":undefined}],198:[function(require,module,exports){
 function DOMParser(options){
 	this.options = options ||{locator:{}};
 	
@@ -44066,7 +44490,9 @@ module.exports={
     "xmldom": "^0.1.19"
   },
   "devDependencies": {
-    "babel": "^5.8.23",
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.0",
     "browserify": "^11.0.1",
     "chai": "^3.2.0",
     "doctoc": "^0.15.0",

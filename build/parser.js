@@ -1,19 +1,18 @@
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.multistatus = multistatus;
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var _camelize = _interopRequireDefault(require("./camelize"));
 
-var _camelize = require('./camelize');
-
-var _camelize2 = _interopRequireDefault(_camelize);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 var debug = require('./debug')('dav:parser');
 
-var DOMParser = undefined;
+var DOMParser;
+
 if (typeof self !== 'undefined' && 'DOMParser' in self) {
   // browser main thread
   DOMParser = self.DOMParser;
@@ -26,26 +25,31 @@ function multistatus(string) {
   var parser = new DOMParser();
   var doc = parser.parseFromString(string, 'text/xml');
   var result = traverse.multistatus(child(doc, 'multistatus'));
-  debug('input:\n' + string + '\noutput:\n' + JSON.stringify(result) + '\n');
+  debug("input:\n".concat(string, "\noutput:\n").concat(JSON.stringify(result), "\n"));
   return result;
 }
 
 var traverse = {
   // { response: [x, y, z] }
   multistatus: function multistatus(node) {
-    return complex(node, { response: true });
+    return complex(node, {
+      response: true
+    });
   },
-
   // { propstat: [x, y, z] }
   response: function response(node) {
-    return complex(node, { propstat: true, href: false, status: false });
+    return complex(node, {
+      propstat: true,
+      href: false,
+      status: false
+    });
   },
-
   // { prop: x }
   propstat: function propstat(node) {
-    return complex(node, { prop: false });
+    return complex(node, {
+      prop: false
+    });
   },
-
   // {
   //   resourcetype: x
   //   supportedCalendarComponentSet: y,
@@ -61,69 +65,70 @@ var traverse = {
       calendarUserAddressSet: false
     });
   },
-
   resourcetype: function resourcetype(node) {
     return childNodes(node).map(function (childNode) {
       return childNode.localName;
     });
   },
-
   // [x, y, z]
   supportedCalendarComponentSet: function supportedCalendarComponentSet(node) {
-    return complex(node, { comp: true }, 'comp');
+    return complex(node, {
+      comp: true
+    }, 'comp');
   },
-
   // [x, y, z]
   currentUserPrivilegeSet: function currentUserPrivilegeSet(node) {
-    return complex(node, { privilege: true }, 'privilege');
+    return complex(node, {
+      privilege: true
+    }, 'privilege');
   },
-
   // [x, y, z]
   calendarUserAddressSet: function calendarUserAddressSet(node) {
-    return complex(node, { href: true }, 'href');
+    return complex(node, {
+      href: true
+    }, 'href');
   },
-
   // [x, y, z]
   supportedReportSet: function supportedReportSet(node) {
-    return complex(node, { supportedReport: true }, 'supportedReport');
+    return complex(node, {
+      supportedReport: true
+    }, 'supportedReport');
   },
-
   comp: function comp(node) {
     return node.getAttribute('name');
   },
-
   // x
   supportedReport: function supportedReport(node) {
-    return complex(node, { report: false }, 'report');
+    return complex(node, {
+      report: false
+    }, 'report');
   },
-
   report: function report(node) {
     return childNodes(node).map(function (childNode) {
       return childNode.localName;
     });
   },
-
   privilege: function privilege(node) {
     return childNodes(node).map(function (childNode) {
       return childNode.localName;
     });
   },
-
   href: function href(node) {
     return decodeURIComponent(childNodes(node)[0].nodeValue);
   },
-
   status: function status(node) {
     return decodeURIComponent(childNodes(node)[0].nodeValue);
   },
-
   currentUserPrincipal: function currentUserPrincipal(node) {
-    return complex(node, { href: false }, 'href');
+    return complex(node, {
+      href: false
+    }, 'href');
   }
 };
 
 function complex(node, childspec, collapse) {
   var result = {};
+
   for (var key in childspec) {
     if (childspec[key]) {
       // Create array since we're expecting multiple.
@@ -134,23 +139,25 @@ function complex(node, childspec, collapse) {
   childNodes(node).forEach(function (childNode) {
     return traverseChild(node, childNode, childspec, result);
   });
-
   return maybeCollapse(result, childspec, collapse);
 }
-
 /**
  * Parse child childNode of node with childspec and write outcome to result.
  */
+
+
 function traverseChild(node, childNode, childspec, result) {
   if (childNode.nodeType === 3 && /^\s+$/.test(childNode.nodeValue)) {
     // Whitespace... nothing to do.
     return;
   }
 
-  var localName = (0, _camelize2['default'])(childNode.localName, '-');
+  var localName = (0, _camelize["default"])(childNode.localName, '-');
+
   if (!(localName in childspec)) {
     debug('Unexpected node of type ' + localName + ' encountered while ' + 'parsing ' + node.localName + ' node!');
     var value = childNode.textContent;
+
     if (localName in result) {
       if (!Array.isArray(result[camelCase])) {
         // Since we've already encountered this node type and we haven't yet
@@ -160,14 +167,15 @@ function traverseChild(node, childNode, childspec, result) {
 
       result[localName].push(value);
       return;
-    }
+    } // First time we're encountering this node.
 
-    // First time we're encountering this node.
+
     result[localName] = value;
     return;
   }
 
   var traversal = traverse[localName](childNode);
+
   if (childspec[localName]) {
     // Expect multiple.
     result[localName].push(traversal);
@@ -184,9 +192,9 @@ function maybeCollapse(result, childspec, collapse) {
 
   if (!childspec[collapse]) {
     return result[collapse];
-  }
+  } // Collapse array.
 
-  // Collapse array.
+
   return result[collapse].reduce(function (a, b) {
     return a.concat(b);
   }, []);
@@ -194,6 +202,7 @@ function maybeCollapse(result, childspec, collapse) {
 
 function childNodes(node) {
   var result = node.childNodes;
+
   if (!Array.isArray(result)) {
     result = Array.prototype.slice.call(result);
   }

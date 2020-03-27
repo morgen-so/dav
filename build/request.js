@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.addressBookQuery = addressBookQuery;
@@ -13,16 +13,19 @@ exports.syncCollection = syncCollection;
 exports.mergeProps = mergeProps;
 exports.getProps = getProps;
 exports.setRequestHeaders = setRequestHeaders;
+exports.Request = void 0;
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+var _parser = require("./parser");
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+var template = _interopRequireWildcard(require("./template"));
 
-var _parser = require('./parser');
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 
-var _template = require('./template');
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
-var template = _interopRequireWildcard(_template);
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 /**
  * Options:
@@ -30,11 +33,13 @@ var template = _interopRequireWildcard(_template);
  *   (String) depth - optional value for Depth header.
  *   (Array.<Object>) props - list of props to request.
  */
-
 function addressBookQuery(options) {
-  return collectionQuery(template.addressBookQuery({ props: options.props || [] }), { depth: options.depth });
+  return collectionQuery(template.addressBookQuery({
+    props: options.props || []
+  }), {
+    depth: options.depth
+  });
 }
-
 /**
  * Options:
  *
@@ -42,6 +47,7 @@ function addressBookQuery(options) {
  *   (String) method - http method.
  *   (String) etag - cached calendar object etag.
  */
+
 
 function basic(options) {
   function transformRequest(xhr) {
@@ -54,7 +60,6 @@ function basic(options) {
     transformRequest: transformRequest
   });
 }
-
 /**
  * Options:
  *
@@ -63,6 +68,7 @@ function basic(options) {
  *   (Array.<Object>) props - list of props to request.
  *   (String) timezone - VTIMEZONE calendar object.
  */
+
 
 function calendarQuery(options) {
   return collectionQuery(template.calendarQuery({
@@ -73,7 +79,6 @@ function calendarQuery(options) {
     depth: options.depth
   });
 }
-
 /**
  * Options:
  *
@@ -81,6 +86,7 @@ function calendarQuery(options) {
  *   (Array.<Object>) props - list of props to request.
  *   (Array.String) hrefs - list of hrefs to request.
  */
+
 
 function calendarMultiget(options) {
   return collectionQuery(template.calendarMultiget({
@@ -98,7 +104,11 @@ function collectionQuery(requestData, options) {
 
   function transformResponse(xhr) {
     return (0, _parser.multistatus)(xhr.responseText).response.map(function (res) {
-      return { href: res.href, props: getProps(res.propstat), status: res.status };
+      return {
+        href: res.href,
+        props: getProps(res.propstat),
+        status: res.status
+      };
     });
   }
 
@@ -109,7 +119,6 @@ function collectionQuery(requestData, options) {
     transformResponse: transformResponse
   });
 }
-
 /**
  * Options:
  *
@@ -117,8 +126,11 @@ function collectionQuery(requestData, options) {
  *   (Array.<Object>) props - list of props to request.
  */
 
+
 function propfind(options) {
-  var requestData = template.propfind({ props: options.props });
+  var requestData = template.propfind({
+    props: options.props
+  });
 
   function transformRequest(xhr) {
     setRequestHeaders(xhr, options);
@@ -126,21 +138,28 @@ function propfind(options) {
 
   function transformResponse(xhr) {
     var responses = (0, _parser.multistatus)(xhr.responseText).response.map(function (res) {
-      return { href: res.href, props: getProps(res.propstat), status: res.status };
+      return {
+        href: res.href,
+        props: getProps(res.propstat),
+        status: res.status
+      };
     });
 
     if (!options.mergeResponses) {
       return responses;
-    }
+    } // Merge the props.
 
-    // Merge the props.
+
     var merged = mergeProps(responses.map(function (res) {
       return res.props;
     }));
     var hrefs = responses.map(function (res) {
       return res.href;
     });
-    return { props: merged, hrefs: hrefs };
+    return {
+      props: merged,
+      hrefs: hrefs
+    };
   }
 
   return new Request({
@@ -150,7 +169,6 @@ function propfind(options) {
     transformResponse: transformResponse
   });
 }
-
 /**
  * Options:
  *
@@ -159,6 +177,7 @@ function propfind(options) {
  *   (Number) syncLevel - indicates scope of the sync report request.
  *   (String) syncToken - synchronization token provided by the server.
  */
+
 
 function syncCollection(options) {
   var requestData = template.syncCollection({
@@ -174,10 +193,16 @@ function syncCollection(options) {
   function transformResponse(xhr) {
     var object = (0, _parser.multistatus)(xhr.responseText);
     var responses = object.response.map(function (res) {
-      return { href: res.href, props: getProps(res.propstat), status: res.status };
+      return {
+        href: res.href,
+        props: getProps(res.propstat),
+        status: res.status
+      };
     });
-
-    return { responses: responses, syncToken: object.syncToken };
+    return {
+      responses: responses,
+      syncToken: object.syncToken
+    };
   }
 
   return new Request({
@@ -189,7 +214,7 @@ function syncCollection(options) {
 }
 
 var Request = function Request() {
-  var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
+  var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
   _classCallCheck(this, Request);
 
@@ -208,6 +233,7 @@ function getProp(propstat) {
   if (/404/g.test(propstat.status)) {
     return null;
   }
+
   if (/5\d{2}/g.test(propstat.status) || /4\d{2}/g.test(propstat.status)) {
     throw new Error('Bad status on propstat: ' + propstat.status);
   }
@@ -220,14 +246,14 @@ function mergeProps(props) {
     return Object.assign(a, b);
   }, {});
 }
-
 /**
  * Map propstats to props.
  */
 
+
 function getProps(propstats) {
   return mergeProps(propstats.map(getProp).filter(function (prop) {
-    return prop && typeof prop === 'object';
+    return prop && _typeof(prop) === 'object';
   }));
 }
 

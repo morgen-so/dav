@@ -1,3 +1,17 @@
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createSandbox = createSandbox;
+exports.Sandbox = void 0;
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
 /**
  * @fileoverview Group requests together and then abort as a group.
  *
@@ -11,21 +25,9 @@
  *   sandbox.abort;
  * });
  */
-'use strict';
-
-Object.defineProperty(exports, '__esModule', {
-  value: true
-});
-
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
-
-exports.createSandbox = createSandbox;
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
-
 var debug = require('./debug')('dav:sandbox');
 
-var Sandbox = (function () {
+var Sandbox = /*#__PURE__*/function () {
   function Sandbox() {
     _classCallCheck(this, Sandbox);
 
@@ -33,13 +35,13 @@ var Sandbox = (function () {
   }
 
   _createClass(Sandbox, [{
-    key: 'add',
+    key: "add",
     value: function add(request) {
       debug('Adding request to sandbox.');
       this.requestList.push(request);
     }
   }, {
-    key: 'abort',
+    key: "abort",
     value: function abort() {
       debug('Aborting sandboxed requests.');
       this.requestList.forEach(function (request) {
@@ -49,7 +51,7 @@ var Sandbox = (function () {
   }]);
 
   return Sandbox;
-})();
+}();
 
 exports.Sandbox = Sandbox;
 

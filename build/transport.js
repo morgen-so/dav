@@ -1,42 +1,49 @@
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.OAuth2 = exports.Basic = exports.Transport = void 0;
 
-var _get = function get(_x2, _x3, _x4) { var _again = true; _function: while (_again) { var object = _x2, property = _x3, receiver = _x4; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x2 = parent; _x3 = property; _x4 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ('value' in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _co = _interopRequireDefault(require("co"));
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _querystring = _interopRequireDefault(require("querystring"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var _XMLHttpRequestWrapper = _interopRequireDefault(require("./XMLHttpRequestWrapper"));
 
-function _inherits(subClass, superClass) { if (typeof superClass !== 'function' && superClass !== null) { throw new TypeError('Super expression must either be null or a function, not ' + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-var _co = require('co');
+function _createSuper(Derived) { return function () { var Super = _getPrototypeOf(Derived), result; if (_isNativeReflectConstruct()) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
 
-var _co2 = _interopRequireDefault(_co);
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
 
-var _querystring = require('querystring');
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
 
-var _querystring2 = _interopRequireDefault(_querystring);
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
 
-var _XMLHttpRequestWrapper = require('./XMLHttpRequestWrapper');
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
 
-var _XMLHttpRequestWrapper2 = _interopRequireDefault(_XMLHttpRequestWrapper);
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
 
-var Transport = (function () {
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var Transport = /*#__PURE__*/function () {
   /**
    * @param {dav.Credentials} credentials user authorization.
    */
-
   function Transport(credentials) {
     _classCallCheck(this, Transport);
 
     this.credentials = credentials || null;
   }
-
   /**
    * @param {dav.Request} request object with request info.
    * @return {Promise} a promise that will be resolved with an xhr request after
@@ -48,174 +55,175 @@ var Transport = (function () {
    *   (Object) sandbox - optional request sandbox.
    */
 
+
   _createClass(Transport, [{
-    key: 'send',
+    key: "send",
     value: function send() {}
   }]);
 
   return Transport;
-})();
+}();
 
 exports.Transport = Transport;
 
-var Basic = (function (_Transport) {
+var Basic = /*#__PURE__*/function (_Transport) {
   _inherits(Basic, _Transport);
+
+  var _super = _createSuper(Basic);
 
   /**
    * @param {dav.Credentials} credentials user authorization.
    */
-
   function Basic(credentials) {
     _classCallCheck(this, Basic);
 
-    _get(Object.getPrototypeOf(Basic.prototype), 'constructor', this).call(this, credentials);
+    return _super.call(this, credentials);
   }
 
-  /**
-   * @param {dav.Credentials} credentials user authorization.
-   */
-
   _createClass(Basic, [{
-    key: 'send',
+    key: "send",
     value: function send(request, url, options) {
-      return (0, _co2['default'])(regeneratorRuntime.mark(function callee$2$0() {
+      return (0, _co["default"])( /*#__PURE__*/regeneratorRuntime.mark(function _callee() {
         var sandbox, transformRequest, transformResponse, onerror, xhr, result;
-        return regeneratorRuntime.wrap(function callee$2$0$(context$3$0) {
-          while (1) switch (context$3$0.prev = context$3$0.next) {
-            case 0:
-              sandbox = options && options.sandbox;
-              transformRequest = request.transformRequest;
-              transformResponse = request.transformResponse;
-              onerror = request.onerror;
-              xhr = new _XMLHttpRequestWrapper2['default']();
+        return regeneratorRuntime.wrap(function _callee$(_context) {
+          while (1) {
+            switch (_context.prev = _context.next) {
+              case 0:
+                sandbox = options && options.sandbox;
+                transformRequest = request.transformRequest;
+                transformResponse = request.transformResponse;
+                onerror = request.onerror;
+                xhr = new _XMLHttpRequestWrapper["default"]();
+                if (sandbox) sandbox.add(xhr);
+                xhr.open(request.method, url, true
+                /* async */
+                , this.credentials.username, this.credentials.password);
+                if (transformRequest) transformRequest(xhr);
+                _context.prev = 8;
+                _context.next = 11;
+                return xhr.send(request.requestData);
 
-              if (sandbox) sandbox.add(xhr);
-              xhr.open(request.method, url, true, /* async */
-              this.credentials.username, this.credentials.password);
+              case 11:
+                result = transformResponse ? transformResponse(xhr) : xhr;
+                _context.next = 18;
+                break;
 
-              if (transformRequest) transformRequest(xhr);
+              case 14:
+                _context.prev = 14;
+                _context.t0 = _context["catch"](8);
+                if (onerror) onerror(_context.t0);
+                throw _context.t0;
 
-              result = undefined;
-              context$3$0.prev = 9;
-              context$3$0.next = 12;
-              return xhr.send(request.requestData);
+              case 18:
+                return _context.abrupt("return", result);
 
-            case 12:
-              result = transformResponse ? transformResponse(xhr) : xhr;
-              context$3$0.next = 19;
-              break;
-
-            case 15:
-              context$3$0.prev = 15;
-              context$3$0.t0 = context$3$0['catch'](9);
-
-              if (onerror) onerror(context$3$0.t0);
-              throw context$3$0.t0;
-
-            case 19:
-              return context$3$0.abrupt('return', result);
-
-            case 20:
-            case 'end':
-              return context$3$0.stop();
+              case 19:
+              case "end":
+                return _context.stop();
+            }
           }
-        }, callee$2$0, this, [[9, 15]]);
+        }, _callee, this, [[8, 14]]);
       }).bind(this));
     }
   }]);
 
   return Basic;
-})(Transport);
+}(Transport);
+/**
+ * @param {dav.Credentials} credentials user authorization.
+ */
+
 
 exports.Basic = Basic;
 
-var OAuth2 = (function (_Transport2) {
+var OAuth2 = /*#__PURE__*/function (_Transport2) {
   _inherits(OAuth2, _Transport2);
+
+  var _super2 = _createSuper(OAuth2);
 
   function OAuth2(credentials) {
     _classCallCheck(this, OAuth2);
 
-    _get(Object.getPrototypeOf(OAuth2.prototype), 'constructor', this).call(this, credentials);
+    return _super2.call(this, credentials);
   }
 
-  /**
-   * @return {Promise} promise that will resolve with access token.
-   */
-
   _createClass(OAuth2, [{
-    key: 'send',
+    key: "send",
     value: function send(request, url) {
-      var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
-
-      return (0, _co2['default'])(regeneratorRuntime.mark(function callee$2$0() {
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+      return (0, _co["default"])( /*#__PURE__*/regeneratorRuntime.mark(function _callee2() {
         var sandbox, transformRequest, transformResponse, onerror, result, xhr, token;
-        return regeneratorRuntime.wrap(function callee$2$0$(context$3$0) {
-          while (1) switch (context$3$0.prev = context$3$0.next) {
-            case 0:
-              sandbox = options.sandbox;
-              transformRequest = request.transformRequest;
-              transformResponse = request.transformResponse;
-              onerror = request.onerror;
+        return regeneratorRuntime.wrap(function _callee2$(_context2) {
+          while (1) {
+            switch (_context2.prev = _context2.next) {
+              case 0:
+                sandbox = options.sandbox;
+                transformRequest = request.transformRequest;
+                transformResponse = request.transformResponse;
+                onerror = request.onerror;
+                if (!('retry' in options)) options.retry = true;
+                _context2.prev = 5;
+                _context2.next = 8;
+                return access(this.credentials, options);
 
-              if (!('retry' in options)) options.retry = true;
+              case 8:
+                token = _context2.sent;
+                xhr = new _XMLHttpRequestWrapper["default"]();
+                if (sandbox) sandbox.add(xhr);
+                xhr.open(request.method, url, true
+                /* async */
+                );
+                xhr.setRequestHeader('Authorization', "Bearer ".concat(token));
+                if (transformRequest) transformRequest(xhr);
+                _context2.next = 16;
+                return xhr.send(request.requestData);
 
-              result = undefined, xhr = undefined;
-              context$3$0.prev = 6;
-              context$3$0.next = 9;
-              return access(this.credentials, options);
-
-            case 9:
-              token = context$3$0.sent;
-
-              xhr = new _XMLHttpRequestWrapper2['default']();
-              if (sandbox) sandbox.add(xhr);
-              xhr.open(request.method, url, true /* async */);
-              xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-              if (transformRequest) transformRequest(xhr);
-              context$3$0.next = 17;
-              return xhr.send(request.requestData);
-
-            case 17:
-              result = transformResponse ? transformResponse(xhr) : xhr;
-              context$3$0.next = 28;
-              break;
-
-            case 20:
-              context$3$0.prev = 20;
-              context$3$0.t0 = context$3$0['catch'](6);
-
-              if (!(options.retry && xhr.status === 401)) {
-                context$3$0.next = 26;
+              case 16:
+                result = transformResponse ? transformResponse(xhr) : xhr;
+                _context2.next = 27;
                 break;
-              }
 
-              // Force expiration.
-              this.credentials.expiration = 0;
-              // Retry once at most.
-              options.retry = false;
-              return context$3$0.abrupt('return', this.send(request, url, options));
+              case 19:
+                _context2.prev = 19;
+                _context2.t0 = _context2["catch"](5);
 
-            case 26:
+                if (!(options.retry && xhr.status === 401)) {
+                  _context2.next = 25;
+                  break;
+                }
 
-              if (onerror) onerror(context$3$0.t0);
-              throw context$3$0.t0;
+                // Force expiration.
+                this.credentials.expiration = 0; // Retry once at most.
 
-            case 28:
-              return context$3$0.abrupt('return', result);
+                options.retry = false;
+                return _context2.abrupt("return", this.send(request, url, options));
 
-            case 29:
-            case 'end':
-              return context$3$0.stop();
+              case 25:
+                if (onerror) onerror(_context2.t0);
+                throw _context2.t0;
+
+              case 27:
+                return _context2.abrupt("return", result);
+
+              case 28:
+              case "end":
+                return _context2.stop();
+            }
           }
-        }, callee$2$0, this, [[6, 20]]);
+        }, _callee2, this, [[5, 19]]);
       }).bind(this));
     }
   }]);
 
   return OAuth2;
-})(Transport);
+}(Transport);
+/**
+ * @return {Promise} promise that will resolve with access token.
+ */
+
 
 exports.OAuth2 = OAuth2;
+
 function access(credentials, options) {
   if (!credentials.accessToken) {
     return getAccessToken(credentials, options);
@@ -232,78 +240,78 @@ function isExpired(credentials) {
   return typeof credentials.expiration === 'number' && Date.now() > credentials.expiration;
 }
 
-var getAccessToken = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(credentials, options) {
+var getAccessToken = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee3(credentials, options) {
   var sandbox, xhr, data, now, response;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        sandbox = options.sandbox;
-        xhr = new _XMLHttpRequestWrapper2['default']();
+  return regeneratorRuntime.wrap(function _callee3$(_context3) {
+    while (1) {
+      switch (_context3.prev = _context3.next) {
+        case 0:
+          sandbox = options.sandbox;
+          xhr = new _XMLHttpRequestWrapper["default"]();
+          if (sandbox) sandbox.add(xhr);
+          xhr.open('POST', credentials.tokenUrl, true
+          /* async */
+          );
+          xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+          data = _querystring["default"].stringify({
+            code: credentials.authorizationCode,
+            redirect_uri: credentials.redirectUrl,
+            client_id: credentials.clientId,
+            client_secret: credentials.clientSecret,
+            grant_type: 'authorization_code'
+          });
+          now = Date.now();
+          _context3.next = 9;
+          return xhr.send(data);
 
-        if (sandbox) sandbox.add(xhr);
-        xhr.open('POST', credentials.tokenUrl, true /* async */);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        case 9:
+          response = JSON.parse(xhr.responseText);
+          credentials.accessToken = response.access_token;
+          credentials.refreshToken = 'refresh_token' in response ? response.refresh_token : null;
+          credentials.expiration = 'expires_in' in response ? now + response.expires_in : null;
+          return _context3.abrupt("return", response.access_token);
 
-        data = _querystring2['default'].stringify({
-          code: credentials.authorizationCode,
-          redirect_uri: credentials.redirectUrl,
-          client_id: credentials.clientId,
-          client_secret: credentials.clientSecret,
-          grant_type: 'authorization_code'
-        });
-        now = Date.now();
-        context$1$0.next = 9;
-        return xhr.send(data);
-
-      case 9:
-        response = JSON.parse(xhr.responseText);
-
-        credentials.accessToken = response.access_token;
-        credentials.refreshToken = 'refresh_token' in response ? response.refresh_token : null;
-        credentials.expiration = 'expires_in' in response ? now + response.expires_in : null;
-
-        return context$1$0.abrupt('return', response.access_token);
-
-      case 14:
-      case 'end':
-        return context$1$0.stop();
+        case 14:
+        case "end":
+          return _context3.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee3);
 }));
 
-var refreshAccessToken = _co2['default'].wrap(regeneratorRuntime.mark(function callee$0$0(credentials, options) {
+var refreshAccessToken = _co["default"].wrap( /*#__PURE__*/regeneratorRuntime.mark(function _callee4(credentials, options) {
   var sandbox, xhr, data, now, response;
-  return regeneratorRuntime.wrap(function callee$0$0$(context$1$0) {
-    while (1) switch (context$1$0.prev = context$1$0.next) {
-      case 0:
-        sandbox = options.sandbox;
-        xhr = new _XMLHttpRequestWrapper2['default']();
+  return regeneratorRuntime.wrap(function _callee4$(_context4) {
+    while (1) {
+      switch (_context4.prev = _context4.next) {
+        case 0:
+          sandbox = options.sandbox;
+          xhr = new _XMLHttpRequestWrapper["default"]();
+          if (sandbox) sandbox.add(xhr);
+          xhr.open('POST', credentials.tokenUrl, true
+          /* async */
+          );
+          xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+          data = _querystring["default"].stringify({
+            client_id: credentials.clientId,
+            client_secret: credentials.clientSecret,
+            refresh_token: credentials.refreshToken,
+            grant_type: 'refresh_token'
+          });
+          now = Date.now();
+          _context4.next = 9;
+          return xhr.send(data);
 
-        if (sandbox) sandbox.add(xhr);
-        xhr.open('POST', credentials.tokenUrl, true /* async */);
-        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        case 9:
+          response = JSON.parse(xhr.responseText);
+          credentials.accessToken = response.access_token;
+          credentials.expiration = 'expires_in' in response ? now + response.expires_in : null;
+          return _context4.abrupt("return", response.access_token);
 
-        data = _querystring2['default'].stringify({
-          client_id: credentials.clientId,
-          client_secret: credentials.clientSecret,
-          refresh_token: credentials.refreshToken,
-          grant_type: 'refresh_token'
-        });
-        now = Date.now();
-        context$1$0.next = 9;
-        return xhr.send(data);
-
-      case 9:
-        response = JSON.parse(xhr.responseText);
-
-        credentials.accessToken = response.access_token;
-        credentials.expiration = 'expires_in' in response ? now + response.expires_in : null;
-
-        return context$1$0.abrupt('return', response.access_token);
-
-      case 13:
-      case 'end':
-        return context$1$0.stop();
+        case 13:
+        case "end":
+          return _context4.stop();
+      }
     }
-  }, callee$0$0, this);
+  }, _callee4);
 }));

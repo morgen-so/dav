@@ -18,14 +18,13 @@ dav.min.js dav.js.map: dav.js node_modules
 dav.js: build node_modules
 	rm -rf dav.js /tmp/dav.js
 	./node_modules/.bin/browserify --node ./build/index.js > /tmp/dav.js
-	cat lib/polyfill/*.js /tmp/dav.js > dav.js
+	cat /tmp/dav.js > dav.js
 
 build: $(JS) $(HBS) node_modules
 	rm -rf build/
 	./node_modules/.bin/babel lib \
-		--modules common \
-		--out-dir build \
-		--stage 4
+		--presets="@babel/preset-env" \
+		--out-dir build
 
 node_modules: package.json
 	npm install

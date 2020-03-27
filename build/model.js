@@ -3,10 +3,23 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.VCard = exports.CalendarObject = exports.DAVObject = exports.Calendar = exports.AddressBook = exports.DAVCollection = exports.Credentials = exports.Account = void 0;
 
-var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; desc = parent = undefined; continue _function; } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _createSuper(Derived) { return function () { var Super = _getPrototypeOf(Derived), result; if (_isNativeReflectConstruct()) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -23,8 +36,7 @@ var Account = function Account(options) {
     addressBooks: null,
     addresses: null
   }, options);
-}
-
+};
 /**
  * Options:
  *   (String) username - username (perhaps email) for calendar user.
@@ -38,7 +50,7 @@ var Account = function Account(options) {
  *   (String) refreshToken - oauth refresh token.
  *   (Number) expiration - unix time for access token expiration.
  */
-;
+
 
 exports.Account = Account;
 
@@ -80,35 +92,42 @@ var DAVCollection = function DAVCollection(options) {
 
 exports.DAVCollection = DAVCollection;
 
-var AddressBook = (function (_DAVCollection) {
+var AddressBook = /*#__PURE__*/function (_DAVCollection) {
   _inherits(AddressBook, _DAVCollection);
+
+  var _super = _createSuper(AddressBook);
 
   function AddressBook(options) {
     _classCallCheck(this, AddressBook);
 
-    _get(Object.getPrototypeOf(AddressBook.prototype), "constructor", this).call(this, options);
+    return _super.call(this, options);
   }
 
   return AddressBook;
-})(DAVCollection);
+}(DAVCollection);
 
 exports.AddressBook = AddressBook;
 
-var Calendar = (function (_DAVCollection2) {
+var Calendar = /*#__PURE__*/function (_DAVCollection2) {
   _inherits(Calendar, _DAVCollection2);
 
+  var _super2 = _createSuper(Calendar);
+
   function Calendar(options) {
+    var _this;
+
     _classCallCheck(this, Calendar);
 
-    _get(Object.getPrototypeOf(Calendar.prototype), "constructor", this).call(this, options);
-    Object.assign(this, {
+    _this = _super2.call(this, options);
+    Object.assign(_assertThisInitialized(_this), {
       components: null,
       timezone: null
     }, options);
+    return _this;
   }
 
   return Calendar;
-})(DAVCollection);
+}(DAVCollection);
 
 exports.Calendar = Calendar;
 
@@ -124,38 +143,48 @@ var DAVObject = function DAVObject(options) {
 
 exports.DAVObject = DAVObject;
 
-var CalendarObject = (function (_DAVObject) {
+var CalendarObject = /*#__PURE__*/function (_DAVObject) {
   _inherits(CalendarObject, _DAVObject);
 
+  var _super3 = _createSuper(CalendarObject);
+
   function CalendarObject(options) {
+    var _this2;
+
     _classCallCheck(this, CalendarObject);
 
-    _get(Object.getPrototypeOf(CalendarObject.prototype), "constructor", this).call(this, options);
-    Object.assign(this, {
+    _this2 = _super3.call(this, options);
+    Object.assign(_assertThisInitialized(_this2), {
       calendar: null,
       calendarData: null
     }, options);
+    return _this2;
   }
 
   return CalendarObject;
-})(DAVObject);
+}(DAVObject);
 
 exports.CalendarObject = CalendarObject;
 
-var VCard = (function (_DAVObject2) {
+var VCard = /*#__PURE__*/function (_DAVObject2) {
   _inherits(VCard, _DAVObject2);
 
+  var _super4 = _createSuper(VCard);
+
   function VCard(options) {
+    var _this3;
+
     _classCallCheck(this, VCard);
 
-    _get(Object.getPrototypeOf(VCard.prototype), "constructor", this).call(this, options);
-    Object.assign(this, {
+    _this3 = _super4.call(this, options);
+    Object.assign(_assertThisInitialized(_this3), {
       addressBook: null,
       addressData: null
     }, options);
+    return _this3;
   }
 
   return VCard;
-})(DAVObject);
+}(DAVObject);
 
 exports.VCard = VCard;

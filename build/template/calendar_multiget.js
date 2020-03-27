@@ -1,22 +1,16 @@
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports['default'] = calendarMultiget;
+exports["default"] = calendarMultiget;
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var _prop = _interopRequireDefault(require("./prop"));
 
-var _prop = require('./prop');
+var _href = _interopRequireDefault(require("./href"));
 
-var _prop2 = _interopRequireDefault(_prop);
-
-var _href = require('./href');
-
-var _href2 = _interopRequireDefault(_href);
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
 function calendarMultiget(object) {
-  return '<c:calendar-multiget xmlns:d="DAV:"\n                               xmlns:c="urn:ietf:params:xml:ns:caldav">\n    <d:prop>\n      ' + object.props.map(_prop2['default']) + '\n    </d:prop>\n    ' + object.hrefs.map(_href2['default']) + '\n  </c:calendar-multiget>';
+  return "<c:calendar-multiget xmlns:d=\"DAV:\"\n                               xmlns:c=\"urn:ietf:params:xml:ns:caldav\">\n    <d:prop>\n      ".concat(object.props.map(_prop["default"]), "\n    </d:prop>\n    ").concat(object.hrefs.map(_href["default"]), "\n  </c:calendar-multiget>");
 }
-
-module.exports = exports['default'];

@@ -1,32 +1,31 @@
-'use strict';
+"use strict";
 
-Object.defineProperty(exports, '__esModule', {
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.Client = void 0;
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ('value' in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _url = _interopRequireDefault(require("url"));
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj['default'] = obj; return newObj; } }
+var accounts = _interopRequireWildcard(require("./accounts"));
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { 'default': obj }; }
+var calendars = _interopRequireWildcard(require("./calendars"));
 
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError('Cannot call a class as a function'); } }
+var contacts = _interopRequireWildcard(require("./contacts"));
 
-var _url = require('url');
+function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function _getRequireWildcardCache() { return cache; }; return cache; }
 
-var _url2 = _interopRequireDefault(_url);
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
-var _accounts = require('./accounts');
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
 
-var accounts = _interopRequireWildcard(_accounts);
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var _calendars = require('./calendars');
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
 
-var calendars = _interopRequireWildcard(_calendars);
-
-var _contacts = require('./contacts');
-
-var contacts = _interopRequireWildcard(_contacts);
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
 
 /**
  * @param {dav.Transport} xhr - request sender.
@@ -35,22 +34,19 @@ var contacts = _interopRequireWildcard(_contacts);
  *
  *   (String) baseUrl - root url to resolve relative request urls with.
  */
-
-var Client = (function () {
+var Client = /*#__PURE__*/function () {
   function Client(xhr) {
-    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+    var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
     _classCallCheck(this, Client);
 
     this.xhr = xhr;
-    Object.assign(this, options);
+    Object.assign(this, options); // Expose internal modules for unit testing
 
-    // Expose internal modules for unit testing
     this._accounts = accounts;
     this._calendars = calendars;
     this._contacts = contacts;
   }
-
   /**
    * @param {dav.Request} req - dav request.
    * @param {String} uri - where to send request.
@@ -64,123 +60,112 @@ var Client = (function () {
    *   (Object) sandbox - optional request sandbox.
    */
 
+
   _createClass(Client, [{
-    key: 'send',
+    key: "send",
     value: function send(req, uri, options) {
       if (this.baseUrl) {
-        var urlObj = _url2['default'].parse(uri);
-        uri = _url2['default'].resolve(this.baseUrl, urlObj.path);
+        var urlObj = _url["default"].parse(uri);
+
+        uri = _url["default"].resolve(this.baseUrl, urlObj.path);
       }
 
       return this.xhr.send(req, uri, options);
     }
   }, {
-    key: 'createAccount',
+    key: "createAccount",
     value: function createAccount() {
-      var options = arguments.length <= 0 || arguments[0] === undefined ? {} : arguments[0];
-
+      var options = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
       options.xhr = options.xhr || this.xhr;
       return accounts.createAccount(options);
     }
   }, {
-    key: 'getCalendar',
+    key: "getCalendar",
     value: function getCalendar(account, calendarUrl) {
-      var options = arguments.length <= 2 || arguments[2] === undefined ? {} : arguments[2];
-
+      var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
       options.xhr = options.xhr || this.xhr;
       return calendars.getCalendar(account, calendarUrl, options);
     }
   }, {
-    key: 'createCalendarObject',
+    key: "createCalendarObject",
     value: function createCalendarObject(calendar) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return calendars.createCalendarObject(calendar, options);
     }
   }, {
-    key: 'getCalendarObject',
+    key: "getCalendarObject",
     value: function getCalendarObject(calendar) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return calendars.getCalendarObject(calendar, options);
     }
   }, {
-    key: 'updateCalendarObject',
+    key: "updateCalendarObject",
     value: function updateCalendarObject(calendarObject) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return calendars.updateCalendarObject(calendarObject, options);
     }
   }, {
-    key: 'deleteCalendarObject',
+    key: "deleteCalendarObject",
     value: function deleteCalendarObject(calendarObject) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return calendars.deleteCalendarObject(calendarObject, options);
     }
   }, {
-    key: 'syncCalendar',
+    key: "syncCalendar",
     value: function syncCalendar(calendar) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return calendars.syncCalendar(calendar, options);
     }
   }, {
-    key: 'syncCaldavAccount',
+    key: "syncCaldavAccount",
     value: function syncCaldavAccount(account) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return calendars.syncCaldavAccount(account, options);
     }
   }, {
-    key: 'createCard',
+    key: "createCard",
     value: function createCard(addressBook) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return contacts.createCard(addressBook, options);
     }
   }, {
-    key: 'updateCard',
+    key: "updateCard",
     value: function updateCard(card) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return contacts.updateCard(card, options);
     }
   }, {
-    key: 'deleteCard',
+    key: "deleteCard",
     value: function deleteCard(card) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return contacts.deleteCard(card, options);
     }
   }, {
-    key: 'syncAddressBook',
+    key: "syncAddressBook",
     value: function syncAddressBook(addressBook) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return contacts.syncAddressBook(addressBook, options);
     }
   }, {
-    key: 'syncCarddavAccount',
+    key: "syncCarddavAccount",
     value: function syncCarddavAccount(account) {
-      var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
-
+      var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
       options.xhr = options.xhr || this.xhr;
       return contacts.syncCarddavAccount(account, options);
     }
   }]);
 
   return Client;
-})();
+}();
 
 exports.Client = Client;

@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 exports.addressBookQuery = require('./address_book_query');
 exports.calendarQuery = require('./calendar_query');

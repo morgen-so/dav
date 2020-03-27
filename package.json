@@ -27,7 +27,9 @@
     "xmldom": "^0.1.19"
   },
   "devDependencies": {
-    "babel": "^5.8.23",
+    "@babel/cli": "^7.8.4",
+    "@babel/core": "^7.9.0",
+    "@babel/preset-env": "^7.9.0",
     "browserify": "^11.0.1",
     "chai": "^3.2.0",
     "doctoc": "^0.15.0",

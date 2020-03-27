@@ -8,9 +8,7 @@ exports["default"] = debug;
 function debug(topic) {
   return function (message) {
     if (debug.enabled) {
-      console.log("[" + topic + "] " + message);
+      console.log("[".concat(topic, "] ").concat(message));
     }
   };
 }
-
-module.exports = exports["default"];
