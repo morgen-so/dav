@@ -5,26 +5,28 @@ SABRE_DAV_VERSION=2.0.1
 SABRE_DAV_RELEASE=sabredav-$(SABRE_DAV_VERSION)
 SABRE_DAV_ZIPBALL=$(SABRE_DAV_RELEASE).zip
 
-dav.zip: dav.js dav.min.js dav.js.map
-	zip dav dav.js dav.js.map dav.min.js
+# dav.zip: dav.js dav.min.js dav.js.map
+# 	zip dav dav.js dav.js.map dav.min.js
+#
+# dav.min.js dav.js.map: dav.js node_modules
+# 	./node_modules/.bin/uglifyjs dav.js \
+# 		--lint \
+# 		--screw-ie8 \
+# 		--output ./dav.min.js \
+# 		--source-map ./dav.js.map
 
-dav.min.js dav.js.map: dav.js node_modules
-	./node_modules/.bin/uglifyjs dav.js \
-		--lint \
-		--screw-ie8 \
-		--output ./dav.min.js \
-		--source-map ./dav.js.map
+build: node_modules
+	rm -rf dav.js
+	./node_modules/.bin/browserify ./lib/index.js -o dav.js \
+	--standalone dav \
+	--node \
+	-t [ babelify --presets [ @babel/preset-env ] \
+	--plugins [ @babel/plugin-transform-classes @babel/plugin-transform-runtime ] ]
 
-dav.js: build node_modules
-	rm -rf dav.js /tmp/dav.js
-	./node_modules/.bin/browserify --node ./build/index.js > /tmp/dav.js
-	cat /tmp/dav.js > dav.js
-
-build: $(JS) $(HBS) node_modules
-	rm -rf build/
-	./node_modules/.bin/babel lib \
-		--presets="@babel/preset-env" \
-		--out-dir build
+# build: $(JS) $(HBS) node_modules
+# 	rm -rf build/
+# 	./node_modules/.bin/babel lib \
+# 		--out-dir build
 
 node_modules: package.json
 	npm install
