@@ -250,7 +250,7 @@ var serviceDiscovery = _co["default"].wrap( /*#__PURE__*/_regenerator["default"]
 
 
 var principalUrl = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee2(account, options) {
-  var req, res, container;
+  var req, res, container, principal;
   return _regenerator["default"].wrap(function _callee2$(_context2) {
     while (1) {
       switch (_context2.prev = _context2.next) {
@@ -259,6 +259,9 @@ var principalUrl = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mar
           req = request.propfind({
             props: [{
               name: 'current-user-principal',
+              namespace: ns.DAV
+            }, {
+              name: 'owner',
               namespace: ns.DAV
             }],
             depth: 0,
@@ -272,10 +275,11 @@ var principalUrl = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mar
         case 4:
           res = _context2.sent;
           container = res.props;
-          debug("Received principal: ".concat(container.currentUserPrincipal));
-          return _context2.abrupt("return", _url["default"].resolve(account.rootUrl, container.currentUserPrincipal));
+          principal = container.currentUserPrincipal || container.owner;
+          debug("Received principal: ".concat(principal));
+          return _context2.abrupt("return", _url["default"].resolve(account.rootUrl, principal));
 
-        case 8:
+        case 9:
         case "end":
           return _context2.stop();
       }
@@ -45346,7 +45350,7 @@ module.exports={
   "author": "Gareth Aye [:gaye] <gaye@mozilla.com>",
   "description": "WebDAV, CalDAV, and CardDAV client for nodejs and the browser",
   "license": "MPL-2.0",
-  "main": "./build/index.js",
+  "main": "dav.js",
   "repository": "https://github.com/gaye/dav",
   "keywords": [
     "address book",
