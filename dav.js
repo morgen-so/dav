@@ -2655,7 +2655,7 @@ function getProp(propstat) {
   }
 
   if (/5\d{2}/g.test(propstat.status) || /4\d{2}/g.test(propstat.status)) {
-    throw new Error('Bad status on propstat: ' + propstat.status);
+    debug('Warning: bad status on propstat: ' + propstat.status);
   }
 
   return 'prop' in propstat ? propstat.prop : null;
