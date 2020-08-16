@@ -57,6 +57,7 @@
     "doctoc": "^0.15.0",
     "mocha": "^2.3.2",
     "nock": "^9.1.6",
+    "prettier": "^2.0.5",
     "sinon": "^1.16.1",
     "tcp-port-used": "^0.1.2",
     "tinyify": "^2.5.2",
