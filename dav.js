@@ -1937,6 +1937,10 @@ function debug(topic) {
     if (debug.enabled) {
       console.log("[".concat(topic, "] ").concat(message));
     }
+
+    if (debug.callback) {
+      debug.callback(topic, message);
+    }
   };
 }
 
