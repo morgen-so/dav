@@ -2453,7 +2453,7 @@ function traverseChild(node, childNode, childspec, result) {
     var value = childNode.textContent;
 
     if (localName in result) {
-      if (!Array.isArray(result[camelCase])) {
+      if (!Array.isArray(result[localName])) {
         // Since we've already encountered this node type and we haven't yet
         // made an array for it, make an array now.
         result[localName] = [result[localName]];
