@@ -327,6 +327,8 @@ var homeUrl = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(fun
           response = responses.find(function (response) {
             return (0, _fuzzy_url_equals["default"])(account.principalUrl, response.href);
           });
+          debug("homeUrl parsed response:");
+          debug(response);
           container = response.props;
 
           if (options.accountType === 'caldav') {
@@ -339,7 +341,7 @@ var homeUrl = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(fun
 
           return _context3.abrupt("return", _url["default"].resolve(account.rootUrl, href));
 
-        case 10:
+        case 12:
         case "end":
           return _context3.stop();
       }
@@ -520,7 +522,7 @@ exports.createAccount = _co["default"].wrap( /*#__PURE__*/_regenerator["default"
   }, _callee6);
 }));
 
-},{"./calendars":3,"./contacts":6,"./debug":7,"./fuzzy_url_equals":8,"./model":10,"./namespace":11,"./request":13,"@babel/runtime/helpers/interopRequireDefault":31,"@babel/runtime/helpers/interopRequireWildcard":32,"@babel/runtime/regenerator":37,"co":100,"url":undefined}],3:[function(require,module,exports){
+},{"./calendars":3,"./contacts":6,"./debug":7,"./fuzzy_url_equals":8,"./model":10,"./namespace":11,"./request":13,"@babel/runtime/helpers/interopRequireDefault":31,"@babel/runtime/helpers/interopRequireWildcard":32,"@babel/runtime/regenerator":36,"co":99,"url":undefined}],3:[function(require,module,exports){
 "use strict";
 
 var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
@@ -1354,7 +1356,7 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
   }, _callee12);
 }));
 
-},{"./debug":7,"./fuzzy_url_equals":8,"./model":10,"./namespace":11,"./request":13,"./webdav":25,"@babel/runtime/helpers/interopRequireDefault":31,"@babel/runtime/helpers/interopRequireWildcard":32,"@babel/runtime/regenerator":37,"co":100,"url":undefined}],4:[function(require,module,exports){
+},{"./debug":7,"./fuzzy_url_equals":8,"./model":10,"./namespace":11,"./request":13,"./webdav":25,"@babel/runtime/helpers/interopRequireDefault":31,"@babel/runtime/helpers/interopRequireWildcard":32,"@babel/runtime/regenerator":36,"co":99,"url":undefined}],4:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1926,7 +1928,7 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
   }, _callee7);
 }));
 
-},{"./debug":7,"./fuzzy_url_equals":8,"./model":10,"./namespace":11,"./request":13,"./webdav":25,"@babel/runtime/helpers/interopRequireDefault":31,"@babel/runtime/helpers/interopRequireWildcard":32,"@babel/runtime/regenerator":37,"co":100,"url":undefined}],7:[function(require,module,exports){
+},{"./debug":7,"./fuzzy_url_equals":8,"./model":10,"./namespace":11,"./request":13,"./webdav":25,"@babel/runtime/helpers/interopRequireDefault":31,"@babel/runtime/helpers/interopRequireWildcard":32,"@babel/runtime/regenerator":36,"co":99,"url":undefined}],7:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -1955,10 +1957,25 @@ Object.defineProperty(exports, "__esModule", {
 exports["default"] = fuzzyUrlEquals;
 
 function fuzzyUrlEquals(one, other) {
+  one = fullyDecodeURI(one);
+  other = fullyDecodeURI(other);
   return fuzzyIncludes(one, other) || fuzzyIncludes(other, one);
 }
 
 ;
+
+function isEncoded(uri) {
+  uri = uri || '';
+  return uri !== decodeURIComponent(uri);
+}
+
+function fullyDecodeURI(uri) {
+  while (isEncoded(uri)) {
+    uri = decodeURIComponent(uri);
+  }
+
+  return uri;
+}
 
 function fuzzyIncludes(one, other) {
   return one.indexOf(other) !== -1 || other.charAt(other.length - 1) === '/' && one.indexOf(other.slice(0, -1)) !== -1;
@@ -2103,15 +2120,15 @@ exports.VCard = exports.CalendarObject = exports.DAVObject = exports.Calendar = 
 
 var _assertThisInitialized2 = _interopRequireDefault(require("@babel/runtime/helpers/assertThisInitialized"));
 
+var _inherits2 = _interopRequireDefault(require("@babel/runtime/helpers/inherits"));
+
 var _possibleConstructorReturn2 = _interopRequireDefault(require("@babel/runtime/helpers/possibleConstructorReturn"));
 
 var _getPrototypeOf2 = _interopRequireDefault(require("@babel/runtime/helpers/getPrototypeOf"));
 
-var _inherits2 = _interopRequireDefault(require("@babel/runtime/helpers/inherits"));
-
 var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
 
-function _createSuper(Derived) { return function () { var Super = (0, _getPrototypeOf2["default"])(Derived), result; if (_isNativeReflectConstruct()) { var NewTarget = (0, _getPrototypeOf2["default"])(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return (0, _possibleConstructorReturn2["default"])(this, result); }; }
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = (0, _getPrototypeOf2["default"])(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = (0, _getPrototypeOf2["default"])(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return (0, _possibleConstructorReturn2["default"])(this, result); }; }
 
 function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
 
@@ -3116,11 +3133,11 @@ exports.OAuth2 = exports.Basic = exports.Transport = void 0;
 
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
 
+var _inherits2 = _interopRequireDefault(require("@babel/runtime/helpers/inherits"));
+
 var _possibleConstructorReturn2 = _interopRequireDefault(require("@babel/runtime/helpers/possibleConstructorReturn"));
 
 var _getPrototypeOf2 = _interopRequireDefault(require("@babel/runtime/helpers/getPrototypeOf"));
-
-var _inherits2 = _interopRequireDefault(require("@babel/runtime/helpers/inherits"));
 
 var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
 
@@ -3132,7 +3149,7 @@ var _querystring = _interopRequireDefault(require("querystring"));
 
 var _XMLHttpRequestWrapper = _interopRequireDefault(require("./XMLHttpRequestWrapper"));
 
-function _createSuper(Derived) { return function () { var Super = (0, _getPrototypeOf2["default"])(Derived), result; if (_isNativeReflectConstruct()) { var NewTarget = (0, _getPrototypeOf2["default"])(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return (0, _possibleConstructorReturn2["default"])(this, result); }; }
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = (0, _getPrototypeOf2["default"])(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = (0, _getPrototypeOf2["default"])(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return (0, _possibleConstructorReturn2["default"])(this, result); }; }
 
 function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
 
@@ -3413,7 +3430,7 @@ var refreshAccessToken = _co["default"].wrap( /*#__PURE__*/_regenerator["default
   }, _callee4);
 }));
 
-},{"./XMLHttpRequestWrapper":1,"@babel/runtime/helpers/classCallCheck":27,"@babel/runtime/helpers/createClass":28,"@babel/runtime/helpers/getPrototypeOf":29,"@babel/runtime/helpers/inherits":30,"@babel/runtime/helpers/interopRequireDefault":31,"@babel/runtime/helpers/possibleConstructorReturn":33,"@babel/runtime/regenerator":37,"co":100,"querystring":undefined}],25:[function(require,module,exports){
+},{"./XMLHttpRequestWrapper":1,"@babel/runtime/helpers/classCallCheck":27,"@babel/runtime/helpers/createClass":28,"@babel/runtime/helpers/getPrototypeOf":29,"@babel/runtime/helpers/inherits":30,"@babel/runtime/helpers/interopRequireDefault":31,"@babel/runtime/helpers/possibleConstructorReturn":33,"@babel/runtime/regenerator":36,"co":99,"querystring":undefined}],25:[function(require,module,exports){
 "use strict";
 
 var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
@@ -3593,7 +3610,7 @@ var isCollectionDirty = _co["default"].wrap( /*#__PURE__*/_regenerator["default"
 
 exports.isCollectionDirty = isCollectionDirty;
 
-},{"./debug":7,"./fuzzy_url_equals":8,"./namespace":11,"./request":13,"@babel/runtime/helpers/interopRequireDefault":31,"@babel/runtime/helpers/interopRequireWildcard":32,"@babel/runtime/regenerator":37,"co":100}],26:[function(require,module,exports){
+},{"./debug":7,"./fuzzy_url_equals":8,"./namespace":11,"./request":13,"@babel/runtime/helpers/interopRequireDefault":31,"@babel/runtime/helpers/interopRequireWildcard":32,"@babel/runtime/regenerator":36,"co":99}],26:[function(require,module,exports){
 function _assertThisInitialized(self) {
   if (self === void 0) {
     throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
@@ -3765,740 +3782,9 @@ function _typeof(obj) {
 
 module.exports = _typeof;
 },{}],36:[function(require,module,exports){
-/**
- * Copyright (c) 2014-present, Facebook, Inc.
- *
- * This source code is licensed under the MIT license found in the
- * LICENSE file in the root directory of this source tree.
- */
-
-var runtime = (function (exports) {
-  "use strict";
-
-  var Op = Object.prototype;
-  var hasOwn = Op.hasOwnProperty;
-  var undefined; // More compressible than void 0.
-  var $Symbol = typeof Symbol === "function" ? Symbol : {};
-  var iteratorSymbol = $Symbol.iterator || "@@iterator";
-  var asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator";
-  var toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag";
-
-  function wrap(innerFn, outerFn, self, tryLocsList) {
-    // If outerFn provided and outerFn.prototype is a Generator, then outerFn.prototype instanceof Generator.
-    var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator;
-    var generator = Object.create(protoGenerator.prototype);
-    var context = new Context(tryLocsList || []);
-
-    // The ._invoke method unifies the implementations of the .next,
-    // .throw, and .return methods.
-    generator._invoke = makeInvokeMethod(innerFn, self, context);
-
-    return generator;
-  }
-  exports.wrap = wrap;
-
-  // Try/catch helper to minimize deoptimizations. Returns a completion
-  // record like context.tryEntries[i].completion. This interface could
-  // have been (and was previously) designed to take a closure to be
-  // invoked without arguments, but in all the cases we care about we
-  // already have an existing method we want to call, so there's no need
-  // to create a new function object. We can even get away with assuming
-  // the method takes exactly one argument, since that happens to be true
-  // in every case, so we don't have to touch the arguments object. The
-  // only additional allocation required is the completion record, which
-  // has a stable shape and so hopefully should be cheap to allocate.
-  function tryCatch(fn, obj, arg) {
-    try {
-      return { type: "normal", arg: fn.call(obj, arg) };
-    } catch (err) {
-      return { type: "throw", arg: err };
-    }
-  }
-
-  var GenStateSuspendedStart = "suspendedStart";
-  var GenStateSuspendedYield = "suspendedYield";
-  var GenStateExecuting = "executing";
-  var GenStateCompleted = "completed";
-
-  // Returning this object from the innerFn has the same effect as
-  // breaking out of the dispatch switch statement.
-  var ContinueSentinel = {};
-
-  // Dummy constructor functions that we use as the .constructor and
-  // .constructor.prototype properties for functions that return Generator
-  // objects. For full spec compliance, you may wish to configure your
-  // minifier not to mangle the names of these two functions.
-  function Generator() {}
-  function GeneratorFunction() {}
-  function GeneratorFunctionPrototype() {}
-
-  // This is a polyfill for %IteratorPrototype% for environments that
-  // don't natively support it.
-  var IteratorPrototype = {};
-  IteratorPrototype[iteratorSymbol] = function () {
-    return this;
-  };
-
-  var getProto = Object.getPrototypeOf;
-  var NativeIteratorPrototype = getProto && getProto(getProto(values([])));
-  if (NativeIteratorPrototype &&
-      NativeIteratorPrototype !== Op &&
-      hasOwn.call(NativeIteratorPrototype, iteratorSymbol)) {
-    // This environment has a native %IteratorPrototype%; use it instead
-    // of the polyfill.
-    IteratorPrototype = NativeIteratorPrototype;
-  }
-
-  var Gp = GeneratorFunctionPrototype.prototype =
-    Generator.prototype = Object.create(IteratorPrototype);
-  GeneratorFunction.prototype = Gp.constructor = GeneratorFunctionPrototype;
-  GeneratorFunctionPrototype.constructor = GeneratorFunction;
-  GeneratorFunctionPrototype[toStringTagSymbol] =
-    GeneratorFunction.displayName = "GeneratorFunction";
-
-  // Helper for defining the .next, .throw, and .return methods of the
-  // Iterator interface in terms of a single ._invoke method.
-  function defineIteratorMethods(prototype) {
-    ["next", "throw", "return"].forEach(function(method) {
-      prototype[method] = function(arg) {
-        return this._invoke(method, arg);
-      };
-    });
-  }
-
-  exports.isGeneratorFunction = function(genFun) {
-    var ctor = typeof genFun === "function" && genFun.constructor;
-    return ctor
-      ? ctor === GeneratorFunction ||
-        // For the native GeneratorFunction constructor, the best we can
-        // do is to check its .name property.
-        (ctor.displayName || ctor.name) === "GeneratorFunction"
-      : false;
-  };
-
-  exports.mark = function(genFun) {
-    if (Object.setPrototypeOf) {
-      Object.setPrototypeOf(genFun, GeneratorFunctionPrototype);
-    } else {
-      genFun.__proto__ = GeneratorFunctionPrototype;
-      if (!(toStringTagSymbol in genFun)) {
-        genFun[toStringTagSymbol] = "GeneratorFunction";
-      }
-    }
-    genFun.prototype = Object.create(Gp);
-    return genFun;
-  };
-
-  // Within the body of any async function, `await x` is transformed to
-  // `yield regeneratorRuntime.awrap(x)`, so that the runtime can test
-  // `hasOwn.call(value, "__await")` to determine if the yielded value is
-  // meant to be awaited.
-  exports.awrap = function(arg) {
-    return { __await: arg };
-  };
-
-  function AsyncIterator(generator, PromiseImpl) {
-    function invoke(method, arg, resolve, reject) {
-      var record = tryCatch(generator[method], generator, arg);
-      if (record.type === "throw") {
-        reject(record.arg);
-      } else {
-        var result = record.arg;
-        var value = result.value;
-        if (value &&
-            typeof value === "object" &&
-            hasOwn.call(value, "__await")) {
-          return PromiseImpl.resolve(value.__await).then(function(value) {
-            invoke("next", value, resolve, reject);
-          }, function(err) {
-            invoke("throw", err, resolve, reject);
-          });
-        }
-
-        return PromiseImpl.resolve(value).then(function(unwrapped) {
-          // When a yielded Promise is resolved, its final value becomes
-          // the .value of the Promise<{value,done}> result for the
-          // current iteration.
-          result.value = unwrapped;
-          resolve(result);
-        }, function(error) {
-          // If a rejected Promise was yielded, throw the rejection back
-          // into the async generator function so it can be handled there.
-          return invoke("throw", error, resolve, reject);
-        });
-      }
-    }
-
-    var previousPromise;
-
-    function enqueue(method, arg) {
-      function callInvokeWithMethodAndArg() {
-        return new PromiseImpl(function(resolve, reject) {
-          invoke(method, arg, resolve, reject);
-        });
-      }
-
-      return previousPromise =
-        // If enqueue has been called before, then we want to wait until
-        // all previous Promises have been resolved before calling invoke,
-        // so that results are always delivered in the correct order. If
-        // enqueue has not been called before, then it is important to
-        // call invoke immediately, without waiting on a callback to fire,
-        // so that the async generator function has the opportunity to do
-        // any necessary setup in a predictable way. This predictability
-        // is why the Promise constructor synchronously invokes its
-        // executor callback, and why async functions synchronously
-        // execute code before the first await. Since we implement simple
-        // async functions in terms of async generators, it is especially
-        // important to get this right, even though it requires care.
-        previousPromise ? previousPromise.then(
-          callInvokeWithMethodAndArg,
-          // Avoid propagating failures to Promises returned by later
-          // invocations of the iterator.
-          callInvokeWithMethodAndArg
-        ) : callInvokeWithMethodAndArg();
-    }
-
-    // Define the unified helper method that is used to implement .next,
-    // .throw, and .return (see defineIteratorMethods).
-    this._invoke = enqueue;
-  }
-
-  defineIteratorMethods(AsyncIterator.prototype);
-  AsyncIterator.prototype[asyncIteratorSymbol] = function () {
-    return this;
-  };
-  exports.AsyncIterator = AsyncIterator;
-
-  // Note that simple async functions are implemented on top of
-  // AsyncIterator objects; they just return a Promise for the value of
-  // the final result produced by the iterator.
-  exports.async = function(innerFn, outerFn, self, tryLocsList, PromiseImpl) {
-    if (PromiseImpl === void 0) PromiseImpl = Promise;
-
-    var iter = new AsyncIterator(
-      wrap(innerFn, outerFn, self, tryLocsList),
-      PromiseImpl
-    );
-
-    return exports.isGeneratorFunction(outerFn)
-      ? iter // If outerFn is a generator, return the full iterator.
-      : iter.next().then(function(result) {
-          return result.done ? result.value : iter.next();
-        });
-  };
-
-  function makeInvokeMethod(innerFn, self, context) {
-    var state = GenStateSuspendedStart;
-
-    return function invoke(method, arg) {
-      if (state === GenStateExecuting) {
-        throw new Error("Generator is already running");
-      }
-
-      if (state === GenStateCompleted) {
-        if (method === "throw") {
-          throw arg;
-        }
-
-        // Be forgiving, per 25.3.3.3.3 of the spec:
-        // https://people.mozilla.org/~jorendorff/es6-draft.html#sec-generatorresume
-        return doneResult();
-      }
-
-      context.method = method;
-      context.arg = arg;
-
-      while (true) {
-        var delegate = context.delegate;
-        if (delegate) {
-          var delegateResult = maybeInvokeDelegate(delegate, context);
-          if (delegateResult) {
-            if (delegateResult === ContinueSentinel) continue;
-            return delegateResult;
-          }
-        }
-
-        if (context.method === "next") {
-          // Setting context._sent for legacy support of Babel's
-          // function.sent implementation.
-          context.sent = context._sent = context.arg;
-
-        } else if (context.method === "throw") {
-          if (state === GenStateSuspendedStart) {
-            state = GenStateCompleted;
-            throw context.arg;
-          }
-
-          context.dispatchException(context.arg);
-
-        } else if (context.method === "return") {
-          context.abrupt("return", context.arg);
-        }
-
-        state = GenStateExecuting;
-
-        var record = tryCatch(innerFn, self, context);
-        if (record.type === "normal") {
-          // If an exception is thrown from innerFn, we leave state ===
-          // GenStateExecuting and loop back for another invocation.
-          state = context.done
-            ? GenStateCompleted
-            : GenStateSuspendedYield;
-
-          if (record.arg === ContinueSentinel) {
-            continue;
-          }
-
-          return {
-            value: record.arg,
-            done: context.done
-          };
-
-        } else if (record.type === "throw") {
-          state = GenStateCompleted;
-          // Dispatch the exception by looping back around to the
-          // context.dispatchException(context.arg) call above.
-          context.method = "throw";
-          context.arg = record.arg;
-        }
-      }
-    };
-  }
-
-  // Call delegate.iterator[context.method](context.arg) and handle the
-  // result, either by returning a { value, done } result from the
-  // delegate iterator, or by modifying context.method and context.arg,
-  // setting context.delegate to null, and returning the ContinueSentinel.
-  function maybeInvokeDelegate(delegate, context) {
-    var method = delegate.iterator[context.method];
-    if (method === undefined) {
-      // A .throw or .return when the delegate iterator has no .throw
-      // method always terminates the yield* loop.
-      context.delegate = null;
-
-      if (context.method === "throw") {
-        // Note: ["return"] must be used for ES3 parsing compatibility.
-        if (delegate.iterator["return"]) {
-          // If the delegate iterator has a return method, give it a
-          // chance to clean up.
-          context.method = "return";
-          context.arg = undefined;
-          maybeInvokeDelegate(delegate, context);
-
-          if (context.method === "throw") {
-            // If maybeInvokeDelegate(context) changed context.method from
-            // "return" to "throw", let that override the TypeError below.
-            return ContinueSentinel;
-          }
-        }
-
-        context.method = "throw";
-        context.arg = new TypeError(
-          "The iterator does not provide a 'throw' method");
-      }
-
-      return ContinueSentinel;
-    }
-
-    var record = tryCatch(method, delegate.iterator, context.arg);
-
-    if (record.type === "throw") {
-      context.method = "throw";
-      context.arg = record.arg;
-      context.delegate = null;
-      return ContinueSentinel;
-    }
-
-    var info = record.arg;
-
-    if (! info) {
-      context.method = "throw";
-      context.arg = new TypeError("iterator result is not an object");
-      context.delegate = null;
-      return ContinueSentinel;
-    }
-
-    if (info.done) {
-      // Assign the result of the finished delegate to the temporary
-      // variable specified by delegate.resultName (see delegateYield).
-      context[delegate.resultName] = info.value;
-
-      // Resume execution at the desired location (see delegateYield).
-      context.next = delegate.nextLoc;
-
-      // If context.method was "throw" but the delegate handled the
-      // exception, let the outer generator proceed normally. If
-      // context.method was "next", forget context.arg since it has been
-      // "consumed" by the delegate iterator. If context.method was
-      // "return", allow the original .return call to continue in the
-      // outer generator.
-      if (context.method !== "return") {
-        context.method = "next";
-        context.arg = undefined;
-      }
-
-    } else {
-      // Re-yield the result returned by the delegate method.
-      return info;
-    }
-
-    // The delegate iterator is finished, so forget it and continue with
-    // the outer generator.
-    context.delegate = null;
-    return ContinueSentinel;
-  }
-
-  // Define Generator.prototype.{next,throw,return} in terms of the
-  // unified ._invoke helper method.
-  defineIteratorMethods(Gp);
-
-  Gp[toStringTagSymbol] = "Generator";
-
-  // A Generator should always return itself as the iterator object when the
-  // @@iterator function is called on it. Some browsers' implementations of the
-  // iterator prototype chain incorrectly implement this, causing the Generator
-  // object to not be returned from this call. This ensures that doesn't happen.
-  // See https://github.com/facebook/regenerator/issues/274 for more details.
-  Gp[iteratorSymbol] = function() {
-    return this;
-  };
-
-  Gp.toString = function() {
-    return "[object Generator]";
-  };
-
-  function pushTryEntry(locs) {
-    var entry = { tryLoc: locs[0] };
-
-    if (1 in locs) {
-      entry.catchLoc = locs[1];
-    }
-
-    if (2 in locs) {
-      entry.finallyLoc = locs[2];
-      entry.afterLoc = locs[3];
-    }
-
-    this.tryEntries.push(entry);
-  }
-
-  function resetTryEntry(entry) {
-    var record = entry.completion || {};
-    record.type = "normal";
-    delete record.arg;
-    entry.completion = record;
-  }
-
-  function Context(tryLocsList) {
-    // The root entry object (effectively a try statement without a catch
-    // or a finally block) gives us a place to store values thrown from
-    // locations where there is no enclosing try statement.
-    this.tryEntries = [{ tryLoc: "root" }];
-    tryLocsList.forEach(pushTryEntry, this);
-    this.reset(true);
-  }
-
-  exports.keys = function(object) {
-    var keys = [];
-    for (var key in object) {
-      keys.push(key);
-    }
-    keys.reverse();
-
-    // Rather than returning an object with a next method, we keep
-    // things simple and return the next function itself.
-    return function next() {
-      while (keys.length) {
-        var key = keys.pop();
-        if (key in object) {
-          next.value = key;
-          next.done = false;
-          return next;
-        }
-      }
-
-      // To avoid creating an additional object, we just hang the .value
-      // and .done properties off the next function object itself. This
-      // also ensures that the minifier will not anonymize the function.
-      next.done = true;
-      return next;
-    };
-  };
-
-  function values(iterable) {
-    if (iterable) {
-      var iteratorMethod = iterable[iteratorSymbol];
-      if (iteratorMethod) {
-        return iteratorMethod.call(iterable);
-      }
-
-      if (typeof iterable.next === "function") {
-        return iterable;
-      }
-
-      if (!isNaN(iterable.length)) {
-        var i = -1, next = function next() {
-          while (++i < iterable.length) {
-            if (hasOwn.call(iterable, i)) {
-              next.value = iterable[i];
-              next.done = false;
-              return next;
-            }
-          }
-
-          next.value = undefined;
-          next.done = true;
-
-          return next;
-        };
-
-        return next.next = next;
-      }
-    }
-
-    // Return an iterator with no values.
-    return { next: doneResult };
-  }
-  exports.values = values;
-
-  function doneResult() {
-    return { value: undefined, done: true };
-  }
-
-  Context.prototype = {
-    constructor: Context,
-
-    reset: function(skipTempReset) {
-      this.prev = 0;
-      this.next = 0;
-      // Resetting context._sent for legacy support of Babel's
-      // function.sent implementation.
-      this.sent = this._sent = undefined;
-      this.done = false;
-      this.delegate = null;
-
-      this.method = "next";
-      this.arg = undefined;
-
-      this.tryEntries.forEach(resetTryEntry);
-
-      if (!skipTempReset) {
-        for (var name in this) {
-          // Not sure about the optimal order of these conditions:
-          if (name.charAt(0) === "t" &&
-              hasOwn.call(this, name) &&
-              !isNaN(+name.slice(1))) {
-            this[name] = undefined;
-          }
-        }
-      }
-    },
-
-    stop: function() {
-      this.done = true;
-
-      var rootEntry = this.tryEntries[0];
-      var rootRecord = rootEntry.completion;
-      if (rootRecord.type === "throw") {
-        throw rootRecord.arg;
-      }
-
-      return this.rval;
-    },
-
-    dispatchException: function(exception) {
-      if (this.done) {
-        throw exception;
-      }
-
-      var context = this;
-      function handle(loc, caught) {
-        record.type = "throw";
-        record.arg = exception;
-        context.next = loc;
-
-        if (caught) {
-          // If the dispatched exception was caught by a catch block,
-          // then let that catch block handle the exception normally.
-          context.method = "next";
-          context.arg = undefined;
-        }
-
-        return !! caught;
-      }
-
-      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-        var entry = this.tryEntries[i];
-        var record = entry.completion;
-
-        if (entry.tryLoc === "root") {
-          // Exception thrown outside of any try block that could handle
-          // it, so set the completion value of the entire function to
-          // throw the exception.
-          return handle("end");
-        }
-
-        if (entry.tryLoc <= this.prev) {
-          var hasCatch = hasOwn.call(entry, "catchLoc");
-          var hasFinally = hasOwn.call(entry, "finallyLoc");
-
-          if (hasCatch && hasFinally) {
-            if (this.prev < entry.catchLoc) {
-              return handle(entry.catchLoc, true);
-            } else if (this.prev < entry.finallyLoc) {
-              return handle(entry.finallyLoc);
-            }
-
-          } else if (hasCatch) {
-            if (this.prev < entry.catchLoc) {
-              return handle(entry.catchLoc, true);
-            }
-
-          } else if (hasFinally) {
-            if (this.prev < entry.finallyLoc) {
-              return handle(entry.finallyLoc);
-            }
-
-          } else {
-            throw new Error("try statement without catch or finally");
-          }
-        }
-      }
-    },
-
-    abrupt: function(type, arg) {
-      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-        var entry = this.tryEntries[i];
-        if (entry.tryLoc <= this.prev &&
-            hasOwn.call(entry, "finallyLoc") &&
-            this.prev < entry.finallyLoc) {
-          var finallyEntry = entry;
-          break;
-        }
-      }
-
-      if (finallyEntry &&
-          (type === "break" ||
-           type === "continue") &&
-          finallyEntry.tryLoc <= arg &&
-          arg <= finallyEntry.finallyLoc) {
-        // Ignore the finally entry if control is not jumping to a
-        // location outside the try/catch block.
-        finallyEntry = null;
-      }
-
-      var record = finallyEntry ? finallyEntry.completion : {};
-      record.type = type;
-      record.arg = arg;
-
-      if (finallyEntry) {
-        this.method = "next";
-        this.next = finallyEntry.finallyLoc;
-        return ContinueSentinel;
-      }
-
-      return this.complete(record);
-    },
-
-    complete: function(record, afterLoc) {
-      if (record.type === "throw") {
-        throw record.arg;
-      }
-
-      if (record.type === "break" ||
-          record.type === "continue") {
-        this.next = record.arg;
-      } else if (record.type === "return") {
-        this.rval = this.arg = record.arg;
-        this.method = "return";
-        this.next = "end";
-      } else if (record.type === "normal" && afterLoc) {
-        this.next = afterLoc;
-      }
-
-      return ContinueSentinel;
-    },
-
-    finish: function(finallyLoc) {
-      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-        var entry = this.tryEntries[i];
-        if (entry.finallyLoc === finallyLoc) {
-          this.complete(entry.completion, entry.afterLoc);
-          resetTryEntry(entry);
-          return ContinueSentinel;
-        }
-      }
-    },
-
-    "catch": function(tryLoc) {
-      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
-        var entry = this.tryEntries[i];
-        if (entry.tryLoc === tryLoc) {
-          var record = entry.completion;
-          if (record.type === "throw") {
-            var thrown = record.arg;
-            resetTryEntry(entry);
-          }
-          return thrown;
-        }
-      }
-
-      // The context.catch method must only be called with a location
-      // argument that corresponds to a known catch block.
-      throw new Error("illegal catch attempt");
-    },
-
-    delegateYield: function(iterable, resultName, nextLoc) {
-      this.delegate = {
-        iterator: values(iterable),
-        resultName: resultName,
-        nextLoc: nextLoc
-      };
-
-      if (this.method === "next") {
-        // Deliberately forget the last sent value so that we don't
-        // accidentally pass it on to the delegate.
-        this.arg = undefined;
-      }
-
-      return ContinueSentinel;
-    }
-  };
-
-  // Regardless of whether this script is executing as a CommonJS module
-  // or not, return the runtime object so that we can declare the variable
-  // regeneratorRuntime in the outer scope, which allows this module to be
-  // injected easily by `bin/regenerator --include-runtime script.js`.
-  return exports;
-
-}(
-  // If this script is executing as a CommonJS module, use module.exports
-  // as the regeneratorRuntime namespace. Otherwise create a new empty
-  // object. Either way, the resulting object will be used to initialize
-  // the regeneratorRuntime variable at the top of this file.
-  typeof module === "object" ? module.exports : {}
-));
-
-try {
-  regeneratorRuntime = runtime;
-} catch (accidentalStrictMode) {
-  // This module should not be running in strict mode, so the above
-  // assignment should always work unless something is misconfigured. Just
-  // in case runtime.js accidentally runs in strict mode, we can escape
-  // strict mode using a global Function call. This could conceivably fail
-  // if a Content Security Policy forbids using Function, but in that case
-  // the proper solution is to fix the accidental strict mode problem. If
-  // you've misconfigured your bundler to force strict mode and applied a
-  // CSP to forbid Function, and you're not willing to fix either of those
-  // problems, please detail your unique predicament in a GitHub issue.
-  Function("r", "regeneratorRuntime = r")(runtime);
-}
-
-},{}],37:[function(require,module,exports){
 module.exports = require("regenerator-runtime");
 
-},{"regenerator-runtime":36}],38:[function(require,module,exports){
+},{"regenerator-runtime":156}],37:[function(require,module,exports){
 'use strict';
 
 var KEYWORDS = [
@@ -4549,7 +3835,7 @@ module.exports = function (metaSchema, keywordsJsonPointers) {
   return metaSchema;
 };
 
-},{}],39:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 'use strict';
 
 var compileSchema = require('./compile')
@@ -5053,7 +4339,7 @@ function setLogger(self) {
 
 function noop() {}
 
-},{"./$data":38,"./cache":40,"./compile":45,"./compile/async":42,"./compile/error_classes":43,"./compile/formats":44,"./compile/resolve":46,"./compile/rules":47,"./compile/schema_obj":48,"./compile/util":50,"./keyword":74,"./patternGroups":75,"./refs/$data.json":76,"./refs/json-schema-draft-06.json":77,"co":100,"fast-json-stable-stringify":110}],40:[function(require,module,exports){
+},{"./$data":37,"./cache":39,"./compile":44,"./compile/async":41,"./compile/error_classes":42,"./compile/formats":43,"./compile/resolve":45,"./compile/rules":46,"./compile/schema_obj":47,"./compile/util":49,"./keyword":73,"./patternGroups":74,"./refs/$data.json":75,"./refs/json-schema-draft-06.json":76,"co":99,"fast-json-stable-stringify":109}],39:[function(require,module,exports){
 'use strict';
 
 
@@ -5081,7 +4367,7 @@ Cache.prototype.clear = function Cache_clear() {
   this._cache = {};
 };
 
-},{}],41:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 'use strict';
 
 //all requires must be explicit because browserify won't work with dynamic requires
@@ -5114,7 +4400,7 @@ module.exports = {
   validate: require('../dotjs/validate')
 };
 
-},{"../dotjs/_limit":51,"../dotjs/_limitItems":52,"../dotjs/_limitLength":53,"../dotjs/_limitProperties":54,"../dotjs/allOf":55,"../dotjs/anyOf":56,"../dotjs/const":57,"../dotjs/contains":58,"../dotjs/dependencies":60,"../dotjs/enum":61,"../dotjs/format":62,"../dotjs/items":63,"../dotjs/multipleOf":64,"../dotjs/not":65,"../dotjs/oneOf":66,"../dotjs/pattern":67,"../dotjs/properties":68,"../dotjs/propertyNames":69,"../dotjs/ref":70,"../dotjs/required":71,"../dotjs/uniqueItems":72,"../dotjs/validate":73}],42:[function(require,module,exports){
+},{"../dotjs/_limit":50,"../dotjs/_limitItems":51,"../dotjs/_limitLength":52,"../dotjs/_limitProperties":53,"../dotjs/allOf":54,"../dotjs/anyOf":55,"../dotjs/const":56,"../dotjs/contains":57,"../dotjs/dependencies":59,"../dotjs/enum":60,"../dotjs/format":61,"../dotjs/items":62,"../dotjs/multipleOf":63,"../dotjs/not":64,"../dotjs/oneOf":65,"../dotjs/pattern":66,"../dotjs/properties":67,"../dotjs/propertyNames":68,"../dotjs/ref":69,"../dotjs/required":70,"../dotjs/uniqueItems":71,"../dotjs/validate":72}],41:[function(require,module,exports){
 'use strict';
 
 var MissingRefError = require('./error_classes').MissingRef;
@@ -5206,7 +4492,7 @@ function compileAsync(schema, meta, callback) {
   }
 }
 
-},{"./error_classes":43}],43:[function(require,module,exports){
+},{"./error_classes":42}],42:[function(require,module,exports){
 'use strict';
 
 var resolve = require('./resolve');
@@ -5242,7 +4528,7 @@ function errorSubclass(Subclass) {
   return Subclass;
 }
 
-},{"./resolve":46}],44:[function(require,module,exports){
+},{"./resolve":45}],43:[function(require,module,exports){
 'use strict';
 
 var util = require('./util');
@@ -5379,7 +4665,7 @@ function regex(str) {
   }
 }
 
-},{"./util":50}],45:[function(require,module,exports){
+},{"./util":49}],44:[function(require,module,exports){
 'use strict';
 
 var resolve = require('./resolve')
@@ -5761,7 +5047,7 @@ function vars(arr, statement) {
   return code;
 }
 
-},{"../dotjs/validate":73,"./error_classes":43,"./resolve":46,"./util":50,"co":100,"fast-deep-equal":109,"fast-json-stable-stringify":110}],46:[function(require,module,exports){
+},{"../dotjs/validate":72,"./error_classes":42,"./resolve":45,"./util":49,"co":99,"fast-deep-equal":108,"fast-json-stable-stringify":109}],45:[function(require,module,exports){
 'use strict';
 
 var url = require('url')
@@ -6034,7 +5320,7 @@ function resolveIds(schema) {
   return localRefs;
 }
 
-},{"./schema_obj":48,"./util":50,"fast-deep-equal":109,"json-schema-traverse":143,"url":undefined}],47:[function(require,module,exports){
+},{"./schema_obj":47,"./util":49,"fast-deep-equal":108,"json-schema-traverse":142,"url":undefined}],46:[function(require,module,exports){
 'use strict';
 
 var ruleModules = require('./_rules')
@@ -6094,7 +5380,7 @@ module.exports = function rules() {
   return RULES;
 };
 
-},{"./_rules":41,"./util":50}],48:[function(require,module,exports){
+},{"./_rules":40,"./util":49}],47:[function(require,module,exports){
 'use strict';
 
 var util = require('./util');
@@ -6105,7 +5391,7 @@ function SchemaObject(obj) {
   util.copy(obj, this);
 }
 
-},{"./util":50}],49:[function(require,module,exports){
+},{"./util":49}],48:[function(require,module,exports){
 'use strict';
 
 // https://mathiasbynens.be/notes/javascript-encoding
@@ -6127,7 +5413,7 @@ module.exports = function ucs2length(str) {
   return length;
 };
 
-},{}],50:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 'use strict';
 
 
@@ -6396,7 +5682,7 @@ function unescapeJsonPointer(str) {
   return str.replace(/~1/g, '/').replace(/~0/g, '~');
 }
 
-},{"./ucs2length":49,"fast-deep-equal":109}],51:[function(require,module,exports){
+},{"./ucs2length":48,"fast-deep-equal":108}],50:[function(require,module,exports){
 'use strict';
 module.exports = function generate__limit(it, $keyword, $ruleType) {
   var out = ' ';
@@ -6547,7 +5833,7 @@ module.exports = function generate__limit(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],52:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 module.exports = function generate__limitItems(it, $keyword, $ruleType) {
   var out = ' ';
@@ -6625,7 +5911,7 @@ module.exports = function generate__limitItems(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],53:[function(require,module,exports){
+},{}],52:[function(require,module,exports){
 'use strict';
 module.exports = function generate__limitLength(it, $keyword, $ruleType) {
   var out = ' ';
@@ -6708,7 +5994,7 @@ module.exports = function generate__limitLength(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],54:[function(require,module,exports){
+},{}],53:[function(require,module,exports){
 'use strict';
 module.exports = function generate__limitProperties(it, $keyword, $ruleType) {
   var out = ' ';
@@ -6786,7 +6072,7 @@ module.exports = function generate__limitProperties(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],55:[function(require,module,exports){
+},{}],54:[function(require,module,exports){
 'use strict';
 module.exports = function generate_allOf(it, $keyword, $ruleType) {
   var out = ' ';
@@ -6831,7 +6117,7 @@ module.exports = function generate_allOf(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],56:[function(require,module,exports){
+},{}],55:[function(require,module,exports){
 'use strict';
 module.exports = function generate_anyOf(it, $keyword, $ruleType) {
   var out = ' ';
@@ -6906,7 +6192,7 @@ module.exports = function generate_anyOf(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],57:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 'use strict';
 module.exports = function generate_const(it, $keyword, $ruleType) {
   var out = ' ';
@@ -6963,7 +6249,7 @@ module.exports = function generate_const(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],58:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 'use strict';
 module.exports = function generate_contains(it, $keyword, $ruleType) {
   var out = ' ';
@@ -7046,7 +6332,7 @@ module.exports = function generate_contains(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],59:[function(require,module,exports){
+},{}],58:[function(require,module,exports){
 'use strict';
 module.exports = function generate_custom(it, $keyword, $ruleType) {
   var out = ' ';
@@ -7274,7 +6560,7 @@ module.exports = function generate_custom(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],60:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 'use strict';
 module.exports = function generate_dependencies(it, $keyword, $ruleType) {
   var out = ' ';
@@ -7443,7 +6729,7 @@ module.exports = function generate_dependencies(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],61:[function(require,module,exports){
+},{}],60:[function(require,module,exports){
 'use strict';
 module.exports = function generate_enum(it, $keyword, $ruleType) {
   var out = ' ';
@@ -7510,7 +6796,7 @@ module.exports = function generate_enum(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],62:[function(require,module,exports){
+},{}],61:[function(require,module,exports){
 'use strict';
 module.exports = function generate_format(it, $keyword, $ruleType) {
   var out = ' ';
@@ -7661,7 +6947,7 @@ module.exports = function generate_format(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],63:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 'use strict';
 module.exports = function generate_items(it, $keyword, $ruleType) {
   var out = ' ';
@@ -7803,7 +7089,7 @@ module.exports = function generate_items(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],64:[function(require,module,exports){
+},{}],63:[function(require,module,exports){
 'use strict';
 module.exports = function generate_multipleOf(it, $keyword, $ruleType) {
   var out = ' ';
@@ -7881,7 +7167,7 @@ module.exports = function generate_multipleOf(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],65:[function(require,module,exports){
+},{}],64:[function(require,module,exports){
 'use strict';
 module.exports = function generate_not(it, $keyword, $ruleType) {
   var out = ' ';
@@ -7966,7 +7252,7 @@ module.exports = function generate_not(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],66:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 'use strict';
 module.exports = function generate_oneOf(it, $keyword, $ruleType) {
   var out = ' ';
@@ -8038,7 +7324,7 @@ module.exports = function generate_oneOf(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],67:[function(require,module,exports){
+},{}],66:[function(require,module,exports){
 'use strict';
 module.exports = function generate_pattern(it, $keyword, $ruleType) {
   var out = ' ';
@@ -8114,7 +7400,7 @@ module.exports = function generate_pattern(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],68:[function(require,module,exports){
+},{}],67:[function(require,module,exports){
 'use strict';
 module.exports = function generate_properties(it, $keyword, $ruleType) {
   var out = ' ';
@@ -8584,7 +7870,7 @@ module.exports = function generate_properties(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],69:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
 'use strict';
 module.exports = function generate_propertyNames(it, $keyword, $ruleType) {
   var out = ' ';
@@ -8667,7 +7953,7 @@ module.exports = function generate_propertyNames(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],70:[function(require,module,exports){
+},{}],69:[function(require,module,exports){
 'use strict';
 module.exports = function generate_ref(it, $keyword, $ruleType) {
   var out = ' ';
@@ -8792,7 +8078,7 @@ module.exports = function generate_ref(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],71:[function(require,module,exports){
+},{}],70:[function(require,module,exports){
 'use strict';
 module.exports = function generate_required(it, $keyword, $ruleType) {
   var out = ' ';
@@ -9062,7 +8348,7 @@ module.exports = function generate_required(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],72:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
 'use strict';
 module.exports = function generate_uniqueItems(it, $keyword, $ruleType) {
   var out = ' ';
@@ -9135,7 +8421,7 @@ module.exports = function generate_uniqueItems(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],73:[function(require,module,exports){
+},{}],72:[function(require,module,exports){
 'use strict';
 module.exports = function generate_validate(it, $keyword, $ruleType) {
   var out = '';
@@ -9595,7 +8881,7 @@ module.exports = function generate_validate(it, $keyword, $ruleType) {
   return out;
 }
 
-},{}],74:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 'use strict';
 
 var IDENTIFIER = /^[a-z_$][a-z0-9_$-]*$/i;
@@ -9732,7 +9018,7 @@ function removeKeyword(keyword) {
   return this;
 }
 
-},{"./dotjs/custom":59}],75:[function(require,module,exports){
+},{"./dotjs/custom":58}],74:[function(require,module,exports){
 'use strict';
 
 var META_SCHEMA_ID = 'http://json-schema.org/draft-06/schema';
@@ -9770,7 +9056,7 @@ module.exports = function (ajv) {
   ajv.RULES.all.properties.implements.push('patternGroups');
 };
 
-},{}],76:[function(require,module,exports){
+},{}],75:[function(require,module,exports){
 module.exports={
     "$schema": "http://json-schema.org/draft-06/schema#",
     "$id": "https://raw.githubusercontent.com/epoberezkin/ajv/master/lib/refs/$data.json#",
@@ -9789,7 +9075,7 @@ module.exports={
     "additionalProperties": false
 }
 
-},{}],77:[function(require,module,exports){
+},{}],76:[function(require,module,exports){
 module.exports={
     "$schema": "http://json-schema.org/draft-06/schema#",
     "$id": "http://json-schema.org/draft-06/schema#",
@@ -9945,7 +9231,7 @@ module.exports={
     "default": {}
 }
 
-},{}],78:[function(require,module,exports){
+},{}],77:[function(require,module,exports){
 // Copyright 2011 Mark Cavage <mcavage@gmail.com> All rights reserved.
 
 
@@ -9960,7 +9246,7 @@ module.exports = {
 
 };
 
-},{}],79:[function(require,module,exports){
+},{}],78:[function(require,module,exports){
 // Copyright 2011 Mark Cavage <mcavage@gmail.com> All rights reserved.
 
 var errors = require('./errors');
@@ -9989,7 +9275,7 @@ for (var e in errors) {
     module.exports[e] = errors[e];
 }
 
-},{"./errors":78,"./reader":80,"./types":81,"./writer":82}],80:[function(require,module,exports){
+},{"./errors":77,"./reader":79,"./types":80,"./writer":81}],79:[function(require,module,exports){
 // Copyright 2011 Mark Cavage <mcavage@gmail.com> All rights reserved.
 
 var assert = require('assert');
@@ -10253,7 +9539,7 @@ Reader.prototype._readTag = function (tag) {
 
 module.exports = Reader;
 
-},{"./errors":78,"./types":81,"assert":undefined,"safer-buffer":171}],81:[function(require,module,exports){
+},{"./errors":77,"./types":80,"assert":undefined,"safer-buffer":171}],80:[function(require,module,exports){
 // Copyright 2011 Mark Cavage <mcavage@gmail.com> All rights reserved.
 
 
@@ -10291,7 +9577,7 @@ module.exports = {
   Context: 128
 };
 
-},{}],82:[function(require,module,exports){
+},{}],81:[function(require,module,exports){
 // Copyright 2011 Mark Cavage <mcavage@gmail.com> All rights reserved.
 
 var assert = require('assert');
@@ -10610,7 +9896,7 @@ Writer.prototype._ensure = function (len) {
 
 module.exports = Writer;
 
-},{"./errors":78,"./types":81,"assert":undefined,"safer-buffer":171}],83:[function(require,module,exports){
+},{"./errors":77,"./types":80,"assert":undefined,"safer-buffer":171}],82:[function(require,module,exports){
 // Copyright 2011 Mark Cavage <mcavage@gmail.com> All rights reserved.
 
 // If you have no idea what ASN.1 or BER is, see this:
@@ -10632,7 +9918,7 @@ module.exports = {
 
 };
 
-},{"./ber/index":79}],84:[function(require,module,exports){
+},{"./ber/index":78}],83:[function(require,module,exports){
 // Copyright (c) 2012, Mark Cavage. All rights reserved.
 // Copyright 2015 Joyent, Inc.
 
@@ -10845,7 +10131,7 @@ function _setExports(ndebug) {
 
 module.exports = _setExports(process.env.NODE_NDEBUG);
 
-},{"assert":undefined,"stream":undefined,"util":undefined}],85:[function(require,module,exports){
+},{"assert":undefined,"stream":undefined,"util":undefined}],84:[function(require,module,exports){
 module.exports =
 {
   parallel      : require('./parallel.js'),
@@ -10853,7 +10139,7 @@ module.exports =
   serialOrdered : require('./serialOrdered.js')
 };
 
-},{"./parallel.js":92,"./serial.js":93,"./serialOrdered.js":94}],86:[function(require,module,exports){
+},{"./parallel.js":91,"./serial.js":92,"./serialOrdered.js":93}],85:[function(require,module,exports){
 // API
 module.exports = abort;
 
@@ -10884,7 +10170,7 @@ function clean(key)
   }
 }
 
-},{}],87:[function(require,module,exports){
+},{}],86:[function(require,module,exports){
 var defer = require('./defer.js');
 
 // API
@@ -10920,7 +10206,7 @@ function async(callback)
   };
 }
 
-},{"./defer.js":88}],88:[function(require,module,exports){
+},{"./defer.js":87}],87:[function(require,module,exports){
 module.exports = defer;
 
 /**
@@ -10948,7 +10234,7 @@ function defer(fn)
   }
 }
 
-},{}],89:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 var async = require('./async.js')
   , abort = require('./abort.js')
   ;
@@ -11025,7 +10311,7 @@ function runJob(iterator, key, item, callback)
   return aborter;
 }
 
-},{"./abort.js":86,"./async.js":87}],90:[function(require,module,exports){
+},{"./abort.js":85,"./async.js":86}],89:[function(require,module,exports){
 // API
 module.exports = state;
 
@@ -11064,7 +10350,7 @@ function state(list, sortMethod)
   return initState;
 }
 
-},{}],91:[function(require,module,exports){
+},{}],90:[function(require,module,exports){
 var abort = require('./abort.js')
   , async = require('./async.js')
   ;
@@ -11095,7 +10381,7 @@ function terminator(callback)
   async(callback)(null, this.results);
 }
 
-},{"./abort.js":86,"./async.js":87}],92:[function(require,module,exports){
+},{"./abort.js":85,"./async.js":86}],91:[function(require,module,exports){
 var iterate    = require('./lib/iterate.js')
   , initState  = require('./lib/state.js')
   , terminator = require('./lib/terminator.js')
@@ -11140,7 +10426,7 @@ function parallel(list, iterator, callback)
   return terminator.bind(state, callback);
 }
 
-},{"./lib/iterate.js":89,"./lib/state.js":90,"./lib/terminator.js":91}],93:[function(require,module,exports){
+},{"./lib/iterate.js":88,"./lib/state.js":89,"./lib/terminator.js":90}],92:[function(require,module,exports){
 var serialOrdered = require('./serialOrdered.js');
 
 // Public API
@@ -11159,7 +10445,7 @@ function serial(list, iterator, callback)
   return serialOrdered(list, iterator, null, callback);
 }
 
-},{"./serialOrdered.js":94}],94:[function(require,module,exports){
+},{"./serialOrdered.js":93}],93:[function(require,module,exports){
 var iterate    = require('./lib/iterate.js')
   , initState  = require('./lib/state.js')
   , terminator = require('./lib/terminator.js')
@@ -11236,7 +10522,7 @@ function descending(a, b)
   return -1 * ascending(a, b);
 }
 
-},{"./lib/iterate.js":89,"./lib/state.js":90,"./lib/terminator.js":91}],95:[function(require,module,exports){
+},{"./lib/iterate.js":88,"./lib/state.js":89,"./lib/terminator.js":90}],94:[function(require,module,exports){
 
 /*!
  *  Copyright 2010 LearnBoost <dev@learnboost.com>
@@ -11450,7 +10736,7 @@ function canonicalizeResource (resource) {
 }
 module.exports.canonicalizeResource = canonicalizeResource
 
-},{"crypto":undefined,"url":undefined}],96:[function(require,module,exports){
+},{"crypto":undefined,"url":undefined}],95:[function(require,module,exports){
 var aws4 = exports,
     url = require('url'),
     querystring = require('querystring'),
@@ -11475,6 +10761,10 @@ function encodeRfc3986(urlEncodedString) {
   })
 }
 
+function encodeRfc3986Full(str) {
+  return encodeRfc3986(encodeURIComponent(str))
+}
+
 // request: { path | body, [host], [method], [headers], [service], [region] }
 // credentials: { accessKeyId, secretAccessKey, [sessionToken] }
 function RequestSigner(request, credentials) {
@@ -11482,7 +10772,7 @@ function RequestSigner(request, credentials) {
   if (typeof request === 'string') request = url.parse(request)
 
   var headers = request.headers = (request.headers || {}),
-      hostParts = this.matchHost(request.hostname || request.host || headers.Host || headers.host)
+      hostParts = (!this.service || !this.region) && this.matchHost(request.hostname || request.host || headers.Host || headers.host)
 
   this.request = request
   this.credentials = credentials || this.defaultCredentials()
@@ -11519,6 +10809,19 @@ RequestSigner.prototype.matchHost = function(host) {
   if (hostParts[1] === 'es')
     hostParts = hostParts.reverse()
 
+  if (hostParts[1] == 's3') {
+    hostParts[0] = 's3'
+    hostParts[1] = 'us-east-1'
+  } else {
+    for (var i = 0; i < 2; i++) {
+      if (/^s3-/.test(hostParts[i])) {
+        hostParts[1] = hostParts[i].slice(3)
+        hostParts[0] = 's3'
+        break
+      }
+    }
+  }
+
   return hostParts
 }
 
@@ -11532,10 +10835,9 @@ RequestSigner.prototype.isSingleRegion = function() {
 }
 
 RequestSigner.prototype.createHost = function() {
-  var region = this.isSingleRegion() ? '' :
-        (this.service === 's3' && this.region !== 'us-east-1' ? '-' : '.') + this.region,
-      service = this.service === 'ses' ? 'email' : this.service
-  return service + region + '.amazonaws.com'
+  var region = this.isSingleRegion() ? '' : '.' + this.region,
+      subdomain = this.service === 'ses' ? 'email' : this.service
+  return subdomain + region + '.amazonaws.com'
 }
 
 RequestSigner.prototype.prepareRequest = function() {
@@ -11673,12 +10975,22 @@ RequestSigner.prototype.canonicalString = function() {
   }
 
   if (query) {
-    queryStr = encodeRfc3986(querystring.stringify(Object.keys(query).sort().reduce(function(obj, key) {
+    var reducedQuery = Object.keys(query).reduce(function(obj, key) {
       if (!key) return obj
-      obj[key] = !Array.isArray(query[key]) ? query[key] :
-        (firstValOnly ? query[key][0] : query[key].slice().sort())
+      obj[encodeRfc3986Full(key)] = !Array.isArray(query[key]) ? query[key] :
+        (firstValOnly ? query[key][0] : query[key])
       return obj
-    }, {})))
+    }, {})
+    var encodedQueryPieces = []
+    Object.keys(reducedQuery).sort().forEach(function(key) {
+      if (!Array.isArray(reducedQuery[key])) {
+        encodedQueryPieces.push(key + '=' + encodeRfc3986Full(reducedQuery[key]))
+      } else {
+        reducedQuery[key].map(encodeRfc3986Full).sort()
+          .forEach(function(val) { encodedQueryPieces.push(key + '=' + val) })
+      }
+    })
+    queryStr = encodedQueryPieces.join('&')
   }
   if (pathStr !== '/') {
     if (normalizePath) pathStr = pathStr.replace(/\/{2,}/g, '/')
@@ -11686,8 +10998,8 @@ RequestSigner.prototype.canonicalString = function() {
       if (normalizePath && piece === '..') {
         path.pop()
       } else if (!normalizePath || piece !== '.') {
-        if (decodePath) piece = decodeURIComponent(piece)
-        path.push(encodeRfc3986(encodeURIComponent(piece)))
+        if (decodePath) piece = decodeURIComponent(piece.replace(/\+/g, ' '))
+        path.push(encodeRfc3986Full(piece))
       }
       return path
     }, []).join('/')
@@ -11742,22 +11054,21 @@ RequestSigner.prototype.defaultCredentials = function() {
 }
 
 RequestSigner.prototype.parsePath = function() {
-  var path = this.request.path || '/',
-      queryIx = path.indexOf('?'),
+  var path = this.request.path || '/'
+
+  // S3 doesn't always encode characters > 127 correctly and
+  // all services don't encode characters > 255 correctly
+  // So if there are non-reserved chars (and it's not already all % encoded), just encode them all
+  if (/[^0-9A-Za-z;,/?:@&=+$\-_.!~*'()#%]/.test(path)) {
+    path = encodeURI(decodeURI(path))
+  }
+
+  var queryIx = path.indexOf('?'),
       query = null
 
   if (queryIx >= 0) {
     query = querystring.parse(path.slice(queryIx + 1))
     path = path.slice(0, queryIx)
-  }
-
-  // S3 doesn't always encode characters > 127 correctly and
-  // all services don't encode characters > 255 correctly
-  // So if there are non-reserved chars (and it's not already all % encoded), just encode them all
-  if (/[^0-9A-Za-z!'()*\-._~%/]/.test(path)) {
-    path = path.split('/').map(function(piece) {
-      return encodeURIComponent(decodeURIComponent(piece))
-    }).join('/')
   }
 
   this.parsedPath = {
@@ -11784,7 +11095,7 @@ aws4.sign = function(request, credentials) {
   return new RequestSigner(request, credentials).sign()
 }
 
-},{"./lru":97,"crypto":undefined,"querystring":undefined,"url":undefined}],97:[function(require,module,exports){
+},{"./lru":96,"crypto":undefined,"querystring":undefined,"url":undefined}],96:[function(require,module,exports){
 module.exports = function(size) {
   return new LruCache(size)
 }
@@ -11882,7 +11193,7 @@ function DoublyLinkedNode(key, val) {
   this.next = null
 }
 
-},{}],98:[function(require,module,exports){
+},{}],97:[function(require,module,exports){
 'use strict';
 
 var crypto_hash_sha512 = require('tweetnacl').lowlevel.crypto_hash;
@@ -12440,7 +11751,7 @@ module.exports = {
       pbkdf: bcrypt_pbkdf
 };
 
-},{"tweetnacl":205}],99:[function(require,module,exports){
+},{"tweetnacl":205}],98:[function(require,module,exports){
 function Caseless (dict) {
   this.dict = dict || {}
 }
@@ -12509,7 +11820,7 @@ module.exports.httpify = function (resp, headers) {
   return c
 }
 
-},{}],100:[function(require,module,exports){
+},{}],99:[function(require,module,exports){
 
 /**
  * slice() reference.
@@ -12748,7 +12059,7 @@ function isObject(val) {
   return Object == val.constructor;
 }
 
-},{}],101:[function(require,module,exports){
+},{}],100:[function(require,module,exports){
 var util = require('util');
 var Stream = require('stream').Stream;
 var DelayedStream = require('delayed-stream');
@@ -12958,7 +12269,7 @@ CombinedStream.prototype._emitError = function(err) {
   this.emit('error', err);
 };
 
-},{"delayed-stream":103,"stream":undefined,"util":undefined}],102:[function(require,module,exports){
+},{"delayed-stream":102,"stream":undefined,"util":undefined}],101:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -13067,7 +12378,7 @@ function objectToString(o) {
   return Object.prototype.toString.call(o);
 }
 
-},{}],103:[function(require,module,exports){
+},{}],102:[function(require,module,exports){
 var Stream = require('stream').Stream;
 var util = require('util');
 
@@ -13176,7 +12487,7 @@ DelayedStream.prototype._checkIfMaxDataSizeExceeded = function() {
   this.emit('error', new Error(message));
 };
 
-},{"stream":undefined,"util":undefined}],104:[function(require,module,exports){
+},{"stream":undefined,"util":undefined}],103:[function(require,module,exports){
 var crypto = require("crypto");
 var BigInteger = require("jsbn").BigInteger;
 var ECPointFp = require("./lib/ec.js").ECPointFp;
@@ -13236,7 +12547,7 @@ exports.ECKey = function(curve, key, isPublic)
 }
 
 
-},{"./lib/ec.js":105,"./lib/sec.js":106,"crypto":undefined,"jsbn":142,"safer-buffer":171}],105:[function(require,module,exports){
+},{"./lib/ec.js":104,"./lib/sec.js":105,"crypto":undefined,"jsbn":141,"safer-buffer":171}],104:[function(require,module,exports){
 // Basic Javascript Elliptic Curve implementation
 // Ported loosely from BouncyCastle's Java EC code
 // Only Fp curves implemented for now
@@ -13799,7 +13110,7 @@ var exports = {
 
 module.exports = exports
 
-},{"jsbn":142}],106:[function(require,module,exports){
+},{"jsbn":141}],105:[function(require,module,exports){
 // Named EC curves
 
 // Requires ec.js, jsbn.js, and jsbn2.js
@@ -13971,7 +13282,7 @@ module.exports = {
   "secp256r1":secp256r1
 }
 
-},{"./ec.js":105,"jsbn":142}],107:[function(require,module,exports){
+},{"./ec.js":104,"jsbn":141}],106:[function(require,module,exports){
 'use strict';
 
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -14090,7 +13401,7 @@ module.exports = function extend() {
 	return target;
 };
 
-},{}],108:[function(require,module,exports){
+},{}],107:[function(require,module,exports){
 /*
  * extsprintf.js: extended POSIX-style sprintf
  */
@@ -14275,7 +13586,7 @@ function dumpException(ex)
 	return (ret);
 }
 
-},{"assert":undefined,"util":undefined}],109:[function(require,module,exports){
+},{"assert":undefined,"util":undefined}],108:[function(require,module,exports){
 'use strict';
 
 var isArray = Array.isArray;
@@ -14332,7 +13643,7 @@ module.exports = function equal(a, b) {
   return false;
 };
 
-},{}],110:[function(require,module,exports){
+},{}],109:[function(require,module,exports){
 'use strict';
 
 module.exports = function (data, opts) {
@@ -14393,7 +13704,7 @@ module.exports = function (data, opts) {
     })(data);
 };
 
-},{}],111:[function(require,module,exports){
+},{}],110:[function(require,module,exports){
 module.exports = ForeverAgent
 ForeverAgent.SSL = ForeverAgentSSL
 
@@ -14533,7 +13844,7 @@ function createConnectionSSL (port, host, options) {
   return tls.connect(options);
 }
 
-},{"http":undefined,"https":undefined,"net":undefined,"tls":undefined,"util":undefined}],112:[function(require,module,exports){
+},{"http":undefined,"https":undefined,"net":undefined,"tls":undefined,"util":undefined}],111:[function(require,module,exports){
 var CombinedStream = require('combined-stream');
 var util = require('util');
 var path = require('path');
@@ -14992,7 +14303,7 @@ FormData.prototype.toString = function () {
   return '[object FormData]';
 };
 
-},{"./populate.js":113,"asynckit":85,"combined-stream":101,"fs":undefined,"http":undefined,"https":undefined,"mime-types":149,"path":undefined,"url":undefined,"util":undefined}],113:[function(require,module,exports){
+},{"./populate.js":112,"asynckit":84,"combined-stream":100,"fs":undefined,"http":undefined,"https":undefined,"mime-types":148,"path":undefined,"url":undefined,"util":undefined}],112:[function(require,module,exports){
 // populates missing values
 module.exports = function(dst, src) {
 
@@ -15004,7 +14315,7 @@ module.exports = function(dst, src) {
   return dst;
 };
 
-},{}],114:[function(require,module,exports){
+},{}],113:[function(require,module,exports){
 module.exports={
   "$id": "afterRequest.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15036,7 +14347,7 @@ module.exports={
   }
 }
 
-},{}],115:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 module.exports={
   "$id": "beforeRequest.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15068,7 +14379,7 @@ module.exports={
   }
 }
 
-},{}],116:[function(require,module,exports){
+},{}],115:[function(require,module,exports){
 module.exports={
   "$id": "browser.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15090,7 +14401,7 @@ module.exports={
   }
 }
 
-},{}],117:[function(require,module,exports){
+},{}],116:[function(require,module,exports){
 module.exports={
   "$id": "cache.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15113,7 +14424,7 @@ module.exports={
   }
 }
 
-},{}],118:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 module.exports={
   "$id": "content.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15144,7 +14455,7 @@ module.exports={
   }
 }
 
-},{}],119:[function(require,module,exports){
+},{}],118:[function(require,module,exports){
 module.exports={
   "$id": "cookie.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15182,7 +14493,7 @@ module.exports={
   }
 }
 
-},{}],120:[function(require,module,exports){
+},{}],119:[function(require,module,exports){
 module.exports={
   "$id": "creator.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15204,7 +14515,7 @@ module.exports={
   }
 }
 
-},{}],121:[function(require,module,exports){
+},{}],120:[function(require,module,exports){
 module.exports={
   "$id": "entry.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15259,7 +14570,7 @@ module.exports={
   }
 }
 
-},{}],122:[function(require,module,exports){
+},{}],121:[function(require,module,exports){
 module.exports={
   "$id": "har.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15274,7 +14585,7 @@ module.exports={
   }
 }
 
-},{}],123:[function(require,module,exports){
+},{}],122:[function(require,module,exports){
 module.exports={
   "$id": "header.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15296,7 +14607,7 @@ module.exports={
   }
 }
 
-},{}],124:[function(require,module,exports){
+},{}],123:[function(require,module,exports){
 'use strict'
 
 module.exports = {
@@ -15320,7 +14631,7 @@ module.exports = {
   timings: require('./timings.json')
 }
 
-},{"./afterRequest.json":114,"./beforeRequest.json":115,"./browser.json":116,"./cache.json":117,"./content.json":118,"./cookie.json":119,"./creator.json":120,"./entry.json":121,"./har.json":122,"./header.json":123,"./log.json":125,"./page.json":126,"./pageTimings.json":127,"./postData.json":128,"./query.json":129,"./request.json":130,"./response.json":131,"./timings.json":132}],125:[function(require,module,exports){
+},{"./afterRequest.json":113,"./beforeRequest.json":114,"./browser.json":115,"./cache.json":116,"./content.json":117,"./cookie.json":118,"./creator.json":119,"./entry.json":120,"./har.json":121,"./header.json":122,"./log.json":124,"./page.json":125,"./pageTimings.json":126,"./postData.json":127,"./query.json":128,"./request.json":129,"./response.json":130,"./timings.json":131}],124:[function(require,module,exports){
 module.exports={
   "$id": "log.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15358,7 +14669,7 @@ module.exports={
   }
 }
 
-},{}],126:[function(require,module,exports){
+},{}],125:[function(require,module,exports){
 module.exports={
   "$id": "page.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15392,7 +14703,7 @@ module.exports={
   }
 }
 
-},{}],127:[function(require,module,exports){
+},{}],126:[function(require,module,exports){
 module.exports={
   "$id": "pageTimings.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15412,7 +14723,7 @@ module.exports={
   }
 }
 
-},{}],128:[function(require,module,exports){
+},{}],127:[function(require,module,exports){
 module.exports={
   "$id": "postData.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15457,7 +14768,7 @@ module.exports={
   }
 }
 
-},{}],129:[function(require,module,exports){
+},{}],128:[function(require,module,exports){
 module.exports={
   "$id": "query.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15479,7 +14790,7 @@ module.exports={
   }
 }
 
-},{}],130:[function(require,module,exports){
+},{}],129:[function(require,module,exports){
 module.exports={
   "$id": "request.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15538,7 +14849,7 @@ module.exports={
   }
 }
 
-},{}],131:[function(require,module,exports){
+},{}],130:[function(require,module,exports){
 module.exports={
   "$id": "response.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15594,7 +14905,7 @@ module.exports={
   }
 }
 
-},{}],132:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 module.exports={
   "$id": "timings.json#",
   "$schema": "http://json-schema.org/draft-06/schema#",
@@ -15638,7 +14949,7 @@ module.exports={
   }
 }
 
-},{}],133:[function(require,module,exports){
+},{}],132:[function(require,module,exports){
 function HARError (errors) {
   var message = 'validation failed'
 
@@ -15657,7 +14968,7 @@ HARError.prototype = Error.prototype
 
 module.exports = HARError
 
-},{}],134:[function(require,module,exports){
+},{}],133:[function(require,module,exports){
 var Ajv = require('ajv')
 var HARError = require('./error')
 var schemas = require('har-schema')
@@ -15754,7 +15065,7 @@ exports.timings = function (data) {
   return validate('timings', data)
 }
 
-},{"./error":133,"ajv":39,"har-schema":124}],135:[function(require,module,exports){
+},{"./error":132,"ajv":38,"har-schema":123}],134:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 var parser = require('./parser');
@@ -15785,7 +15096,7 @@ module.exports = {
   verifyHMAC: verify.verifyHMAC
 };
 
-},{"./parser":136,"./signer":137,"./utils":138,"./verify":139}],136:[function(require,module,exports){
+},{"./parser":135,"./signer":136,"./utils":137,"./verify":138}],135:[function(require,module,exports){
 // Copyright 2012 Joyent, Inc.  All rights reserved.
 
 var assert = require('assert-plus');
@@ -16102,7 +15413,7 @@ module.exports = {
 
 };
 
-},{"./utils":138,"assert-plus":84,"util":undefined}],137:[function(require,module,exports){
+},{"./utils":137,"assert-plus":83,"util":undefined}],136:[function(require,module,exports){
 // Copyright 2012 Joyent, Inc.  All rights reserved.
 
 var assert = require('assert-plus');
@@ -16505,7 +15816,7 @@ module.exports = {
 
 };
 
-},{"./utils":138,"assert-plus":84,"crypto":undefined,"http":undefined,"jsprim":146,"sshpk":191,"util":undefined}],138:[function(require,module,exports){
+},{"./utils":137,"assert-plus":83,"crypto":undefined,"http":undefined,"jsprim":145,"sshpk":191,"util":undefined}],137:[function(require,module,exports){
 // Copyright 2012 Joyent, Inc.  All rights reserved.
 
 var assert = require('assert-plus');
@@ -16619,7 +15930,7 @@ module.exports = {
   }
 };
 
-},{"assert-plus":84,"sshpk":191,"util":undefined}],139:[function(require,module,exports){
+},{"assert-plus":83,"sshpk":191,"util":undefined}],138:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 var assert = require('assert-plus');
@@ -16709,7 +16020,7 @@ module.exports = {
   }
 };
 
-},{"./utils":138,"assert-plus":84,"crypto":undefined,"sshpk":191}],140:[function(require,module,exports){
+},{"./utils":137,"assert-plus":83,"crypto":undefined,"sshpk":191}],139:[function(require,module,exports){
 module.exports      = isTypedArray
 isTypedArray.strict = isStrictTypedArray
 isTypedArray.loose  = isLooseTypedArray
@@ -16752,7 +16063,7 @@ function isLooseTypedArray(arr) {
   return names[toString.call(arr)]
 }
 
-},{}],141:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 var stream = require('stream')
 
 
@@ -16781,7 +16092,7 @@ module.exports.isReadable = isReadable
 module.exports.isWritable = isWritable
 module.exports.isDuplex   = isDuplex
 
-},{"stream":undefined}],142:[function(require,module,exports){
+},{"stream":undefined}],141:[function(require,module,exports){
 (function(){
 
     // Copyright (c) 2005  Tom Wu
@@ -18140,7 +17451,7 @@ module.exports.isDuplex   = isDuplex
 
 }).call(this);
 
-},{}],143:[function(require,module,exports){
+},{}],142:[function(require,module,exports){
 'use strict';
 
 var traverse = module.exports = function (schema, opts, cb) {
@@ -18223,7 +17534,7 @@ function escapeJsonPtr(str) {
   return str.replace(/~/g, '~0').replace(/\//g, '~1');
 }
 
-},{}],144:[function(require,module,exports){
+},{}],143:[function(require,module,exports){
 /**
  * JSONSchema Validator - Validates JavaScript objects using JSON Schemas
  *	(http://www.json.com/json-schema-proposal/)
@@ -18498,7 +17809,7 @@ exports.mustBeValid = function(result){
 return exports;
 }));
 
-},{}],145:[function(require,module,exports){
+},{}],144:[function(require,module,exports){
 exports = module.exports = stringify
 exports.getSerialize = serializer
 
@@ -18527,7 +17838,7 @@ function serializer(replacer, cycleReplacer) {
   }
 }
 
-},{}],146:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 /*
  * lib/jsprim.js: utilities for primitive JavaScript types
  */
@@ -19264,13 +18575,14 @@ function mergeObjects(provided, overrides, defaults)
 	return (rv);
 }
 
-},{"assert-plus":84,"extsprintf":108,"json-schema":144,"util":undefined,"verror":209}],147:[function(require,module,exports){
+},{"assert-plus":83,"extsprintf":107,"json-schema":143,"util":undefined,"verror":209}],146:[function(require,module,exports){
 module.exports={
   "application/1d-interleaved-parityfec": {
     "source": "iana"
   },
   "application/3gpdash-qoe-report+xml": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true
   },
   "application/3gpp-ims+xml": {
@@ -19327,6 +18639,14 @@ module.exports={
     "source": "iana",
     "compressible": true
   },
+  "application/alto-updatestreamcontrol+json": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/alto-updatestreamparams+json": {
+    "source": "iana",
+    "compressible": true
+  },
   "application/aml": {
     "source": "iana"
   },
@@ -19359,7 +18679,8 @@ module.exports={
   },
   "application/atomdeleted+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["atomdeleted"]
   },
   "application/atomicmail": {
     "source": "iana"
@@ -19371,15 +18692,25 @@ module.exports={
   },
   "application/atsc-dwd+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["dwd"]
+  },
+  "application/atsc-dynamic-event-message": {
+    "source": "iana"
   },
   "application/atsc-held+xml": {
+    "source": "iana",
+    "compressible": true,
+    "extensions": ["held"]
+  },
+  "application/atsc-rdt+json": {
     "source": "iana",
     "compressible": true
   },
   "application/atsc-rsat+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["rsat"]
   },
   "application/atxml": {
     "source": "iana"
@@ -19401,6 +18732,7 @@ module.exports={
   },
   "application/beep+xml": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true
   },
   "application/calendar+json": {
@@ -19409,7 +18741,8 @@ module.exports={
   },
   "application/calendar+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["xcs"]
   },
   "application/call-completion": {
     "source": "iana"
@@ -19417,7 +18750,15 @@ module.exports={
   "application/cals-1840": {
     "source": "iana"
   },
+  "application/cap+xml": {
+    "source": "iana",
+    "charset": "UTF-8",
+    "compressible": true
+  },
   "application/cbor": {
+    "source": "iana"
+  },
+  "application/cbor-seq": {
     "source": "iana"
   },
   "application/cccex": {
@@ -19434,7 +18775,8 @@ module.exports={
   },
   "application/cdfx+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["cdfx"]
   },
   "application/cdmi-capability": {
     "source": "iana",
@@ -19472,6 +18814,10 @@ module.exports={
   },
   "application/cfw": {
     "source": "iana"
+  },
+  "application/clue+xml": {
+    "source": "iana",
+    "compressible": true
   },
   "application/clue_info+xml": {
     "source": "iana",
@@ -19597,6 +18943,9 @@ module.exports={
     "compressible": true,
     "extensions": ["dbk"]
   },
+  "application/dots+cbor": {
+    "source": "iana"
+  },
   "application/dskpp+xml": {
     "source": "iana",
     "compressible": true
@@ -19670,7 +19019,8 @@ module.exports={
   },
   "application/emotionml+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["emotionml"]
   },
   "application/encaprtp": {
     "source": "iana"
@@ -19703,14 +19053,17 @@ module.exports={
   },
   "application/fdt+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["fdt"]
   },
   "application/fhir+json": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true
   },
   "application/fhir+xml": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true
   },
   "application/fido.trusted-apps+json": {
@@ -19807,6 +19160,7 @@ module.exports={
   },
   "application/im-iscomposing+xml": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true
   },
   "application/index": {
@@ -19844,7 +19198,8 @@ module.exports={
   },
   "application/its+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["its"]
   },
   "application/java-archive": {
     "source": "apache",
@@ -19929,7 +19284,8 @@ module.exports={
   },
   "application/lgr+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["lgr"]
   },
   "application/link-format": {
     "source": "iana"
@@ -19946,6 +19302,10 @@ module.exports={
   "application/lostsync+xml": {
     "source": "iana",
     "compressible": true
+  },
+  "application/lpf+zip": {
+    "source": "iana",
+    "compressible": false
   },
   "application/lxf": {
     "source": "iana"
@@ -20088,11 +19448,13 @@ module.exports={
   },
   "application/mmt-aei+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["maei"]
   },
   "application/mmt-usd+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["musd"]
   },
   "application/mods+xml": {
     "source": "iana",
@@ -20130,18 +19492,22 @@ module.exports={
   },
   "application/mrb-consumer+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["xdf"]
   },
   "application/mrb-publish+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["xdf"]
   },
   "application/msc-ivr+xml": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true
   },
   "application/msc-mixer+xml": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true
   },
   "application/msword": {
@@ -20152,6 +19518,9 @@ module.exports={
   "application/mud+json": {
     "source": "iana",
     "compressible": true
+  },
+  "application/multipart-core": {
+    "source": "iana"
   },
   "application/mxf": {
     "source": "iana",
@@ -20169,10 +19538,12 @@ module.exports={
     "source": "iana"
   },
   "application/news-checkgroups": {
-    "source": "iana"
+    "source": "iana",
+    "charset": "US-ASCII"
   },
   "application/news-groupinfo": {
-    "source": "iana"
+    "source": "iana",
+    "charset": "US-ASCII"
   },
   "application/news-transmission": {
     "source": "iana"
@@ -20182,7 +19553,8 @@ module.exports={
     "compressible": true
   },
   "application/node": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["cjs"]
   },
   "application/nss": {
     "source": "iana"
@@ -20237,7 +19609,8 @@ module.exports={
   },
   "application/p2p-overlay+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["relo"]
   },
   "application/parityfec": {
     "source": "iana"
@@ -20279,10 +19652,12 @@ module.exports={
   },
   "application/pidf+xml": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true
   },
   "application/pidf-diff+xml": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true
   },
   "application/pkcs10": {
@@ -20334,6 +19709,7 @@ module.exports={
   },
   "application/poc-settings+xml": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true
   },
   "application/postscript": {
@@ -20355,7 +19731,8 @@ module.exports={
   },
   "application/provenance+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["provx"]
   },
   "application/prs.alvestrand.titrax-sheet": {
     "source": "iana"
@@ -20385,6 +19762,10 @@ module.exports={
     "source": "iana",
     "compressible": true,
     "extensions": ["pskcxml"]
+  },
+  "application/pvd+json": {
+    "source": "iana",
+    "compressible": true
   },
   "application/qsig": {
     "source": "iana"
@@ -20449,15 +19830,18 @@ module.exports={
   },
   "application/route-apd+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["rapd"]
   },
   "application/route-s-tsid+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["sls"]
   },
   "application/route-usd+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["rusd"]
   },
   "application/rpki-ghostbusters": {
     "source": "iana",
@@ -20506,6 +19890,9 @@ module.exports={
     "source": "iana",
     "compressible": true
   },
+  "application/sbe": {
+    "source": "iana"
+  },
   "application/sbml+xml": {
     "source": "iana",
     "compressible": true,
@@ -20551,6 +19938,14 @@ module.exports={
   },
   "application/senml+xml": {
     "source": "iana",
+    "compressible": true,
+    "extensions": ["senmlx"]
+  },
+  "application/senml-etch+cbor": {
+    "source": "iana"
+  },
+  "application/senml-etch+json": {
+    "source": "iana",
     "compressible": true
   },
   "application/senml-exi": {
@@ -20565,7 +19960,8 @@ module.exports={
   },
   "application/sensml+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["sensmlx"]
   },
   "application/sensml-exi": {
     "source": "iana"
@@ -20689,7 +20085,8 @@ module.exports={
   },
   "application/swid+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["swidtag"]
   },
   "application/tamp-apex-update": {
     "source": "iana"
@@ -20728,6 +20125,10 @@ module.exports={
     "compressible": true
   },
   "application/taxii+json": {
+    "source": "iana",
+    "compressible": true
+  },
+  "application/td+json": {
     "source": "iana",
     "compressible": true
   },
@@ -20776,7 +20177,8 @@ module.exports={
   },
   "application/ttml+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["ttml"]
   },
   "application/tve-trigger": {
     "source": "iana"
@@ -20796,7 +20198,8 @@ module.exports={
   },
   "application/urc-ressheet+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["rsheet"]
   },
   "application/urc-targetdesc+xml": {
     "source": "iana",
@@ -20822,7 +20225,8 @@ module.exports={
   },
   "application/vnd.1000minds.decision-model+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["1km"]
   },
   "application/vnd.3gpp-prose+xml": {
     "source": "iana",
@@ -21059,7 +20463,34 @@ module.exports={
   "application/vnd.afpc.afplinedata": {
     "source": "iana"
   },
+  "application/vnd.afpc.afplinedata-pagedef": {
+    "source": "iana"
+  },
+  "application/vnd.afpc.foca-charset": {
+    "source": "iana"
+  },
+  "application/vnd.afpc.foca-codedfont": {
+    "source": "iana"
+  },
+  "application/vnd.afpc.foca-codepage": {
+    "source": "iana"
+  },
   "application/vnd.afpc.modca": {
+    "source": "iana"
+  },
+  "application/vnd.afpc.modca-formdef": {
+    "source": "iana"
+  },
+  "application/vnd.afpc.modca-mediummap": {
+    "source": "iana"
+  },
+  "application/vnd.afpc.modca-objectcontainer": {
+    "source": "iana"
+  },
+  "application/vnd.afpc.modca-overlay": {
+    "source": "iana"
+  },
+  "application/vnd.afpc.modca-pagesegment": {
     "source": "iana"
   },
   "application/vnd.ah-barcode": {
@@ -21136,6 +20567,10 @@ module.exports={
     "source": "iana",
     "compressible": true
   },
+  "application/vnd.aplextor.warrp+json": {
+    "source": "iana",
+    "compressible": true
+  },
   "application/vnd.apothekende.reservation+json": {
     "source": "iana",
     "compressible": true
@@ -21200,7 +20635,8 @@ module.exports={
   },
   "application/vnd.balsamiq.bmml+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["bmml"]
   },
   "application/vnd.balsamiq.bmpr": {
     "source": "iana"
@@ -21480,6 +20916,9 @@ module.exports={
     "source": "iana",
     "compressible": true
   },
+  "application/vnd.dbf": {
+    "source": "iana"
+  },
   "application/vnd.debian.binary-package": {
     "source": "iana"
   },
@@ -21563,6 +21002,10 @@ module.exports={
   "application/vnd.dvb.ait": {
     "source": "iana",
     "extensions": ["ait"]
+  },
+  "application/vnd.dvb.dvbisl+xml": {
+    "source": "iana",
+    "compressible": true
   },
   "application/vnd.dvb.dvbj": {
     "source": "iana"
@@ -21951,6 +21394,10 @@ module.exports={
   "application/vnd.genomatix.tuxedo": {
     "source": "iana",
     "extensions": ["txd"]
+  },
+  "application/vnd.gentics.grd+json": {
+    "source": "iana",
+    "compressible": true
   },
   "application/vnd.geo+json": {
     "source": "iana",
@@ -22918,7 +22365,8 @@ module.exports={
   },
   "application/vnd.nokia.n-gage.ac+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["ac"]
   },
   "application/vnd.nokia.n-gage.data": {
     "source": "iana",
@@ -23050,6 +22498,10 @@ module.exports={
   },
   "application/vnd.ocf+cbor": {
     "source": "iana"
+  },
+  "application/vnd.oci.image.manifest.v1+json": {
+    "source": "iana",
+    "compressible": true
   },
   "application/vnd.oftn.l10n+json": {
     "source": "iana",
@@ -23239,14 +22691,17 @@ module.exports={
   },
   "application/vnd.omads-email+xml": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true
   },
   "application/vnd.omads-file+xml": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true
   },
   "application/vnd.omads-folder+xml": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true
   },
   "application/vnd.omaloc-supl-init": {
@@ -23272,7 +22727,8 @@ module.exports={
   },
   "application/vnd.openblox.game+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["obgx"]
   },
   "application/vnd.openblox.game-binary": {
     "source": "iana"
@@ -23286,7 +22742,8 @@ module.exports={
   },
   "application/vnd.openstreetmap.data+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["osm"]
   },
   "application/vnd.openxmlformats-officedocument.custom-properties+xml": {
     "source": "iana",
@@ -23856,6 +23313,9 @@ module.exports={
     "source": "iana",
     "extensions": ["st"]
   },
+  "application/vnd.sar": {
+    "source": "iana"
+  },
   "application/vnd.sbm.cid": {
     "source": "iana"
   },
@@ -23941,6 +23401,12 @@ module.exports={
     "source": "iana",
     "compressible": true
   },
+  "application/vnd.shp": {
+    "source": "iana"
+  },
+  "application/vnd.shx": {
+    "source": "iana"
+  },
   "application/vnd.sigrok.session": {
     "source": "iana"
   },
@@ -23963,9 +23429,13 @@ module.exports={
     "source": "iana",
     "extensions": ["teacher"]
   },
+  "application/vnd.snesdev-page-table": {
+    "source": "iana"
+  },
   "application/vnd.software602.filler.form+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["fo"]
   },
   "application/vnd.software602.filler.form-xml-zip": {
     "source": "iana"
@@ -24092,15 +23562,18 @@ module.exports={
   },
   "application/vnd.syncml+xml": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true,
     "extensions": ["xsm"]
   },
   "application/vnd.syncml.dm+wbxml": {
     "source": "iana",
+    "charset": "UTF-8",
     "extensions": ["bdm"]
   },
   "application/vnd.syncml.dm+xml": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true,
     "extensions": ["xdm"]
   },
@@ -24112,13 +23585,16 @@ module.exports={
   },
   "application/vnd.syncml.dmddf+xml": {
     "source": "iana",
-    "compressible": true
+    "charset": "UTF-8",
+    "compressible": true,
+    "extensions": ["ddf"]
   },
   "application/vnd.syncml.dmtnds+wbxml": {
     "source": "iana"
   },
   "application/vnd.syncml.dmtnds+xml": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true
   },
   "application/vnd.syncml.ds.notification": {
@@ -24287,6 +23763,7 @@ module.exports={
   },
   "application/vnd.wap.wbxml": {
     "source": "iana",
+    "charset": "UTF-8",
     "extensions": ["wbxml"]
   },
   "application/vnd.wap.wmlc": {
@@ -24749,6 +24226,9 @@ module.exports={
   "application/x-javascript": {
     "compressible": true
   },
+  "application/x-keepass2": {
+    "extensions": ["kdbx"]
+  },
   "application/x-latex": {
     "source": "apache",
     "compressible": false,
@@ -24879,6 +24359,9 @@ module.exports={
   "application/x-pkcs7-certreqresp": {
     "source": "apache",
     "extensions": ["p7r"]
+  },
+  "application/x-pki-message": {
+    "source": "iana"
   },
   "application/x-rar-compressed": {
     "source": "apache",
@@ -25022,8 +24505,14 @@ module.exports={
     "compressible": true
   },
   "application/x-x509-ca-cert": {
-    "source": "apache",
+    "source": "iana",
     "extensions": ["der","crt","pem"]
+  },
+  "application/x-x509-ca-ra-cert": {
+    "source": "iana"
+  },
+  "application/x-x509-next-ca-cert": {
+    "source": "iana"
   },
   "application/x-xfig": {
     "source": "apache",
@@ -25061,11 +24550,13 @@ module.exports={
   },
   "application/xcap-att+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["xav"]
   },
   "application/xcap-caps+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["xca"]
   },
   "application/xcap-diff+xml": {
     "source": "iana",
@@ -25074,15 +24565,18 @@ module.exports={
   },
   "application/xcap-el+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["xel"]
   },
   "application/xcap-error+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["xer"]
   },
   "application/xcap-ns+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["xns"]
   },
   "application/xcon-conference-info+xml": {
     "source": "iana",
@@ -25108,7 +24602,8 @@ module.exports={
   },
   "application/xliff+xml": {
     "source": "iana",
-    "compressible": true
+    "compressible": true,
+    "extensions": ["xlf"]
   },
   "application/xml": {
     "source": "iana",
@@ -25423,12 +24918,16 @@ module.exports={
   "audio/melp600": {
     "source": "iana"
   },
+  "audio/mhas": {
+    "source": "iana"
+  },
   "audio/midi": {
     "source": "apache",
     "extensions": ["mid","midi","kar","rmi"]
   },
   "audio/mobile-xmf": {
-    "source": "iana"
+    "source": "iana",
+    "extensions": ["mxmf"]
   },
   "audio/mp3": {
     "compressible": false,
@@ -25539,6 +25038,9 @@ module.exports={
     "source": "iana"
   },
   "audio/tetra_acelp": {
+    "source": "iana"
+  },
+  "audio/tetra_acelp_bb": {
     "source": "iana"
   },
   "audio/tone": {
@@ -26310,6 +25812,14 @@ module.exports={
     "compressible": false,
     "extensions": ["msh","mesh","silo"]
   },
+  "model/mtl": {
+    "source": "iana",
+    "extensions": ["mtl"]
+  },
+  "model/obj": {
+    "source": "iana",
+    "extensions": ["obj"]
+  },
   "model/stl": {
     "source": "iana",
     "extensions": ["stl"]
@@ -26557,11 +26067,13 @@ module.exports={
   },
   "text/n3": {
     "source": "iana",
+    "charset": "UTF-8",
     "compressible": true,
     "extensions": ["n3"]
   },
   "text/parameters": {
-    "source": "iana"
+    "source": "iana",
+    "charset": "UTF-8"
   },
   "text/parityfec": {
     "source": "iana"
@@ -26572,7 +26084,8 @@ module.exports={
     "extensions": ["txt","text","conf","def","list","log","in","ini"]
   },
   "text/provenance-notation": {
-    "source": "iana"
+    "source": "iana",
+    "charset": "UTF-8"
   },
   "text/prs.fallenstein.rst": {
     "source": "iana"
@@ -26684,7 +26197,8 @@ module.exports={
     "extensions": ["scurl"]
   },
   "text/vnd.debian.copyright": {
-    "source": "iana"
+    "source": "iana",
+    "charset": "UTF-8"
   },
   "text/vnd.dmclientscript": {
     "source": "iana"
@@ -26694,7 +26208,8 @@ module.exports={
     "extensions": ["sub"]
   },
   "text/vnd.esmertec.theme-descriptor": {
-    "source": "iana"
+    "source": "iana",
+    "charset": "UTF-8"
   },
   "text/vnd.ficlab.flt": {
     "source": "iana"
@@ -26757,10 +26272,12 @@ module.exports={
   },
   "text/vnd.sun.j2me.app-descriptor": {
     "source": "iana",
+    "charset": "UTF-8",
     "extensions": ["jad"]
   },
   "text/vnd.trolltech.linguist": {
-    "source": "iana"
+    "source": "iana",
+    "charset": "UTF-8"
   },
   "text/vnd.wap.si": {
     "source": "iana"
@@ -26777,6 +26294,7 @@ module.exports={
     "extensions": ["wmls"]
   },
   "text/vtt": {
+    "source": "iana",
     "charset": "UTF-8",
     "compressible": true,
     "extensions": ["vtt"]
@@ -27235,7 +26753,7 @@ module.exports={
   }
 }
 
-},{}],148:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 /*!
  * mime-db
  * Copyright(c) 2014 Jonathan Ong
@@ -27248,7 +26766,7 @@ module.exports={
 
 module.exports = require('./db.json')
 
-},{"./db.json":147}],149:[function(require,module,exports){
+},{"./db.json":146}],148:[function(require,module,exports){
 /*!
  * mime-types
  * Copyright(c) 2014 Jonathan Ong
@@ -27438,7 +26956,7 @@ function populateMaps (extensions, types) {
   })
 }
 
-},{"mime-db":148,"path":undefined}],150:[function(require,module,exports){
+},{"mime-db":147,"path":undefined}],149:[function(require,module,exports){
 var crypto = require('crypto')
 
 function sha (key, body, algorithm) {
@@ -27585,7 +27103,7 @@ exports.plaintext = plaintext
 exports.sign = sign
 exports.rfc3986 = rfc3986
 exports.generateBase = generateBase
-},{"crypto":undefined}],151:[function(require,module,exports){
+},{"crypto":undefined}],150:[function(require,module,exports){
 // Generated by CoffeeScript 1.12.2
 (function() {
   var getNanoSeconds, hrtime, loadTime, moduleLoadTime, nodeLoadTime, upTime;
@@ -27623,7 +27141,7 @@ exports.generateBase = generateBase
 
 
 
-},{}],152:[function(require,module,exports){
+},{}],151:[function(require,module,exports){
 'use strict';
 
 var replace = String.prototype.replace;
@@ -27643,7 +27161,7 @@ module.exports = {
     RFC3986: 'RFC3986'
 };
 
-},{}],153:[function(require,module,exports){
+},{}],152:[function(require,module,exports){
 'use strict';
 
 var stringify = require('./stringify');
@@ -27656,7 +27174,7 @@ module.exports = {
     stringify: stringify
 };
 
-},{"./formats":152,"./parse":154,"./stringify":155}],154:[function(require,module,exports){
+},{"./formats":151,"./parse":153,"./stringify":154}],153:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -27832,7 +27350,7 @@ module.exports = function (str, opts) {
     return utils.compact(obj);
 };
 
-},{"./utils":156}],155:[function(require,module,exports){
+},{"./utils":155}],154:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -28044,7 +27562,7 @@ module.exports = function (object, opts) {
     return joined.length > 0 ? prefix + joined : '';
 };
 
-},{"./formats":152,"./utils":156}],156:[function(require,module,exports){
+},{"./formats":151,"./utils":155}],155:[function(require,module,exports){
 'use strict';
 
 var has = Object.prototype.hasOwnProperty;
@@ -28259,6 +27777,756 @@ module.exports = {
     merge: merge
 };
 
+},{}],156:[function(require,module,exports){
+/**
+ * Copyright (c) 2014-present, Facebook, Inc.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+var runtime = (function (exports) {
+  "use strict";
+
+  var Op = Object.prototype;
+  var hasOwn = Op.hasOwnProperty;
+  var undefined; // More compressible than void 0.
+  var $Symbol = typeof Symbol === "function" ? Symbol : {};
+  var iteratorSymbol = $Symbol.iterator || "@@iterator";
+  var asyncIteratorSymbol = $Symbol.asyncIterator || "@@asyncIterator";
+  var toStringTagSymbol = $Symbol.toStringTag || "@@toStringTag";
+
+  function define(obj, key, value) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+    return obj[key];
+  }
+  try {
+    // IE 8 has a broken Object.defineProperty that only works on DOM objects.
+    define({}, "");
+  } catch (err) {
+    define = function(obj, key, value) {
+      return obj[key] = value;
+    };
+  }
+
+  function wrap(innerFn, outerFn, self, tryLocsList) {
+    // If outerFn provided and outerFn.prototype is a Generator, then outerFn.prototype instanceof Generator.
+    var protoGenerator = outerFn && outerFn.prototype instanceof Generator ? outerFn : Generator;
+    var generator = Object.create(protoGenerator.prototype);
+    var context = new Context(tryLocsList || []);
+
+    // The ._invoke method unifies the implementations of the .next,
+    // .throw, and .return methods.
+    generator._invoke = makeInvokeMethod(innerFn, self, context);
+
+    return generator;
+  }
+  exports.wrap = wrap;
+
+  // Try/catch helper to minimize deoptimizations. Returns a completion
+  // record like context.tryEntries[i].completion. This interface could
+  // have been (and was previously) designed to take a closure to be
+  // invoked without arguments, but in all the cases we care about we
+  // already have an existing method we want to call, so there's no need
+  // to create a new function object. We can even get away with assuming
+  // the method takes exactly one argument, since that happens to be true
+  // in every case, so we don't have to touch the arguments object. The
+  // only additional allocation required is the completion record, which
+  // has a stable shape and so hopefully should be cheap to allocate.
+  function tryCatch(fn, obj, arg) {
+    try {
+      return { type: "normal", arg: fn.call(obj, arg) };
+    } catch (err) {
+      return { type: "throw", arg: err };
+    }
+  }
+
+  var GenStateSuspendedStart = "suspendedStart";
+  var GenStateSuspendedYield = "suspendedYield";
+  var GenStateExecuting = "executing";
+  var GenStateCompleted = "completed";
+
+  // Returning this object from the innerFn has the same effect as
+  // breaking out of the dispatch switch statement.
+  var ContinueSentinel = {};
+
+  // Dummy constructor functions that we use as the .constructor and
+  // .constructor.prototype properties for functions that return Generator
+  // objects. For full spec compliance, you may wish to configure your
+  // minifier not to mangle the names of these two functions.
+  function Generator() {}
+  function GeneratorFunction() {}
+  function GeneratorFunctionPrototype() {}
+
+  // This is a polyfill for %IteratorPrototype% for environments that
+  // don't natively support it.
+  var IteratorPrototype = {};
+  IteratorPrototype[iteratorSymbol] = function () {
+    return this;
+  };
+
+  var getProto = Object.getPrototypeOf;
+  var NativeIteratorPrototype = getProto && getProto(getProto(values([])));
+  if (NativeIteratorPrototype &&
+      NativeIteratorPrototype !== Op &&
+      hasOwn.call(NativeIteratorPrototype, iteratorSymbol)) {
+    // This environment has a native %IteratorPrototype%; use it instead
+    // of the polyfill.
+    IteratorPrototype = NativeIteratorPrototype;
+  }
+
+  var Gp = GeneratorFunctionPrototype.prototype =
+    Generator.prototype = Object.create(IteratorPrototype);
+  GeneratorFunction.prototype = Gp.constructor = GeneratorFunctionPrototype;
+  GeneratorFunctionPrototype.constructor = GeneratorFunction;
+  GeneratorFunction.displayName = define(
+    GeneratorFunctionPrototype,
+    toStringTagSymbol,
+    "GeneratorFunction"
+  );
+
+  // Helper for defining the .next, .throw, and .return methods of the
+  // Iterator interface in terms of a single ._invoke method.
+  function defineIteratorMethods(prototype) {
+    ["next", "throw", "return"].forEach(function(method) {
+      define(prototype, method, function(arg) {
+        return this._invoke(method, arg);
+      });
+    });
+  }
+
+  exports.isGeneratorFunction = function(genFun) {
+    var ctor = typeof genFun === "function" && genFun.constructor;
+    return ctor
+      ? ctor === GeneratorFunction ||
+        // For the native GeneratorFunction constructor, the best we can
+        // do is to check its .name property.
+        (ctor.displayName || ctor.name) === "GeneratorFunction"
+      : false;
+  };
+
+  exports.mark = function(genFun) {
+    if (Object.setPrototypeOf) {
+      Object.setPrototypeOf(genFun, GeneratorFunctionPrototype);
+    } else {
+      genFun.__proto__ = GeneratorFunctionPrototype;
+      define(genFun, toStringTagSymbol, "GeneratorFunction");
+    }
+    genFun.prototype = Object.create(Gp);
+    return genFun;
+  };
+
+  // Within the body of any async function, `await x` is transformed to
+  // `yield regeneratorRuntime.awrap(x)`, so that the runtime can test
+  // `hasOwn.call(value, "__await")` to determine if the yielded value is
+  // meant to be awaited.
+  exports.awrap = function(arg) {
+    return { __await: arg };
+  };
+
+  function AsyncIterator(generator, PromiseImpl) {
+    function invoke(method, arg, resolve, reject) {
+      var record = tryCatch(generator[method], generator, arg);
+      if (record.type === "throw") {
+        reject(record.arg);
+      } else {
+        var result = record.arg;
+        var value = result.value;
+        if (value &&
+            typeof value === "object" &&
+            hasOwn.call(value, "__await")) {
+          return PromiseImpl.resolve(value.__await).then(function(value) {
+            invoke("next", value, resolve, reject);
+          }, function(err) {
+            invoke("throw", err, resolve, reject);
+          });
+        }
+
+        return PromiseImpl.resolve(value).then(function(unwrapped) {
+          // When a yielded Promise is resolved, its final value becomes
+          // the .value of the Promise<{value,done}> result for the
+          // current iteration.
+          result.value = unwrapped;
+          resolve(result);
+        }, function(error) {
+          // If a rejected Promise was yielded, throw the rejection back
+          // into the async generator function so it can be handled there.
+          return invoke("throw", error, resolve, reject);
+        });
+      }
+    }
+
+    var previousPromise;
+
+    function enqueue(method, arg) {
+      function callInvokeWithMethodAndArg() {
+        return new PromiseImpl(function(resolve, reject) {
+          invoke(method, arg, resolve, reject);
+        });
+      }
+
+      return previousPromise =
+        // If enqueue has been called before, then we want to wait until
+        // all previous Promises have been resolved before calling invoke,
+        // so that results are always delivered in the correct order. If
+        // enqueue has not been called before, then it is important to
+        // call invoke immediately, without waiting on a callback to fire,
+        // so that the async generator function has the opportunity to do
+        // any necessary setup in a predictable way. This predictability
+        // is why the Promise constructor synchronously invokes its
+        // executor callback, and why async functions synchronously
+        // execute code before the first await. Since we implement simple
+        // async functions in terms of async generators, it is especially
+        // important to get this right, even though it requires care.
+        previousPromise ? previousPromise.then(
+          callInvokeWithMethodAndArg,
+          // Avoid propagating failures to Promises returned by later
+          // invocations of the iterator.
+          callInvokeWithMethodAndArg
+        ) : callInvokeWithMethodAndArg();
+    }
+
+    // Define the unified helper method that is used to implement .next,
+    // .throw, and .return (see defineIteratorMethods).
+    this._invoke = enqueue;
+  }
+
+  defineIteratorMethods(AsyncIterator.prototype);
+  AsyncIterator.prototype[asyncIteratorSymbol] = function () {
+    return this;
+  };
+  exports.AsyncIterator = AsyncIterator;
+
+  // Note that simple async functions are implemented on top of
+  // AsyncIterator objects; they just return a Promise for the value of
+  // the final result produced by the iterator.
+  exports.async = function(innerFn, outerFn, self, tryLocsList, PromiseImpl) {
+    if (PromiseImpl === void 0) PromiseImpl = Promise;
+
+    var iter = new AsyncIterator(
+      wrap(innerFn, outerFn, self, tryLocsList),
+      PromiseImpl
+    );
+
+    return exports.isGeneratorFunction(outerFn)
+      ? iter // If outerFn is a generator, return the full iterator.
+      : iter.next().then(function(result) {
+          return result.done ? result.value : iter.next();
+        });
+  };
+
+  function makeInvokeMethod(innerFn, self, context) {
+    var state = GenStateSuspendedStart;
+
+    return function invoke(method, arg) {
+      if (state === GenStateExecuting) {
+        throw new Error("Generator is already running");
+      }
+
+      if (state === GenStateCompleted) {
+        if (method === "throw") {
+          throw arg;
+        }
+
+        // Be forgiving, per 25.3.3.3.3 of the spec:
+        // https://people.mozilla.org/~jorendorff/es6-draft.html#sec-generatorresume
+        return doneResult();
+      }
+
+      context.method = method;
+      context.arg = arg;
+
+      while (true) {
+        var delegate = context.delegate;
+        if (delegate) {
+          var delegateResult = maybeInvokeDelegate(delegate, context);
+          if (delegateResult) {
+            if (delegateResult === ContinueSentinel) continue;
+            return delegateResult;
+          }
+        }
+
+        if (context.method === "next") {
+          // Setting context._sent for legacy support of Babel's
+          // function.sent implementation.
+          context.sent = context._sent = context.arg;
+
+        } else if (context.method === "throw") {
+          if (state === GenStateSuspendedStart) {
+            state = GenStateCompleted;
+            throw context.arg;
+          }
+
+          context.dispatchException(context.arg);
+
+        } else if (context.method === "return") {
+          context.abrupt("return", context.arg);
+        }
+
+        state = GenStateExecuting;
+
+        var record = tryCatch(innerFn, self, context);
+        if (record.type === "normal") {
+          // If an exception is thrown from innerFn, we leave state ===
+          // GenStateExecuting and loop back for another invocation.
+          state = context.done
+            ? GenStateCompleted
+            : GenStateSuspendedYield;
+
+          if (record.arg === ContinueSentinel) {
+            continue;
+          }
+
+          return {
+            value: record.arg,
+            done: context.done
+          };
+
+        } else if (record.type === "throw") {
+          state = GenStateCompleted;
+          // Dispatch the exception by looping back around to the
+          // context.dispatchException(context.arg) call above.
+          context.method = "throw";
+          context.arg = record.arg;
+        }
+      }
+    };
+  }
+
+  // Call delegate.iterator[context.method](context.arg) and handle the
+  // result, either by returning a { value, done } result from the
+  // delegate iterator, or by modifying context.method and context.arg,
+  // setting context.delegate to null, and returning the ContinueSentinel.
+  function maybeInvokeDelegate(delegate, context) {
+    var method = delegate.iterator[context.method];
+    if (method === undefined) {
+      // A .throw or .return when the delegate iterator has no .throw
+      // method always terminates the yield* loop.
+      context.delegate = null;
+
+      if (context.method === "throw") {
+        // Note: ["return"] must be used for ES3 parsing compatibility.
+        if (delegate.iterator["return"]) {
+          // If the delegate iterator has a return method, give it a
+          // chance to clean up.
+          context.method = "return";
+          context.arg = undefined;
+          maybeInvokeDelegate(delegate, context);
+
+          if (context.method === "throw") {
+            // If maybeInvokeDelegate(context) changed context.method from
+            // "return" to "throw", let that override the TypeError below.
+            return ContinueSentinel;
+          }
+        }
+
+        context.method = "throw";
+        context.arg = new TypeError(
+          "The iterator does not provide a 'throw' method");
+      }
+
+      return ContinueSentinel;
+    }
+
+    var record = tryCatch(method, delegate.iterator, context.arg);
+
+    if (record.type === "throw") {
+      context.method = "throw";
+      context.arg = record.arg;
+      context.delegate = null;
+      return ContinueSentinel;
+    }
+
+    var info = record.arg;
+
+    if (! info) {
+      context.method = "throw";
+      context.arg = new TypeError("iterator result is not an object");
+      context.delegate = null;
+      return ContinueSentinel;
+    }
+
+    if (info.done) {
+      // Assign the result of the finished delegate to the temporary
+      // variable specified by delegate.resultName (see delegateYield).
+      context[delegate.resultName] = info.value;
+
+      // Resume execution at the desired location (see delegateYield).
+      context.next = delegate.nextLoc;
+
+      // If context.method was "throw" but the delegate handled the
+      // exception, let the outer generator proceed normally. If
+      // context.method was "next", forget context.arg since it has been
+      // "consumed" by the delegate iterator. If context.method was
+      // "return", allow the original .return call to continue in the
+      // outer generator.
+      if (context.method !== "return") {
+        context.method = "next";
+        context.arg = undefined;
+      }
+
+    } else {
+      // Re-yield the result returned by the delegate method.
+      return info;
+    }
+
+    // The delegate iterator is finished, so forget it and continue with
+    // the outer generator.
+    context.delegate = null;
+    return ContinueSentinel;
+  }
+
+  // Define Generator.prototype.{next,throw,return} in terms of the
+  // unified ._invoke helper method.
+  defineIteratorMethods(Gp);
+
+  define(Gp, toStringTagSymbol, "Generator");
+
+  // A Generator should always return itself as the iterator object when the
+  // @@iterator function is called on it. Some browsers' implementations of the
+  // iterator prototype chain incorrectly implement this, causing the Generator
+  // object to not be returned from this call. This ensures that doesn't happen.
+  // See https://github.com/facebook/regenerator/issues/274 for more details.
+  Gp[iteratorSymbol] = function() {
+    return this;
+  };
+
+  Gp.toString = function() {
+    return "[object Generator]";
+  };
+
+  function pushTryEntry(locs) {
+    var entry = { tryLoc: locs[0] };
+
+    if (1 in locs) {
+      entry.catchLoc = locs[1];
+    }
+
+    if (2 in locs) {
+      entry.finallyLoc = locs[2];
+      entry.afterLoc = locs[3];
+    }
+
+    this.tryEntries.push(entry);
+  }
+
+  function resetTryEntry(entry) {
+    var record = entry.completion || {};
+    record.type = "normal";
+    delete record.arg;
+    entry.completion = record;
+  }
+
+  function Context(tryLocsList) {
+    // The root entry object (effectively a try statement without a catch
+    // or a finally block) gives us a place to store values thrown from
+    // locations where there is no enclosing try statement.
+    this.tryEntries = [{ tryLoc: "root" }];
+    tryLocsList.forEach(pushTryEntry, this);
+    this.reset(true);
+  }
+
+  exports.keys = function(object) {
+    var keys = [];
+    for (var key in object) {
+      keys.push(key);
+    }
+    keys.reverse();
+
+    // Rather than returning an object with a next method, we keep
+    // things simple and return the next function itself.
+    return function next() {
+      while (keys.length) {
+        var key = keys.pop();
+        if (key in object) {
+          next.value = key;
+          next.done = false;
+          return next;
+        }
+      }
+
+      // To avoid creating an additional object, we just hang the .value
+      // and .done properties off the next function object itself. This
+      // also ensures that the minifier will not anonymize the function.
+      next.done = true;
+      return next;
+    };
+  };
+
+  function values(iterable) {
+    if (iterable) {
+      var iteratorMethod = iterable[iteratorSymbol];
+      if (iteratorMethod) {
+        return iteratorMethod.call(iterable);
+      }
+
+      if (typeof iterable.next === "function") {
+        return iterable;
+      }
+
+      if (!isNaN(iterable.length)) {
+        var i = -1, next = function next() {
+          while (++i < iterable.length) {
+            if (hasOwn.call(iterable, i)) {
+              next.value = iterable[i];
+              next.done = false;
+              return next;
+            }
+          }
+
+          next.value = undefined;
+          next.done = true;
+
+          return next;
+        };
+
+        return next.next = next;
+      }
+    }
+
+    // Return an iterator with no values.
+    return { next: doneResult };
+  }
+  exports.values = values;
+
+  function doneResult() {
+    return { value: undefined, done: true };
+  }
+
+  Context.prototype = {
+    constructor: Context,
+
+    reset: function(skipTempReset) {
+      this.prev = 0;
+      this.next = 0;
+      // Resetting context._sent for legacy support of Babel's
+      // function.sent implementation.
+      this.sent = this._sent = undefined;
+      this.done = false;
+      this.delegate = null;
+
+      this.method = "next";
+      this.arg = undefined;
+
+      this.tryEntries.forEach(resetTryEntry);
+
+      if (!skipTempReset) {
+        for (var name in this) {
+          // Not sure about the optimal order of these conditions:
+          if (name.charAt(0) === "t" &&
+              hasOwn.call(this, name) &&
+              !isNaN(+name.slice(1))) {
+            this[name] = undefined;
+          }
+        }
+      }
+    },
+
+    stop: function() {
+      this.done = true;
+
+      var rootEntry = this.tryEntries[0];
+      var rootRecord = rootEntry.completion;
+      if (rootRecord.type === "throw") {
+        throw rootRecord.arg;
+      }
+
+      return this.rval;
+    },
+
+    dispatchException: function(exception) {
+      if (this.done) {
+        throw exception;
+      }
+
+      var context = this;
+      function handle(loc, caught) {
+        record.type = "throw";
+        record.arg = exception;
+        context.next = loc;
+
+        if (caught) {
+          // If the dispatched exception was caught by a catch block,
+          // then let that catch block handle the exception normally.
+          context.method = "next";
+          context.arg = undefined;
+        }
+
+        return !! caught;
+      }
+
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        var record = entry.completion;
+
+        if (entry.tryLoc === "root") {
+          // Exception thrown outside of any try block that could handle
+          // it, so set the completion value of the entire function to
+          // throw the exception.
+          return handle("end");
+        }
+
+        if (entry.tryLoc <= this.prev) {
+          var hasCatch = hasOwn.call(entry, "catchLoc");
+          var hasFinally = hasOwn.call(entry, "finallyLoc");
+
+          if (hasCatch && hasFinally) {
+            if (this.prev < entry.catchLoc) {
+              return handle(entry.catchLoc, true);
+            } else if (this.prev < entry.finallyLoc) {
+              return handle(entry.finallyLoc);
+            }
+
+          } else if (hasCatch) {
+            if (this.prev < entry.catchLoc) {
+              return handle(entry.catchLoc, true);
+            }
+
+          } else if (hasFinally) {
+            if (this.prev < entry.finallyLoc) {
+              return handle(entry.finallyLoc);
+            }
+
+          } else {
+            throw new Error("try statement without catch or finally");
+          }
+        }
+      }
+    },
+
+    abrupt: function(type, arg) {
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.tryLoc <= this.prev &&
+            hasOwn.call(entry, "finallyLoc") &&
+            this.prev < entry.finallyLoc) {
+          var finallyEntry = entry;
+          break;
+        }
+      }
+
+      if (finallyEntry &&
+          (type === "break" ||
+           type === "continue") &&
+          finallyEntry.tryLoc <= arg &&
+          arg <= finallyEntry.finallyLoc) {
+        // Ignore the finally entry if control is not jumping to a
+        // location outside the try/catch block.
+        finallyEntry = null;
+      }
+
+      var record = finallyEntry ? finallyEntry.completion : {};
+      record.type = type;
+      record.arg = arg;
+
+      if (finallyEntry) {
+        this.method = "next";
+        this.next = finallyEntry.finallyLoc;
+        return ContinueSentinel;
+      }
+
+      return this.complete(record);
+    },
+
+    complete: function(record, afterLoc) {
+      if (record.type === "throw") {
+        throw record.arg;
+      }
+
+      if (record.type === "break" ||
+          record.type === "continue") {
+        this.next = record.arg;
+      } else if (record.type === "return") {
+        this.rval = this.arg = record.arg;
+        this.method = "return";
+        this.next = "end";
+      } else if (record.type === "normal" && afterLoc) {
+        this.next = afterLoc;
+      }
+
+      return ContinueSentinel;
+    },
+
+    finish: function(finallyLoc) {
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.finallyLoc === finallyLoc) {
+          this.complete(entry.completion, entry.afterLoc);
+          resetTryEntry(entry);
+          return ContinueSentinel;
+        }
+      }
+    },
+
+    "catch": function(tryLoc) {
+      for (var i = this.tryEntries.length - 1; i >= 0; --i) {
+        var entry = this.tryEntries[i];
+        if (entry.tryLoc === tryLoc) {
+          var record = entry.completion;
+          if (record.type === "throw") {
+            var thrown = record.arg;
+            resetTryEntry(entry);
+          }
+          return thrown;
+        }
+      }
+
+      // The context.catch method must only be called with a location
+      // argument that corresponds to a known catch block.
+      throw new Error("illegal catch attempt");
+    },
+
+    delegateYield: function(iterable, resultName, nextLoc) {
+      this.delegate = {
+        iterator: values(iterable),
+        resultName: resultName,
+        nextLoc: nextLoc
+      };
+
+      if (this.method === "next") {
+        // Deliberately forget the last sent value so that we don't
+        // accidentally pass it on to the delegate.
+        this.arg = undefined;
+      }
+
+      return ContinueSentinel;
+    }
+  };
+
+  // Regardless of whether this script is executing as a CommonJS module
+  // or not, return the runtime object so that we can declare the variable
+  // regeneratorRuntime in the outer scope, which allows this module to be
+  // injected easily by `bin/regenerator --include-runtime script.js`.
+  return exports;
+
+}(
+  // If this script is executing as a CommonJS module, use module.exports
+  // as the regeneratorRuntime namespace. Otherwise create a new empty
+  // object. Either way, the resulting object will be used to initialize
+  // the regeneratorRuntime variable at the top of this file.
+  typeof module === "object" ? module.exports : {}
+));
+
+try {
+  regeneratorRuntime = runtime;
+} catch (accidentalStrictMode) {
+  // This module should not be running in strict mode, so the above
+  // assignment should always work unless something is misconfigured. Just
+  // in case runtime.js accidentally runs in strict mode, we can escape
+  // strict mode using a global Function call. This could conceivably fail
+  // if a Content Security Policy forbids using Function, but in that case
+  // the proper solution is to fix the accidental strict mode problem. If
+  // you've misconfigured your bundler to force strict mode and applied a
+  // CSP to forbid Function, and you're not willing to fix either of those
+  // problems, please detail your unique predicament in a GitHub issue.
+  Function("r", "regeneratorRuntime = r")(runtime);
+}
+
 },{}],157:[function(require,module,exports){
 // Copyright 2010-2012 Mikeal Rogers
 //
@@ -28416,7 +28684,7 @@ Object.defineProperty(request, 'debug', {
   }
 })
 
-},{"./lib/cookies":159,"./lib/helpers":163,"./request":169,"extend":107}],158:[function(require,module,exports){
+},{"./lib/cookies":159,"./lib/helpers":163,"./request":169,"extend":106}],158:[function(require,module,exports){
 'use strict'
 
 var caseless = require('caseless')
@@ -28588,7 +28856,7 @@ Auth.prototype.onResponse = function (response) {
 
 exports.Auth = Auth
 
-},{"./helpers":163,"caseless":99,"uuid/v4":208}],159:[function(require,module,exports){
+},{"./helpers":163,"caseless":98,"uuid/v4":208}],159:[function(require,module,exports){
 'use strict'
 
 var tough = require('tough-cookie')
@@ -28916,7 +29184,7 @@ Har.prototype.options = function (options) {
 
 exports.Har = Har
 
-},{"extend":107,"fs":undefined,"har-validator":134,"querystring":undefined}],162:[function(require,module,exports){
+},{"extend":106,"fs":undefined,"har-validator":133,"querystring":undefined}],162:[function(require,module,exports){
 'use strict'
 
 var crypto = require('crypto')
@@ -29075,7 +29343,7 @@ exports.copy = copy
 exports.version = version
 exports.defer = defer
 
-},{"crypto":undefined,"json-stringify-safe":145,"safe-buffer":170}],164:[function(require,module,exports){
+},{"crypto":undefined,"json-stringify-safe":144,"safe-buffer":170}],164:[function(require,module,exports){
 'use strict'
 
 var uuid = require('uuid/v4')
@@ -29189,7 +29457,7 @@ Multipart.prototype.onRequest = function (options) {
 
 exports.Multipart = Multipart
 
-},{"combined-stream":101,"isstream":141,"safe-buffer":170,"uuid/v4":208}],165:[function(require,module,exports){
+},{"combined-stream":100,"isstream":140,"safe-buffer":170,"uuid/v4":208}],165:[function(require,module,exports){
 'use strict'
 
 var url = require('url')
@@ -29339,7 +29607,7 @@ OAuth.prototype.onRequest = function (_oauth) {
 
 exports.OAuth = OAuth
 
-},{"caseless":99,"crypto":undefined,"oauth-sign":150,"qs":153,"safe-buffer":170,"url":undefined,"uuid/v4":208}],166:[function(require,module,exports){
+},{"caseless":98,"crypto":undefined,"oauth-sign":149,"qs":152,"safe-buffer":170,"url":undefined,"uuid/v4":208}],166:[function(require,module,exports){
 'use strict'
 
 var qs = require('qs')
@@ -29391,7 +29659,7 @@ Querystring.prototype.unescape = querystring.unescape
 
 exports.Querystring = Querystring
 
-},{"qs":153,"querystring":undefined}],167:[function(require,module,exports){
+},{"qs":152,"querystring":undefined}],167:[function(require,module,exports){
 'use strict'
 
 var url = require('url')
@@ -31277,7 +31545,8 @@ Request.defaultProxyHeaderExclusiveList =
 Request.prototype.toJSON = requestToJSON
 module.exports = Request
 
-},{"./lib/auth":158,"./lib/cookies":159,"./lib/getProxyFromURI":160,"./lib/har":161,"./lib/hawk":162,"./lib/helpers":163,"./lib/multipart":164,"./lib/oauth":165,"./lib/querystring":166,"./lib/redirect":167,"./lib/tunnel":168,"aws-sign2":95,"aws4":96,"caseless":99,"extend":107,"forever-agent":111,"form-data":112,"http":undefined,"http-signature":135,"https":undefined,"is-typedarray":140,"isstream":141,"mime-types":149,"performance-now":151,"safe-buffer":170,"stream":undefined,"url":undefined,"util":undefined,"zlib":undefined}],170:[function(require,module,exports){
+},{"./lib/auth":158,"./lib/cookies":159,"./lib/getProxyFromURI":160,"./lib/har":161,"./lib/hawk":162,"./lib/helpers":163,"./lib/multipart":164,"./lib/oauth":165,"./lib/querystring":166,"./lib/redirect":167,"./lib/tunnel":168,"aws-sign2":94,"aws4":95,"caseless":98,"extend":106,"forever-agent":110,"form-data":111,"http":undefined,"http-signature":134,"https":undefined,"is-typedarray":139,"isstream":140,"mime-types":148,"performance-now":150,"safe-buffer":170,"stream":undefined,"url":undefined,"util":undefined,"zlib":undefined}],170:[function(require,module,exports){
+/*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 /* eslint-disable node/no-deprecated-api */
 var buffer = require('buffer')
 var Buffer = buffer.Buffer
@@ -32004,7 +32273,7 @@ Certificate._oldVersionDetect = function (obj) {
 	return ([1, 0]);
 };
 
-},{"./algs":172,"./errors":176,"./fingerprint":177,"./formats/openssh-cert":180,"./formats/x509":189,"./formats/x509-pem":188,"./identity":190,"./key":192,"./private-key":193,"./signature":194,"./utils":196,"assert-plus":84,"crypto":undefined,"safer-buffer":171,"util":undefined}],174:[function(require,module,exports){
+},{"./algs":172,"./errors":176,"./fingerprint":177,"./formats/openssh-cert":180,"./formats/x509":189,"./formats/x509-pem":188,"./identity":190,"./key":192,"./private-key":193,"./signature":194,"./utils":196,"assert-plus":83,"crypto":undefined,"safer-buffer":171,"util":undefined}],174:[function(require,module,exports){
 // Copyright 2017 Joyent, Inc.
 
 module.exports = {
@@ -32403,7 +32672,7 @@ function generateECDSA(curve) {
 	}
 }
 
-},{"./algs":172,"./key":192,"./private-key":193,"./utils":196,"assert-plus":84,"crypto":undefined,"ecc-jsbn":104,"ecc-jsbn/lib/ec":105,"jsbn":142,"safer-buffer":171,"tweetnacl":205}],175:[function(require,module,exports){
+},{"./algs":172,"./key":192,"./private-key":193,"./utils":196,"assert-plus":83,"crypto":undefined,"ecc-jsbn":103,"ecc-jsbn/lib/ec":104,"jsbn":141,"safer-buffer":171,"tweetnacl":205}],175:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = {
@@ -32497,7 +32766,7 @@ Signer.prototype.sign = function () {
 	return (sigObj);
 };
 
-},{"./signature":194,"assert-plus":84,"safer-buffer":171,"stream":undefined,"tweetnacl":205,"util":undefined}],176:[function(require,module,exports){
+},{"./signature":194,"assert-plus":83,"safer-buffer":171,"stream":undefined,"tweetnacl":205,"util":undefined}],176:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 var assert = require('assert-plus');
@@ -32583,7 +32852,7 @@ module.exports = {
 	CertificateParseError: CertificateParseError
 };
 
-},{"assert-plus":84,"util":undefined}],177:[function(require,module,exports){
+},{"assert-plus":83,"util":undefined}],177:[function(require,module,exports){
 // Copyright 2018 Joyent, Inc.
 
 module.exports = Fingerprint;
@@ -32805,7 +33074,7 @@ Fingerprint._oldVersionDetect = function (obj) {
 	return ([1, 0]);
 };
 
-},{"./algs":172,"./certificate":173,"./errors":176,"./key":192,"./private-key":193,"./utils":196,"assert-plus":84,"crypto":undefined,"safer-buffer":171}],178:[function(require,module,exports){
+},{"./algs":172,"./certificate":173,"./errors":176,"./key":192,"./private-key":193,"./utils":196,"assert-plus":83,"crypto":undefined,"safer-buffer":171}],178:[function(require,module,exports){
 // Copyright 2018 Joyent, Inc.
 
 module.exports = {
@@ -32931,7 +33200,7 @@ function write(key, options) {
 	throw (new Error('"auto" format cannot be used for writing'));
 }
 
-},{"../key":192,"../private-key":193,"../utils":196,"./dnssec":179,"./pem":181,"./putty":184,"./rfc4253":185,"./ssh":187,"assert-plus":84,"safer-buffer":171}],179:[function(require,module,exports){
+},{"../key":192,"../private-key":193,"../utils":196,"./dnssec":179,"./pem":181,"./putty":184,"./rfc4253":185,"./ssh":187,"assert-plus":83,"safer-buffer":171}],179:[function(require,module,exports){
 // Copyright 2017 Joyent, Inc.
 
 module.exports = {
@@ -33220,7 +33489,7 @@ function write(key, options) {
 	}
 }
 
-},{"../dhe":174,"../key":192,"../private-key":193,"../ssh-buffer":195,"../utils":196,"assert-plus":84,"safer-buffer":171}],180:[function(require,module,exports){
+},{"../dhe":174,"../key":192,"../private-key":193,"../ssh-buffer":195,"../utils":196,"assert-plus":83,"safer-buffer":171}],180:[function(require,module,exports){
 // Copyright 2017 Joyent, Inc.
 
 module.exports = {
@@ -33574,7 +33843,7 @@ function getCertType(key) {
 	throw (new Error('Unsupported key type ' + key.type));
 }
 
-},{"../algs":172,"../certificate":173,"../identity":190,"../key":192,"../private-key":193,"../signature":194,"../ssh-buffer":195,"../utils":196,"./rfc4253":185,"assert-plus":84,"crypto":undefined,"safer-buffer":171}],181:[function(require,module,exports){
+},{"../algs":172,"../certificate":173,"../identity":190,"../key":192,"../private-key":193,"../signature":194,"../ssh-buffer":195,"../utils":196,"./rfc4253":185,"assert-plus":83,"crypto":undefined,"safer-buffer":171}],181:[function(require,module,exports){
 // Copyright 2018 Joyent, Inc.
 
 module.exports = {
@@ -33866,7 +34135,7 @@ function write(key, options, type) {
 	return (buf.slice(0, o));
 }
 
-},{"../algs":172,"../errors":176,"../key":192,"../private-key":193,"../utils":196,"./pkcs1":182,"./pkcs8":183,"./rfc4253":185,"./ssh-private":186,"asn1":83,"assert-plus":84,"crypto":undefined,"safer-buffer":171}],182:[function(require,module,exports){
+},{"../algs":172,"../errors":176,"../key":192,"../private-key":193,"../utils":196,"./pkcs1":182,"./pkcs8":183,"./rfc4253":185,"./ssh-private":186,"asn1":82,"assert-plus":83,"crypto":undefined,"safer-buffer":171}],182:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = {
@@ -34241,7 +34510,7 @@ function writePkcs1EdDSAPublic(der, key) {
 	throw (new Error('Public keys are not supported for EdDSA PKCS#1'));
 }
 
-},{"../algs":172,"../key":192,"../private-key":193,"../utils":196,"./pem":181,"./pkcs8":183,"asn1":83,"assert-plus":84,"safer-buffer":171}],183:[function(require,module,exports){
+},{"../algs":172,"../key":192,"../private-key":193,"../utils":196,"./pem":181,"./pkcs8":183,"asn1":82,"assert-plus":83,"safer-buffer":171}],183:[function(require,module,exports){
 // Copyright 2018 Joyent, Inc.
 
 module.exports = {
@@ -34874,7 +35143,7 @@ function writePkcs8EdDSAPrivate(key, der) {
 	der.endSequence();
 }
 
-},{"../algs":172,"../key":192,"../private-key":193,"../utils":196,"./pem":181,"asn1":83,"assert-plus":84,"safer-buffer":171}],184:[function(require,module,exports){
+},{"../algs":172,"../key":192,"../private-key":193,"../utils":196,"./pem":181,"asn1":82,"assert-plus":83,"safer-buffer":171}],184:[function(require,module,exports){
 // Copyright 2018 Joyent, Inc.
 
 module.exports = {
@@ -34975,7 +35244,7 @@ function wrap(txt, len) {
 	return (lines);
 }
 
-},{"../errors":176,"../key":192,"./rfc4253":185,"assert-plus":84,"safer-buffer":171}],185:[function(require,module,exports){
+},{"../errors":176,"../key":192,"./rfc4253":185,"assert-plus":83,"safer-buffer":171}],185:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = {
@@ -35143,7 +35412,7 @@ function write(key, options) {
 	return (buf.toBuffer());
 }
 
-},{"../algs":172,"../key":192,"../private-key":193,"../ssh-buffer":195,"../utils":196,"assert-plus":84,"safer-buffer":171}],186:[function(require,module,exports){
+},{"../algs":172,"../key":192,"../private-key":193,"../ssh-buffer":195,"../utils":196,"assert-plus":83,"safer-buffer":171}],186:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = {
@@ -35407,7 +35676,7 @@ function write(key, options) {
 	return (buf.slice(0, o));
 }
 
-},{"../algs":172,"../errors":176,"../key":192,"../private-key":193,"../ssh-buffer":195,"../utils":196,"./pem":181,"./rfc4253":185,"asn1":83,"assert-plus":84,"bcrypt-pbkdf":98,"crypto":undefined,"safer-buffer":171}],187:[function(require,module,exports){
+},{"../algs":172,"../errors":176,"../key":192,"../private-key":193,"../ssh-buffer":195,"../utils":196,"./pem":181,"./rfc4253":185,"asn1":82,"assert-plus":83,"bcrypt-pbkdf":97,"crypto":undefined,"safer-buffer":171}],187:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = {
@@ -35524,7 +35793,7 @@ function write(key, options) {
 	return (Buffer.from(parts.join(' ')));
 }
 
-},{"../key":192,"../private-key":193,"../utils":196,"./rfc4253":185,"./ssh-private":186,"assert-plus":84,"safer-buffer":171}],188:[function(require,module,exports){
+},{"../key":192,"../private-key":193,"../utils":196,"./rfc4253":185,"./ssh-private":186,"assert-plus":83,"safer-buffer":171}],188:[function(require,module,exports){
 // Copyright 2016 Joyent, Inc.
 
 var x509 = require('./x509');
@@ -35614,7 +35883,7 @@ function write(cert, options) {
 	return (buf.slice(0, o));
 }
 
-},{"../algs":172,"../certificate":173,"../identity":190,"../key":192,"../private-key":193,"../signature":194,"../utils":196,"./pem":181,"./x509":189,"asn1":83,"assert-plus":84,"safer-buffer":171}],189:[function(require,module,exports){
+},{"../algs":172,"../certificate":173,"../identity":190,"../key":192,"../private-key":193,"../signature":194,"../utils":196,"./pem":181,"./x509":189,"asn1":82,"assert-plus":83,"safer-buffer":171}],189:[function(require,module,exports){
 // Copyright 2017 Joyent, Inc.
 
 module.exports = {
@@ -36368,7 +36637,7 @@ function writeBitField(setBits, bitIndex) {
 	return (bits);
 }
 
-},{"../algs":172,"../certificate":173,"../identity":190,"../key":192,"../private-key":193,"../signature":194,"../utils":196,"./pem":181,"./pkcs8":183,"asn1":83,"assert-plus":84,"safer-buffer":171}],190:[function(require,module,exports){
+},{"../algs":172,"../certificate":173,"../identity":190,"../key":192,"../private-key":193,"../signature":194,"../utils":196,"./pem":181,"./pkcs8":183,"asn1":82,"assert-plus":83,"safer-buffer":171}],190:[function(require,module,exports){
 // Copyright 2017 Joyent, Inc.
 
 module.exports = Identity;
@@ -36743,7 +37012,7 @@ Identity._oldVersionDetect = function (obj) {
 	return ([1, 0]);
 };
 
-},{"./algs":172,"./errors":176,"./fingerprint":177,"./signature":194,"./utils":196,"asn1":83,"assert-plus":84,"crypto":undefined,"safer-buffer":171,"util":undefined}],191:[function(require,module,exports){
+},{"./algs":172,"./errors":176,"./fingerprint":177,"./signature":194,"./utils":196,"asn1":82,"assert-plus":83,"crypto":undefined,"safer-buffer":171,"util":undefined}],191:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 var Key = require('./key');
@@ -37081,7 +37350,7 @@ Key._oldVersionDetect = function (obj) {
 	return ([1, 0]);
 };
 
-},{"./algs":172,"./dhe":174,"./ed-compat":175,"./errors":176,"./fingerprint":177,"./formats/auto":178,"./formats/dnssec":179,"./formats/pem":181,"./formats/pkcs1":182,"./formats/pkcs8":183,"./formats/putty":184,"./formats/rfc4253":185,"./formats/ssh":187,"./formats/ssh-private":186,"./private-key":193,"./signature":194,"./utils":196,"assert-plus":84,"crypto":undefined}],193:[function(require,module,exports){
+},{"./algs":172,"./dhe":174,"./ed-compat":175,"./errors":176,"./fingerprint":177,"./formats/auto":178,"./formats/dnssec":179,"./formats/pem":181,"./formats/pkcs1":182,"./formats/pkcs8":183,"./formats/putty":184,"./formats/rfc4253":185,"./formats/ssh":187,"./formats/ssh-private":186,"./private-key":193,"./signature":194,"./utils":196,"assert-plus":83,"crypto":undefined}],193:[function(require,module,exports){
 // Copyright 2017 Joyent, Inc.
 
 module.exports = PrivateKey;
@@ -37329,7 +37598,7 @@ PrivateKey._oldVersionDetect = function (obj) {
 	return ([1, 0]);
 };
 
-},{"./algs":172,"./dhe":174,"./ed-compat":175,"./errors":176,"./fingerprint":177,"./formats/auto":178,"./formats/dnssec":179,"./formats/pem":181,"./formats/pkcs1":182,"./formats/pkcs8":183,"./formats/rfc4253":185,"./formats/ssh-private":186,"./key":192,"./signature":194,"./utils":196,"assert-plus":84,"crypto":undefined,"safer-buffer":171,"tweetnacl":205,"util":undefined}],194:[function(require,module,exports){
+},{"./algs":172,"./dhe":174,"./ed-compat":175,"./errors":176,"./fingerprint":177,"./formats/auto":178,"./formats/dnssec":179,"./formats/pem":181,"./formats/pkcs1":182,"./formats/pkcs8":183,"./formats/rfc4253":185,"./formats/ssh-private":186,"./key":192,"./signature":194,"./utils":196,"assert-plus":83,"crypto":undefined,"safer-buffer":171,"tweetnacl":205,"util":undefined}],194:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = Signature;
@@ -37645,7 +37914,7 @@ Signature._oldVersionDetect = function (obj) {
 	return ([1, 0]);
 };
 
-},{"./algs":172,"./errors":176,"./ssh-buffer":195,"./utils":196,"asn1":83,"assert-plus":84,"crypto":undefined,"safer-buffer":171}],195:[function(require,module,exports){
+},{"./algs":172,"./errors":176,"./ssh-buffer":195,"./utils":196,"asn1":82,"assert-plus":83,"crypto":undefined,"safer-buffer":171}],195:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = SSHBuffer;
@@ -37796,7 +38065,7 @@ SSHBuffer.prototype.write = function (buf) {
 	this._offset += buf.length;
 };
 
-},{"assert-plus":84,"safer-buffer":171}],196:[function(require,module,exports){
+},{"assert-plus":83,"safer-buffer":171}],196:[function(require,module,exports){
 // Copyright 2015 Joyent, Inc.
 
 module.exports = {
@@ -38202,7 +38471,7 @@ function opensshCipherInfo(cipher) {
 	return (inf);
 }
 
-},{"./algs":172,"./key":192,"./private-key":193,"asn1":83,"assert-plus":84,"crypto":undefined,"ecc-jsbn/lib/ec":105,"jsbn":142,"safer-buffer":171,"tweetnacl":205}],197:[function(require,module,exports){
+},{"./algs":172,"./key":192,"./private-key":193,"asn1":82,"assert-plus":83,"crypto":undefined,"ecc-jsbn/lib/ec":104,"jsbn":141,"safer-buffer":171,"tweetnacl":205}],197:[function(require,module,exports){
 /*!
  * Copyright (c) 2015, Salesforce.com, Inc.
  * All rights reserved.
@@ -40098,34 +40367,29 @@ Store.prototype.getAllCookies = function(cb) {
 
 },{}],203:[function(require,module,exports){
 module.exports={
-  "_args": [
-    [
-      "tough-cookie@2.3.4",
-      "/Users/anconam/Documents/projects/dav"
-    ]
-  ],
-  "_from": "tough-cookie@2.3.4",
+  "_from": "tough-cookie@~2.3.3",
   "_id": "tough-cookie@2.3.4",
   "_inBundle": false,
   "_integrity": "sha512-TZ6TTfI5NtZnuyy/Kecv+CnoROnyXn2DN97LontgQpCwsX2XyLYCC0ENhYkehSOwAp8rTQKc/NUIF7BkQ5rKLA==",
   "_location": "/tough-cookie",
   "_phantomChildren": {},
   "_requested": {
-    "type": "version",
+    "type": "range",
     "registry": true,
-    "raw": "tough-cookie@2.3.4",
+    "raw": "tough-cookie@~2.3.3",
     "name": "tough-cookie",
     "escapedName": "tough-cookie",
-    "rawSpec": "2.3.4",
+    "rawSpec": "~2.3.3",
     "saveSpec": null,
-    "fetchSpec": "2.3.4"
+    "fetchSpec": "~2.3.3"
   },
   "_requiredBy": [
     "/request"
   ],
   "_resolved": "https://registry.npmjs.org/tough-cookie/-/tough-cookie-2.3.4.tgz",
-  "_spec": "2.3.4",
-  "_where": "/Users/anconam/Documents/projects/dav",
+  "_shasum": "ec60cee38ac675063ffc97a5c18970578ee83655",
+  "_spec": "tough-cookie@~2.3.3",
+  "_where": "C:\\Users\\ancon\\projects\\dav\\node_modules\\request",
   "author": {
     "name": "Jeremy Stashewsky",
     "email": "jstashewsky@salesforce.com"
@@ -40133,6 +40397,7 @@ module.exports={
   "bugs": {
     "url": "https://github.com/salesforce/tough-cookie/issues"
   },
+  "bundleDependencies": false,
   "contributors": [
     {
       "name": "Alexander Savin"
@@ -40156,6 +40421,7 @@ module.exports={
   "dependencies": {
     "punycode": "^1.4.1"
   },
+  "deprecated": false,
   "description": "RFC6265 Cookies and Cookie Jar for node.js",
   "devDependencies": {
     "async": "^1.4.2",
@@ -42843,14 +43109,16 @@ function bytesToUuid(buf, offset) {
   var i = offset || 0;
   var bth = byteToHex;
   // join used to fix memory issue caused by concatenation: https://bugs.chromium.org/p/v8/issues/detail?id=3175#c4
-  return ([bth[buf[i++]], bth[buf[i++]], 
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]], '-',
-	bth[buf[i++]], bth[buf[i++]],
-	bth[buf[i++]], bth[buf[i++]],
-	bth[buf[i++]], bth[buf[i++]]]).join('');
+  return ([
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]], '-',
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]],
+    bth[buf[i++]], bth[buf[i++]]
+  ]).join('');
 }
 
 module.exports = bytesToUuid;
@@ -43349,7 +43617,7 @@ WError.prototype.cause = function we_cause(c)
 	return (this.jse_cause);
 };
 
-},{"assert-plus":84,"core-util-is":102,"extsprintf":108,"util":undefined}],210:[function(require,module,exports){
+},{"assert-plus":83,"core-util-is":101,"extsprintf":107,"util":undefined}],210:[function(require,module,exports){
 function DOMParser(options){
 	this.options = options ||{locator:{}};
 	

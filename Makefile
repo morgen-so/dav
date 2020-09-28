@@ -15,6 +15,10 @@ SABRE_DAV_ZIPBALL=$(SABRE_DAV_RELEASE).zip
 # 		--output ./dav.min.js \
 # 		--source-map ./dav.js.map
 
+# Windows:
+# .\node_modules\.bin\browserify .\lib\index.js -o .\dav.js --standalone dav --node -t [ babelify --presets [ @babel/preset-env ] --plugins [ @babel/plugin-transform-classes @babel/plugin-transform-runtime ] ]
+
+
 build: node_modules
 	rm -rf dav.js
 	./node_modules/.bin/browserify ./lib/index.js -o dav.js \
