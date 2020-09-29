@@ -328,7 +328,7 @@ var homeUrl = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(fun
             return (0, _fuzzy_url_equals["default"])(account.principalUrl, response.href);
           });
           debug("homeUrl parsed response:");
-          debug(response);
+          debug(JSON.stringify(response));
           container = response.props;
 
           if (options.accountType === 'caldav') {
@@ -339,7 +339,7 @@ var homeUrl = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(fun
             href = container.addressbookHomeSet;
           }
 
-          return _context3.abrupt("return", _url["default"].resolve(account.rootUrl, href));
+          return _context3.abrupt("return", _url["default"].resolve(account.principalUrl, href));
 
         case 12:
         case "end":
