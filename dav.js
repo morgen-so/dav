@@ -635,7 +635,7 @@ var listCalendars = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].ma
               description: res.props.calendarDescription,
               timezone: res.props.calendarTimezone,
               color: res.props.calendarColor,
-              url: _url["default"].resolve(account.rootUrl, res.href),
+              url: _url["default"].resolve(account.principalUrl, res.href),
               ctag: res.props.getctag,
               displayName: res.props.displayname,
               components: res.props.supportedCalendarComponentSet,
@@ -740,7 +740,7 @@ var getCalendar = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark
               description: res.props.calendarDescription,
               timezone: res.props.calendarTimezone,
               color: res.props.calendarColor,
-              url: _url["default"].resolve(account.rootUrl, res.href),
+              url: _url["default"].resolve(account.principalUrl, res.href),
               ctag: res.props.getctag,
               displayName: res.props.displayname,
               components: res.props.supportedCalendarComponentSet,
@@ -1009,7 +1009,7 @@ var multigetCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["de
             return new _model.CalendarObject({
               data: res,
               calendar: calendar,
-              url: _url["default"].resolve(calendar.account.rootUrl, res.href),
+              url: _url["default"].resolve(calendar.account.principalUrl, res.href),
               etag: res.props.getetag,
               calendarData: res.props.calendarData
             });
@@ -1343,7 +1343,7 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
               calendar.objects.push(new _model.CalendarObject({
                 data: response,
                 calendar: calendar,
-                url: _url["default"].resolve(calendar.account.rootUrl, response.href),
+                url: _url["default"].resolve(calendar.account.principalUrl, response.href),
                 etag: response.props.getetag,
                 calendarData: response.props.calendarData
               }));
@@ -1629,7 +1629,7 @@ var listAddressBooks = _co["default"].wrap( /*#__PURE__*/_regenerator["default"]
             return new _model.AddressBook({
               data: res,
               account: account,
-              url: _url["default"].resolve(account.rootUrl, res.href),
+              url: _url["default"].resolve(account.principalUrl, res.href),
               ctag: res.props.getctag,
               displayName: res.props.displayname,
               resourcetype: res.props.resourcetype,
@@ -1722,7 +1722,7 @@ var listVCards = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
             return new _model.VCard({
               data: res,
               addressBook: addressBook,
-              url: _url["default"].resolve(addressBook.account.rootUrl, res.href),
+              url: _url["default"].resolve(addressBook.account.principalUrl, res.href),
               etag: res.props.getetag,
               addressData: res.props.addressData
             });
