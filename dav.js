@@ -419,42 +419,57 @@ exports.createAccount = _co["default"].wrap( /*#__PURE__*/_regenerator["default"
             server: options.server,
             credentials: options.xhr.credentials
           });
-          _context6.next = 5;
-          return serviceDiscovery(account, options);
 
-        case 5:
-          account.rootUrl = _context6.sent;
-          _context6.next = 8;
-          return principalUrl(account, options);
-
-        case 8:
-          account.principalUrl = _context6.sent;
-          _context6.next = 11;
-          return homeUrl(account, options);
-
-        case 11:
-          account.homeUrl = _context6.sent;
-
-          if (!(options.accountType === 'caldav')) {
-            _context6.next = 16;
+          if (!options.discoveryEnabled) {
+            _context6.next = 13;
             break;
           }
 
+          debug("Connecting with autodiscovery from ".concat(options.server));
+          _context6.next = 7;
+          return serviceDiscovery(account, options);
+
+        case 7:
+          account.rootUrl = _context6.sent;
+          _context6.next = 10;
+          return principalUrl(account, options);
+
+        case 10:
+          account.principalUrl = _context6.sent;
           _context6.next = 15;
-          return addressSet(account, options);
+          break;
+
+        case 13:
+          debug("Connecting assuming principal: ".concat(options.server));
+          account.principalUrl = options.server;
 
         case 15:
+          _context6.next = 17;
+          return homeUrl(account, options);
+
+        case 17:
+          account.homeUrl = _context6.sent;
+
+          if (!(options.accountType === 'caldav')) {
+            _context6.next = 22;
+            break;
+          }
+
+          _context6.next = 21;
+          return addressSet(account, options);
+
+        case 21:
           account.addresses = _context6.sent;
 
-        case 16:
+        case 22:
           if (options.loadCollections) {
-            _context6.next = 18;
+            _context6.next = 24;
             break;
           }
 
           return _context6.abrupt("return", account);
 
-        case 18:
+        case 24:
           if (options.accountType === 'caldav') {
             key = 'calendars';
             loadCollections = _calendars.listCalendars;
@@ -465,22 +480,22 @@ exports.createAccount = _co["default"].wrap( /*#__PURE__*/_regenerator["default"
             loadObjects = _contacts.listVCards;
           }
 
-          _context6.next = 21;
+          _context6.next = 27;
           return loadCollections(account, options);
 
-        case 21:
+        case 27:
           collections = _context6.sent;
           account[key] = collections;
 
           if (options.loadObjects) {
-            _context6.next = 25;
+            _context6.next = 31;
             break;
           }
 
           return _context6.abrupt("return", account);
 
-        case 25:
-          _context6.next = 27;
+        case 31:
+          _context6.next = 33;
           return collections.map(_co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee5(collection) {
             return _regenerator["default"].wrap(function _callee5$(_context5) {
               while (1) {
@@ -508,13 +523,13 @@ exports.createAccount = _co["default"].wrap( /*#__PURE__*/_regenerator["default"
             }, _callee5, null, [[0, 6]]);
           })));
 
-        case 27:
+        case 33:
           account[key] = account[key].filter(function (collection) {
             return !collection.error;
           });
           return _context6.abrupt("return", account);
 
-        case 29:
+        case 35:
         case "end":
           return _context6.stop();
       }
