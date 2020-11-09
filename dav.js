@@ -1964,7 +1964,7 @@ function debug(topic) {
 }
 
 },{}],8:[function(require,module,exports){
-'use strict';
+"use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -1977,7 +1977,10 @@ function fuzzyUrlEquals(one, other) {
   return fuzzyIncludes(one, other) || fuzzyIncludes(other, one);
 }
 
-;
+function isEncoded(uri) {
+  uri = uri || "";
+  return uri !== decodeURIComponent(uri);
+}
 
 function isEncoded(uri) {
   uri = uri || '';
@@ -1993,7 +1996,7 @@ function fullyDecodeURI(uri) {
 }
 
 function fuzzyIncludes(one, other) {
-  return one.indexOf(other) !== -1 || other.charAt(other.length - 1) === '/' && one.indexOf(other.slice(0, -1)) !== -1;
+  return one.indexOf(other) !== -1 || other.charAt(other.length - 1) === "/" && one.indexOf(other.slice(0, -1)) !== -1;
 }
 
 },{}],9:[function(require,module,exports){

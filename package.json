@@ -48,14 +48,16 @@
     "@babel/plugin-syntax-import-meta": "^7.0.0",
     "@babel/plugin-transform-classes": "^7.9.2",
     "@babel/plugin-transform-flow-strip-types": "^7.0.0",
-    "@babel/plugin-transform-runtime": "^7.7.6",
+    "@babel/plugin-transform-runtime": "^7.12.1",
     "@babel/preset-env": "^7.9.0",
     "@babel/register": "^7.0.0",
+    "@types/chai": "^4.2.14",
+    "@types/mocha": "^8.0.3",
     "babelify": "^10.0.0",
     "browserify": "^16.5.0",
-    "chai": "^3.2.0",
+    "chai": "^4.2.0",
     "doctoc": "^0.15.0",
-    "mocha": "^2.3.2",
+    "mocha": "^8.2.1",
     "nock": "^9.1.6",
     "prettier": "^2.0.5",
     "sinon": "^1.16.1",
@@ -64,6 +66,7 @@
     "uglify-js": "^2.4.24"
   },
   "scripts": {
-    "test": "make test"
+    "test": "make test",
+    "build": "make"
   }
 }
