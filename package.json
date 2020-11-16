@@ -67,6 +67,7 @@
   },
   "scripts": {
     "test": "make test",
-    "build": "make"
+    "build": "make",
+    "format": "prettier --config ./.prettierrc --write ."
   }
 }
