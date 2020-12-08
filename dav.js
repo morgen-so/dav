@@ -552,7 +552,7 @@ exports.createCalendarObject = createCalendarObject;
 exports.updateCalendarObject = updateCalendarObject;
 exports.deleteCalendarObject = deleteCalendarObject;
 exports.syncCalendar = syncCalendar;
-exports.syncCaldavAccount = exports.multigetSingleCalendarObject = exports.multigetCalendarObjects = exports.listCalendarObjectsEtags = exports.listCalendarObjects = exports.getCalendar = exports.listCalendars = void 0;
+exports.syncCaldavAccount = exports.multigetSingleCalendarObject = exports.multigetCalendarObjects = exports.listCalendarObjectsEtags = exports.syncCalendarObjects = exports.listCalendarObjects = exports.getCalendar = exports.listCalendars = void 0;
 
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
 
@@ -891,7 +891,12 @@ var listCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["defaul
   }, _callee5);
 }));
 /**
- * @param {dav.Calendar} calendar the calendar to fetch etags for.
+ * Fetch calendar objects that changed on the remote calendar since
+ * the last sync. This includes added, modified and deleted calendar
+ * objects. Changes will be recognized by comparing the etags in the
+ * `calendar.objects` array with the etags fetched from the remote.
+ *
+ * @param {dav.Calendar} calendar the calendar to fetch objects for.
  *
  * Options:
  *
@@ -903,11 +908,88 @@ var listCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["defaul
 
 exports.listCalendarObjects = listCalendarObjects;
 
-var listCalendarObjectsEtags = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee6(calendar, options) {
-  var filters, req, responses;
+var syncCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee6(calendar, options) {
+  var remoteCalendarObjects, hrefs, localEvents, remoteEvents, calendarObjects;
   return _regenerator["default"].wrap(function _callee6$(_context6) {
     while (1) {
       switch (_context6.prev = _context6.next) {
+        case 0:
+          debug("Sync objects on calendar ".concat(calendar.url, " which belongs to\n         ").concat(calendar.account.credentials.username)); // First we only fetch the etags and hrefs to figure out what changed locally
+
+          _context6.next = 3;
+          return listCalendarObjectsEtags(calendar, options);
+
+        case 3:
+          remoteCalendarObjects = _context6.sent;
+          // Collect hrefs of all new and modified events
+          hrefs = []; // Compare local calendar objects with remote calendar objects
+
+          localEvents = calendar.objects;
+          remoteEvents = remoteCalendarObjects.filter(function (obj) {
+            return obj.href && obj.href.length;
+          });
+          remoteEvents.forEach(function (remoteEvent) {
+            // Check if remote event already exists locally
+            var localEvent = localEvents.find(function (localEvent) {
+              return (0, _fuzzy_url_equals["default"])(localEvent.url, remoteEvent.href);
+            });
+
+            if (localEvent) {
+              localEvent.exists = true;
+
+              if (localEvent.etag !== remoteEvent.etag) {
+                // Modified event
+                hrefs.push(remoteEvent.href);
+              } // If etag matches, event did not change -> don't push them
+
+            } else {
+              // New event
+              hrefs.push(remoteEvent.href);
+            }
+          }); // Get the calendar-data and etags of the events that are either new or changed
+
+          options.hrefs = hrefs;
+          _context6.next = 11;
+          return multigetCalendarObjects(calendar, options);
+
+        case 11:
+          calendarObjects = _context6.sent;
+          // Push deleted events
+          localEvents.forEach(function (event) {
+            if (!event.exists) {
+              calendarObjects.push(new _model.CalendarObject({
+                url: event.url,
+                status: 'cancelled'
+              }));
+            }
+          });
+          return _context6.abrupt("return", calendarObjects);
+
+        case 14:
+        case "end":
+          return _context6.stop();
+      }
+    }
+  }, _callee6);
+}));
+/**
+ * @param {dav.Calendar} calendar the calendar to fetch etags for.
+ *
+ * Options:
+ *
+ *   (Array.<Object>) filters - optional caldav filters.
+ *   (dav.Sandbox) sandbox - optional request sandbox.
+ *   (dav.Transport) xhr - request sender.
+ */
+
+
+exports.syncCalendarObjects = syncCalendarObjects;
+
+var listCalendarObjectsEtags = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee7(calendar, options) {
+  var filters, req, responses;
+  return _regenerator["default"].wrap(function _callee7$(_context7) {
+    while (1) {
+      switch (_context7.prev = _context7.next) {
         case 0:
           debug("Getting etags on calendar ".concat(calendar.url, " which belongs to\n         ").concat(calendar.account.credentials.username));
           filters = options.filters || [{
@@ -931,14 +1013,14 @@ var listCalendarObjectsEtags = _co["default"].wrap( /*#__PURE__*/_regenerator["d
             }],
             filters: filters
           });
-          _context6.next = 5;
+          _context7.next = 5;
           return options.xhr.send(req, calendar.url, {
             sandbox: options.sandbox
           });
 
         case 5:
-          responses = _context6.sent;
-          return _context6.abrupt("return", responses.map(function (res) {
+          responses = _context7.sent;
+          return _context7.abrupt("return", responses.map(function (res) {
             debug("Found calendar object (etag only) with url ".concat(res.href));
             return {
               href: res.href,
@@ -948,10 +1030,10 @@ var listCalendarObjectsEtags = _co["default"].wrap( /*#__PURE__*/_regenerator["d
 
         case 7:
         case "end":
-          return _context6.stop();
+          return _context7.stop();
       }
     }
-  }, _callee6);
+  }, _callee7);
 }));
 /**
  * @param {dav.Calendar} calendar the calendar to fetch objects for.
@@ -966,21 +1048,21 @@ var listCalendarObjectsEtags = _co["default"].wrap( /*#__PURE__*/_regenerator["d
 
 exports.listCalendarObjectsEtags = listCalendarObjectsEtags;
 
-var multigetCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee7(calendar, options) {
+var multigetCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee8(calendar, options) {
   var hrefs, req, responses;
-  return _regenerator["default"].wrap(function _callee7$(_context7) {
+  return _regenerator["default"].wrap(function _callee8$(_context8) {
     while (1) {
-      switch (_context7.prev = _context7.next) {
+      switch (_context8.prev = _context8.next) {
         case 0:
           debug("Doing multiget on calendar ".concat(calendar.url, " which belongs to\n         ").concat(calendar.account.credentials.username));
           hrefs = options.hrefs || [];
 
           if (hrefs.length) {
-            _context7.next = 4;
+            _context8.next = 4;
             break;
           }
 
-          return _context7.abrupt("return", []);
+          return _context8.abrupt("return", []);
 
         case 4:
           req = request.calendarMultiget({
@@ -996,14 +1078,14 @@ var multigetCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["de
               return ensureEncodedPath(href);
             })
           });
-          _context7.next = 7;
+          _context8.next = 7;
           return options.xhr.send(req, calendar.url, {
             sandbox: options.sandbox
           });
 
         case 7:
-          responses = _context7.sent;
-          return _context7.abrupt("return", responses.map(function (res) {
+          responses = _context8.sent;
+          return _context8.abrupt("return", responses.map(function (res) {
             //debug(`Found calendar object with url ${res.href}`);
             return new _model.CalendarObject({
               data: res,
@@ -1016,36 +1098,36 @@ var multigetCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["de
 
         case 9:
         case "end":
-          return _context7.stop();
+          return _context8.stop();
       }
     }
-  }, _callee7);
+  }, _callee8);
 }));
 
 exports.multigetCalendarObjects = multigetCalendarObjects;
 
-var multigetSingleCalendarObject = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee8(calendar, options) {
+var multigetSingleCalendarObject = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee9(calendar, options) {
   var events;
-  return _regenerator["default"].wrap(function _callee8$(_context8) {
+  return _regenerator["default"].wrap(function _callee9$(_context9) {
     while (1) {
-      switch (_context8.prev = _context8.next) {
+      switch (_context9.prev = _context9.next) {
         case 0:
-          _context8.next = 2;
+          _context9.next = 2;
           return multigetCalendarObjects(calendar, options);
 
         case 2:
-          events = _context8.sent;
-          return _context8.abrupt("return", events.filter(function (event) {
+          events = _context9.sent;
+          return _context9.abrupt("return", events.filter(function (event) {
             // Find the response that corresponds to the parameter collection.
             return (0, _fuzzy_url_equals["default"])(options.href, event.url);
           })[0]);
 
         case 4:
         case "end":
-          return _context8.stop();
+          return _context9.stop();
       }
     }
-  }, _callee8);
+  }, _callee9);
 }));
 /**
  * @param {dav.Calendar} calendar the calendar to fetch updates to.
@@ -1081,22 +1163,22 @@ function syncCalendar(calendar, options) {
  */
 
 
-var syncCaldavAccount = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee10(account) {
+var syncCaldavAccount = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee11(account) {
   var options,
       cals,
-      _args10 = arguments;
-  return _regenerator["default"].wrap(function _callee10$(_context10) {
+      _args11 = arguments;
+  return _regenerator["default"].wrap(function _callee11$(_context11) {
     while (1) {
-      switch (_context10.prev = _context10.next) {
+      switch (_context11.prev = _context11.next) {
         case 0:
-          options = _args10.length > 1 && _args10[1] !== undefined ? _args10[1] : {};
+          options = _args11.length > 1 && _args11[1] !== undefined ? _args11[1] : {};
           options.loadObjects = false;
           if (!account.calendars) account.calendars = [];
-          _context10.next = 5;
+          _context11.next = 5;
           return listCalendars(account, options);
 
         case 5:
-          cals = _context10.sent;
+          cals = _context11.sent;
           cals.filter(function (cal) {
             // Filter the calendars not previously seen.
             return account.calendars.every(function (prev) {
@@ -1107,43 +1189,43 @@ var syncCaldavAccount = _co["default"].wrap( /*#__PURE__*/_regenerator["default"
             account.calendars.push(cal);
           });
           options.loadObjects = true;
-          _context10.next = 10;
-          return account.calendars.map(_co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee9(cal, index) {
-            return _regenerator["default"].wrap(function _callee9$(_context9) {
+          _context11.next = 10;
+          return account.calendars.map(_co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee10(cal, index) {
+            return _regenerator["default"].wrap(function _callee10$(_context10) {
               while (1) {
-                switch (_context9.prev = _context9.next) {
+                switch (_context10.prev = _context10.next) {
                   case 0:
-                    _context9.prev = 0;
-                    _context9.next = 3;
+                    _context10.prev = 0;
+                    _context10.next = 3;
                     return syncCalendar(cal, options);
 
                   case 3:
-                    _context9.next = 9;
+                    _context10.next = 9;
                     break;
 
                   case 5:
-                    _context9.prev = 5;
-                    _context9.t0 = _context9["catch"](0);
-                    debug("Sync calendar ".concat(cal.displayName, " failed with ").concat(_context9.t0));
+                    _context10.prev = 5;
+                    _context10.t0 = _context10["catch"](0);
+                    debug("Sync calendar ".concat(cal.displayName, " failed with ").concat(_context10.t0));
                     account.calendars.splice(index, 1);
 
                   case 9:
                   case "end":
-                    return _context9.stop();
+                    return _context10.stop();
                 }
               }
-            }, _callee9, null, [[0, 5]]);
+            }, _callee10, null, [[0, 5]]);
           })));
 
         case 10:
-          return _context10.abrupt("return", account);
+          return _context11.abrupt("return", account);
 
         case 11:
         case "end":
-          return _context10.stop();
+          return _context11.stop();
       }
     }
-  }, _callee10);
+  }, _callee11);
 }));
 /**
  * Extract the path from the full spec, if the regexp failed, log
@@ -1212,48 +1294,48 @@ var ensureDecodedPath = function ensureDecodedPath(aString) {
   return uriComponents.join('/');
 };
 
-var basicSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee11(calendar, options) {
+var basicSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee12(calendar, options) {
   var sync;
-  return _regenerator["default"].wrap(function _callee11$(_context11) {
+  return _regenerator["default"].wrap(function _callee12$(_context12) {
     while (1) {
-      switch (_context11.prev = _context11.next) {
+      switch (_context12.prev = _context12.next) {
         case 0:
-          _context11.next = 2;
+          _context12.next = 2;
           return webdav.isCollectionDirty(calendar, options);
 
         case 2:
-          sync = _context11.sent;
+          sync = _context12.sent;
 
           if (sync) {
-            _context11.next = 6;
+            _context12.next = 6;
             break;
           }
 
           debug('Local ctag matched remote! No need to sync :).');
-          return _context11.abrupt("return", calendar);
+          return _context12.abrupt("return", calendar);
 
         case 6:
           debug('ctag changed so we need to fetch stuffs.');
-          _context11.next = 9;
-          return listCalendarObjects(calendar, options);
+          _context12.next = 9;
+          return syncCalendarObjects(calendar, options);
 
         case 9:
-          calendar.objects = _context11.sent;
-          return _context11.abrupt("return", calendar);
+          calendar.objects = _context12.sent;
+          return _context12.abrupt("return", calendar);
 
         case 11:
         case "end":
-          return _context11.stop();
+          return _context12.stop();
       }
     }
-  }, _callee11);
+  }, _callee12);
 }));
 
-var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee12(calendar, options) {
+var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee13(calendar, options) {
   var req, result, deletedHrefs, newUpdatedHrefs, results;
-  return _regenerator["default"].wrap(function _callee12$(_context12) {
+  return _regenerator["default"].wrap(function _callee13$(_context13) {
     while (1) {
-      switch (_context12.prev = _context12.next) {
+      switch (_context13.prev = _context13.next) {
         case 0:
           req = request.syncCollection({
             props: [{
@@ -1265,13 +1347,13 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
             syncToken: calendar.syncToken,
             depth: 1
           });
-          _context12.next = 3;
+          _context13.next = 3;
           return options.xhr.send(req, calendar.url, {
             sandbox: options.sandbox
           });
 
         case 3:
-          result = _context12.sent;
+          result = _context13.sent;
           // Results contains new, modified or deleted objects.
           result.responses.forEach(function (res) {
             // Validate href
@@ -1319,13 +1401,13 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
               return ensureEncodedPath(href);
             })
           });
-          _context12.next = 11;
+          _context13.next = 11;
           return options.xhr.send(req, calendar.url, {
             sandbox: options.sandbox
           });
 
         case 11:
-          results = _context12.sent;
+          results = _context13.sent;
           // Calendar objects array will contain all new, modified and deleted events
           calendar.objects = [];
           results.forEach(function (response) {
@@ -1352,14 +1434,14 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
           }); // Update token
 
           calendar.syncToken = result.syncToken;
-          return _context12.abrupt("return", calendar);
+          return _context13.abrupt("return", calendar);
 
         case 17:
         case "end":
-          return _context12.stop();
+          return _context13.stop();
       }
     }
-  }, _callee12);
+  }, _callee13);
 }));
 
 },{"./debug":7,"./fuzzy_url_equals":8,"./model":10,"./namespace":11,"./request":13,"./webdav":25,"@babel/runtime/helpers/interopRequireDefault":31,"@babel/runtime/helpers/interopRequireWildcard":32,"@babel/runtime/regenerator":36,"co":99,"url":undefined}],4:[function(require,module,exports){
