@@ -115,7 +115,7 @@ var XMLHttpRequestWrapper = /*#__PURE__*/function () {
                 case 12:
                   responseText = _context.sent;
 
-                  if (response.ok) {
+                  if (!(response.status < 200 || response.status >= 400)) {
                     _context.next = 17;
                     break;
                   }
@@ -132,9 +132,10 @@ var XMLHttpRequestWrapper = /*#__PURE__*/function () {
                 case 21:
                   _context.prev = 21;
                   _context.t0 = _context["catch"](1);
+                  clearTimeout(timeoutId);
                   return _context.abrupt("return", reject(_context.t0));
 
-                case 24:
+                case 25:
                 case "end":
                   return _context.stop();
               }
@@ -160,7 +161,7 @@ var XMLHttpRequestWrapper = /*#__PURE__*/function () {
   }, {
     key: "response",
     get: function get() {
-      throw new Error('Not implemented');
+      return this._response;
     }
   }, {
     key: "timeout",
@@ -227,7 +228,7 @@ var defaults = {
  */
 
 var serviceDiscovery = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee(account, options) {
-  var endpoint, uri, req, xhr, location;
+  var endpoint, uri, req, xhr, redirectUrl;
   return _regenerator["default"].wrap(function _callee$(_context) {
     while (1) {
       switch (_context.prev = _context.next) {
@@ -248,30 +249,30 @@ var serviceDiscovery = _co["default"].wrap( /*#__PURE__*/_regenerator["default"]
           _context.next = 8;
           return options.xhr.send(req, uri, {
             sandbox: options.sandbox,
-            followRedirect: false
+            followRedirect: true
           });
 
         case 8:
           xhr = _context.sent;
 
-          if (!(xhr.status >= 300 && xhr.status < 400)) {
+          if (!xhr.response.ok) {
             _context.next = 14;
             break;
           }
 
           // http redirect.
-          location = xhr.getResponseHeader('Location');
+          redirectUrl = xhr.response.url;
 
-          if (!(typeof location === 'string' && location.length)) {
+          if (!(typeof redirectUrl === 'string' && redirectUrl.length)) {
             _context.next = 14;
             break;
           }
 
-          debug("Discovery redirected to ".concat(location));
+          debug("Discovery redirected to ".concat(redirectUrl));
           return _context.abrupt("return", _url["default"].resolve(_url["default"].format({
             protocol: endpoint.protocol,
             host: endpoint.host
-          }), location));
+          }), redirectUrl));
 
         case 14:
           _context.next = 19;
