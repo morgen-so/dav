@@ -24,6 +24,7 @@
   ],
   "dependencies": {
     "co": "^4.6.0",
+    "lodash": "^4.17.21",
     "request": "git+https://github.com/marcoancona/request.git#01b7b6ef318fd2f08c9e56ab3f9b9526ce32024d",
     "xmldom": "^0.1.19"
   },
