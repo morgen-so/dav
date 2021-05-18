@@ -931,7 +931,7 @@ var listCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["defaul
         case 3:
           results = _context5.sent;
           options.hrefs = results.filter(function (res) {
-            return res.href && res.href.length;
+            return ensureIsUri(res.href);
           }).map(function (res) {
             return res.href;
           });
@@ -987,7 +987,7 @@ var syncCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["defaul
 
           localEvents = calendar.objects;
           remoteEvents = remoteCalendarObjects.filter(function (obj) {
-            return obj.href && obj.href.length;
+            return ensureIsUri(obj.href);
           });
           remoteEvents.forEach(function (remoteEvent) {
             // Check if remote event already exists locally
@@ -1355,6 +1355,17 @@ var ensureDecodedPath = function ensureDecodedPath(aString) {
   return uriComponents.join('/');
 };
 
+var ensureIsUri = function ensureIsUri(aString) {
+  try {
+    if (!aString || !aString.length()) return false;
+    decodeURIComponent(aString);
+    return true;
+  } catch (e) {
+    debug('CalDAV: Invalid URL string: ' + aString);
+    return false;
+  }
+};
+
 var basicSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee12(calendar, options) {
   var sync;
   return _regenerator["default"].wrap(function _callee12$(_context12) {
@@ -1418,7 +1429,7 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
           // Results contains new, modified or deleted objects.
           result.responses.forEach(function (res) {
             // Validate href
-            if (res.href && res.href.length) {
+            if (ensureIsUri(res.href)) {
               res.href = ensureDecodedPath(res.href);
             } // Validate contenttype
 
@@ -1432,7 +1443,7 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
             }
           });
           deletedHrefs = result.responses.filter(function (res) {
-            return res.href && res.href.length && res.status && res.status.length && res.status.indexOf('404') > -1;
+            return ensureIsUri(res.href) && res.status && res.status.length && res.status.indexOf('404') > -1;
           }).map(function (res) {
             return res.href;
           });
@@ -1502,7 +1513,7 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
           // Calendar objects array will contain all new, modified and deleted events
           calendar.objects = [];
           results.forEach(function (response) {
-            if (response.href && response.href.length) {
+            if (ensureIsUri(response.href)) {
               response.href = ensureDecodedPath(response.href);
             } else return;
 
@@ -2222,9 +2233,16 @@ Object.defineProperty(exports, "__esModule", {
 exports["default"] = fuzzyUrlEquals;
 
 function fuzzyUrlEquals(one, other) {
-  one = fullyDecodeURI(one);
-  other = fullyDecodeURI(other);
-  return fuzzyIncludes(one, other) || fuzzyIncludes(other, one);
+  if (one === other) return true;
+
+  try {
+    one = fullyDecodeURI(one);
+    other = fullyDecodeURI(other);
+    return fuzzyIncludes(one, other) || fuzzyIncludes(other, one);
+  } catch (e) {
+    console.log("Could not decode URLs ".concat(one, " or ").concat(other));
+    return false;
+  }
 }
 
 function isEncoded(uri) {
