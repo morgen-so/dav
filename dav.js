@@ -1357,7 +1357,7 @@ var ensureDecodedPath = function ensureDecodedPath(aString) {
 
 var ensureIsUri = function ensureIsUri(aString) {
   try {
-    if (!aString || !aString.length()) return false;
+    if (!aString || !aString.length) return false;
     decodeURIComponent(aString);
     return true;
   } catch (e) {
