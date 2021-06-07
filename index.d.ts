@@ -644,6 +644,15 @@ export class Client {
   ): Promise<Calendar>;
 
   /**
+   * Fetch a calendar
+   */
+  getCalendar(
+    account: Account,
+    calendarUrl: string,
+    options?: any
+  ): Promise<Calendar>;
+
+  /**
    * Fetch changes from the remote server to the account's calendars.
    * @param account the calendar account to sync.
    * @param options
