@@ -476,55 +476,72 @@ exports.createAccount = _co["default"].wrap( /*#__PURE__*/_regenerator["default"
           });
 
           if (!options.discoveryEnabled) {
-            _context6.next = 13;
+            _context6.next = 23;
             break;
           }
 
-          debug("Connecting with autodiscovery from ".concat(options.server));
-          _context6.next = 7;
-          return serviceDiscovery(account, options);
-
-        case 7:
-          account.rootUrl = _context6.sent;
-          _context6.next = 10;
+          _context6.prev = 4;
+          // First try with provided server URL
+          debug("Connecting with autodiscovery from ".concat(options.server, ". Trying first using this as root url..."));
+          account.rootUrl = account.server;
+          _context6.next = 9;
           return principalUrl(account, options);
 
-        case 10:
+        case 9:
           account.principalUrl = _context6.sent;
-          _context6.next = 15;
+          _context6.next = 21;
           break;
 
-        case 13:
+        case 12:
+          _context6.prev = 12;
+          _context6.t0 = _context6["catch"](4);
+          debug("Did not work, running autodiscovery from ".concat(options.server));
+          _context6.next = 17;
+          return serviceDiscovery(account, options);
+
+        case 17:
+          account.rootUrl = _context6.sent;
+          _context6.next = 20;
+          return principalUrl(account, options);
+
+        case 20:
+          account.principalUrl = _context6.sent;
+
+        case 21:
+          _context6.next = 25;
+          break;
+
+        case 23:
           debug("Connecting assuming principal: ".concat(options.server));
           account.principalUrl = options.server;
 
-        case 15:
-          _context6.next = 17;
+        case 25:
+          _context6.next = 27;
           return homeUrl(account, options);
 
-        case 17:
+        case 27:
           account.homeUrl = _context6.sent;
 
           if (!(options.accountType === 'caldav')) {
-            _context6.next = 22;
+            _context6.next = 32;
             break;
           }
 
-          _context6.next = 21;
+          _context6.next = 31;
           return addressSet(account, options);
 
-        case 21:
+        case 31:
           account.addresses = _context6.sent;
 
-        case 22:
+        case 32:
           if (options.loadCollections) {
-            _context6.next = 24;
+            _context6.next = 34;
             break;
           }
 
           return _context6.abrupt("return", account);
 
-        case 24:
+        case 34:
           if (options.accountType === 'caldav') {
             key = 'calendars';
             loadCollections = _calendars.listCalendars;
@@ -535,22 +552,22 @@ exports.createAccount = _co["default"].wrap( /*#__PURE__*/_regenerator["default"
             loadObjects = _contacts.listVCards;
           }
 
-          _context6.next = 27;
+          _context6.next = 37;
           return loadCollections(account, options);
 
-        case 27:
+        case 37:
           collections = _context6.sent;
           account[key] = collections;
 
           if (options.loadObjects) {
-            _context6.next = 31;
+            _context6.next = 41;
             break;
           }
 
           return _context6.abrupt("return", account);
 
-        case 31:
-          _context6.next = 33;
+        case 41:
+          _context6.next = 43;
           return collections.map(_co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee5(collection) {
             return _regenerator["default"].wrap(function _callee5$(_context5) {
               while (1) {
@@ -578,18 +595,18 @@ exports.createAccount = _co["default"].wrap( /*#__PURE__*/_regenerator["default"
             }, _callee5, null, [[0, 6]]);
           })));
 
-        case 33:
+        case 43:
           account[key] = account[key].filter(function (collection) {
             return !collection.error;
           });
           return _context6.abrupt("return", account);
 
-        case 35:
+        case 45:
         case "end":
           return _context6.stop();
       }
     }
-  }, _callee6);
+  }, _callee6, null, [[4, 12]]);
 }));
 
 },{"./calendars":3,"./contacts":6,"./debug":7,"./fuzzy_url_equals":8,"./model":10,"./namespace":11,"./request":13,"@babel/runtime/helpers/interopRequireDefault":34,"@babel/runtime/helpers/typeof":40,"@babel/runtime/regenerator":42,"co":45,"url":54}],3:[function(require,module,exports){
