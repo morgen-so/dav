@@ -481,7 +481,10 @@ exports.createAccount = _co["default"].wrap( /*#__PURE__*/_regenerator["default"
           }
 
           _context6.prev = 4;
-          // First try with provided server URL
+          // First try with provided server URL. This is useful when a root url
+          // with a not standard port is provided. Autodiscover would discard the
+          // port, thus making the connection fail.
+          // See https://github.com/morgen-so/minetime/issues/1625
           debug("Connecting with autodiscovery from ".concat(options.server, ". Trying first using this as root url..."));
           account.rootUrl = account.server;
           _context6.next = 9;
@@ -28359,7 +28362,7 @@ exports.XMLReader = XMLReader;
 },{}],59:[function(require,module,exports){
 module.exports={
   "name": "dav",
-  "version": "1.7.9",
+  "version": "1.7.10",
   "author": "Gareth Aye [:gaye] <gaye@mozilla.com>",
   "description": "WebDAV, CalDAV, and CardDAV client for nodejs and the browser",
   "license": "MPL-2.0",
