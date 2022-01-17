@@ -30,6 +30,11 @@ export interface CreateAccountOptions {
   loadCollections?: boolean;
 
   /**
+   *  whether or not to include delegate calendars.
+   */
+  loadUserProxyCalendars?: boolean;
+
+  /**
    * whether or not to load dav objects.
    */
   loadObjects?: boolean;
@@ -745,6 +750,7 @@ export class Account {
   homeUrl: string;
   calendars: Calendar[];
   addressBooks: AddressBook[];
+  addresses: string[];
 }
 
 export type AccountOptions = Partial<Account>;
@@ -816,6 +822,7 @@ export class DAVCollection<T> {
   resourcetype: string;
   syncToken: string;
   url: string;
+  isDelegate: boolean;
 }
 export type DAVCollectionOptions<T> = Partial<DAVCollection<T>>;
 
