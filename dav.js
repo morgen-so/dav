@@ -2676,10 +2676,18 @@ var Calendar = /*#__PURE__*/function (_DAVCollection2) {
   var _super2 = _createSuper(Calendar);
 
   function Calendar(options) {
+    var _options$url;
+
     var _this;
 
     (0, _classCallCheck2["default"])(this, Calendar);
-    _this = _super2.call(this, options);
+    _this = _super2.call(this, options); // Ensure calendar collection URL ends with a slash
+    // See https://github.com/morgen-so/minetime/issues/2231
+
+    if ((options === null || options === void 0 ? void 0 : (_options$url = options.url) === null || _options$url === void 0 ? void 0 : _options$url.length) && !options.url.endsWith('/')) {
+      options.url = options.url + '/';
+    }
+
     Object.assign((0, _assertThisInitialized2["default"])(_this), {
       components: null,
       timezone: null
