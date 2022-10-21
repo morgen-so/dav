@@ -769,6 +769,11 @@ export class Credentials {
   password: string;
 
   /**
+   * authentication method (automatic when omitted)
+   */
+  mechanism?: 'basic' | 'digest';
+
+  /**
    * oauth client id.
    */
   clientId: string;
