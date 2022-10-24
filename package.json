@@ -1,11 +1,11 @@
 {
   "name": "dav",
-  "version": "1.7.10",
-  "author": "Gareth Aye [:gaye] <gaye@mozilla.com>",
+  "version": "1.7.11",
+  "author": "Gareth Aye [:gaye] <gaye@mozilla.com>, Morgen AG",
   "description": "WebDAV, CalDAV, and CardDAV client for nodejs and the browser",
   "license": "MPL-2.0",
   "main": "dav.js",
-  "repository": "https://github.com/gaye/dav",
+  "repository": "https://github.com/morgen-so/dav",
   "typings": "./index.d.ts",
   "keywords": [
     "address book",
@@ -24,8 +24,10 @@
   ],
   "dependencies": {
     "co": "^4.6.0",
+    "isomorphic-fetch": "^3.0.0",
     "js-base64": "^3.6.1",
     "lodash": "^4.17.21",
+    "md5": "^2.3.0",
     "request": "git+https://github.com/marcoancona/request.git#01b7b6ef318fd2f08c9e56ab3f9b9526ce32024d",
     "xmldom": "^0.1.19"
   },
