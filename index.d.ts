@@ -385,8 +385,9 @@ export namespace transport {
   class Transport {
     /**
      * @param credentials user authorization.
+     * @param options
      */
-    constructor(credentials: Credentials);
+    constructor(credentials: Credentials, options?: TransportInitOptions);
 
     send(
       request: Request,
@@ -402,6 +403,10 @@ export namespace transport {
     sandbox?: Sandbox;
 
     retry?: boolean;
+  }
+
+  interface TransportInitOptions {
+    userAgent?: string;
   }
 
   class Basic extends Transport {

@@ -85,8 +85,11 @@ var XMLHttpRequestWrapper = /*#__PURE__*/function () {
     }
   }, {
     key: "open",
-    value: function open(method, url, async, user, password, mechanism) {
-      var followRedirect = arguments.length > 6 && arguments[6] !== undefined ? arguments[6] : true;
+    value: function open(method, url, async, user, password, _ref) {
+      var mechanism = _ref.mechanism,
+        userAgent = _ref.userAgent,
+        _ref$followRedirect = _ref.followRedirect,
+        followRedirect = _ref$followRedirect === void 0 ? true : _ref$followRedirect;
       this._responseText = null;
       this._response = null;
       this._url = url;
@@ -94,7 +97,7 @@ var XMLHttpRequestWrapper = /*#__PURE__*/function () {
         method: method,
         headers: {
           Accept: 'application/json, text/plain, */*',
-          'User-Agent': 'minetime/request'
+          'User-Agent': userAgent !== null && userAgent !== void 0 ? userAgent : 'minetime/request'
         },
         redirect: followRedirect ? 'follow' : 'manual',
         credentials: 'omit',
@@ -116,7 +119,7 @@ var XMLHttpRequestWrapper = /*#__PURE__*/function () {
       if (this.sandbox) this.sandbox.add(this);
       if (data) this._options.body = data;
       return new Promise( /*#__PURE__*/function () {
-        var _ref = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(resolve, reject) {
+        var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(resolve, reject) {
           var timeoutId, response, blob, responseText, error;
           return _regenerator["default"].wrap(function _callee$(_context) {
             while (1) {
@@ -167,7 +170,7 @@ var XMLHttpRequestWrapper = /*#__PURE__*/function () {
           }, _callee, null, [[1, 21]]);
         }));
         return function (_x, _x2) {
-          return _ref.apply(this, arguments);
+          return _ref2.apply(this, arguments);
         };
       }());
     }
@@ -3464,14 +3467,15 @@ function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Re
 var Transport = /*#__PURE__*/function () {
   /**
    * @param {dav.Credentials} credentials user authorization.
+   * @param {dav.TransportInitOptions} options
    */
-  function Transport(credentials) {
+  function Transport(credentials, options) {
     (0, _classCallCheck2["default"])(this, Transport);
     this.credentials = credentials || null;
+    this.options = options || {};
   }
 
   /**
-   * @param {dav.Request} request object with request info.
    * @return {Promise} a promise that will be resolved with an xhr request after
    *     its readyState is 4 or the result of applying an optional request
    *     `transformResponse` function to the xhr object after its readyState is 4.
@@ -3513,7 +3517,11 @@ var Basic = /*#__PURE__*/function (_Transport) {
                 onerror = request.onerror;
                 xhr = new _XMLHttpRequestWrapper["default"]();
                 if (sandbox) sandbox.add(xhr);
-                xhr.open(request.method, url, true /* async */, this.credentials.username, this.credentials.password, this.credentials.mechanism, followRedirect);
+                xhr.open(request.method, url, true /* async */, this.credentials.username, this.credentials.password, {
+                  mechanism: this.credentials.mechanism,
+                  userAgent: this.options.userAgent,
+                  followRedirect: followRedirect
+                });
                 if (transformRequest) transformRequest(xhr);
                 _context.prev = 9;
                 _context.next = 12;
