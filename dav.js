@@ -85,14 +85,15 @@ var XMLHttpRequestWrapper = /*#__PURE__*/function () {
     }
   }, {
     key: "open",
-    value: function open(method, url, async, user, password, _ref) {
-      var mechanism = _ref.mechanism,
-        userAgent = _ref.userAgent,
-        _ref$followRedirect = _ref.followRedirect,
-        followRedirect = _ref$followRedirect === void 0 ? true : _ref$followRedirect;
+    value: function open(method, url, async, user, password, options) {
       this._responseText = null;
       this._response = null;
       this._url = url;
+      var _ref = options || {},
+        mechanism = _ref.mechanism,
+        userAgent = _ref.userAgent,
+        _ref$followRedirect = _ref.followRedirect,
+        followRedirect = _ref$followRedirect === void 0 ? true : _ref$followRedirect;
       this._options = {
         method: method,
         headers: {
