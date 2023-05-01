@@ -13,7 +13,7 @@ var _createClass2 = _interopRequireDefault(require("@babel/runtime/helpers/creat
 var _digestFetch = _interopRequireDefault(require("./digestFetch"));
 var debug = require('./debug')["default"]('dav:xmlhttprequest');
 var canRequire = typeof require == 'function';
-if (typeof fetch !== 'function' && canRequire) var fetch = require('node-fetch');else var fetch = window.fetch.bind(window);
+if (typeof _fetch !== 'function' && canRequire) var _fetch = require('node-fetch');
 var DEFAULT_TIMEOUT = 5 * 60 * 1000;
 
 /**
@@ -107,12 +107,16 @@ var XMLHttpRequestWrapper = /*#__PURE__*/function () {
         signal: this._abortController.signal
       };
       if (user) {
+        // This is always the case for basic/digest auth
         this._digestFetch = new _digestFetch["default"](user, password, {
           mechanism: mechanism
         });
       } else {
+        // OAuth
         this._digestFetch = {
-          fetch: fetch
+          fetch: function fetch() {
+            return _fetch.apply(void 0, arguments);
+          }
         };
       }
     }
