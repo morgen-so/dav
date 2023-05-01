@@ -383,6 +383,7 @@ export function createSandbox(): Sandbox;
 
 export namespace transport {
   class Transport {
+    credentials: Credentials;
     /**
      * @param credentials user authorization.
      * @param options
@@ -581,6 +582,7 @@ export namespace request {
 }
 
 export class Client {
+  xhr: transport.Transport;
   /**
    * Create a new Client object. The client interface allows consumers to set
    * their credentials and transport once and then make authorized requests
