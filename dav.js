@@ -12,6 +12,8 @@ var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/cl
 var _createClass2 = _interopRequireDefault(require("@babel/runtime/helpers/createClass"));
 var _digestFetch = _interopRequireDefault(require("./digestFetch"));
 var debug = require('./debug')["default"]('dav:xmlhttprequest');
+var canRequire = typeof require == 'function';
+if (typeof fetch !== 'function' && canRequire) var fetch = require('node-fetch');else var fetch = window.fetch.bind(window);
 var DEFAULT_TIMEOUT = 5 * 60 * 1000;
 
 /**
@@ -182,7 +184,7 @@ var XMLHttpRequestWrapper = /*#__PURE__*/function () {
 }();
 exports["default"] = XMLHttpRequestWrapper;
 
-},{"./debug":7,"./digestFetch":8,"@babel/runtime/helpers/asyncToGenerator":30,"@babel/runtime/helpers/classCallCheck":31,"@babel/runtime/helpers/createClass":32,"@babel/runtime/helpers/interopRequireDefault":35,"@babel/runtime/regenerator":44}],2:[function(require,module,exports){
+},{"./debug":7,"./digestFetch":8,"@babel/runtime/helpers/asyncToGenerator":30,"@babel/runtime/helpers/classCallCheck":31,"@babel/runtime/helpers/createClass":32,"@babel/runtime/helpers/interopRequireDefault":35,"@babel/runtime/regenerator":44,"node-fetch":94}],2:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
