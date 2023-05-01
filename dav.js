@@ -109,7 +109,9 @@ var XMLHttpRequestWrapper = /*#__PURE__*/function () {
           mechanism: mechanism
         });
       } else {
-        this._digestFetch = fetch;
+        this._digestFetch = {
+          fetch: fetch
+        };
       }
     }
   }, {
