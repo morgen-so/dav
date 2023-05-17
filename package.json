@@ -25,12 +25,12 @@
   "dependencies": {
     "@xmldom/xmldom": "^0.8.7",
     "co": "^4.6.0",
-    "fast-xml-parser": "^4.2.2",
     "isomorphic-fetch": "^3.0.0",
     "js-base64": "^3.6.1",
     "lodash": "^4.17.21",
     "md5": "^2.3.0",
-    "request": "git+https://github.com/marcoancona/request.git#01b7b6ef318fd2f08c9e56ab3f9b9526ce32024d"
+    "request": "git+https://github.com/marcoancona/request.git#01b7b6ef318fd2f08c9e56ab3f9b9526ce32024d",
+    "xml-beautify": "^1.2.3"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",
