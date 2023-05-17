@@ -3,7 +3,6 @@ SabreDAV/
 /*.zip
 /coverage/
 /index.js
-/package-lock.json
 /node_modules/
 /.idea/
 
