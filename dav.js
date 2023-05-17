@@ -2802,7 +2802,7 @@ function beautifyXML(xml) {
       format: true
     });
     var clean = builder.build(jObj);
-    debug("beautify input:\n".concat(xml, "\noutput:\n").concat(JSON.stringify(clean), "\n"));
+    debug("beautify input:\n".concat(xml, "\noutput:\n").concat(clean, "\n"));
     return clean;
   } catch (e) {
     debug("Error parsing XML: ".concat(e));
