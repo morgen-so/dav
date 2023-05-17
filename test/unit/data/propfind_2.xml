@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<d:multistatus xmlns:c="urn:ietf:params:xml:ns:caldav" xmlns:card="urn:ietf:params:xml:ns:carddav" xmlns:d="DAV:">
+  <d:response>
+    <d:href>/dav/calendars/user/morgencalendar_2@fastmail.com/E654DFB2-B0FC-11EC-B5AE-C69DA452101A/daad9b88-4d41-464c-83aa-17f7d0b92898.ics</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:getetag>"016f543b71e3b26c41f8c855f18ff50044692380"</d:getetag>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/dav/calendars/user/morgencalendar_2@fastmail.com/E654DFB2-B0FC-11EC-B5AE-C69DA452101A/4E2F41C5-9B2C-498F-AFBA-56B09F4DA86D.ics</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:getetag>"69bda2a1c5bd0be01a4463eda1a15cf46b2ecac1"</d:getetag>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/dav/calendars/user/morgencalendar_2@fastmail.com/E654DFB2-B0FC-11EC-B5AE-C69DA452101A/6E5D3A1F-247F-4922-99BD-D79B4C4C6B5B.ics</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:getetag>"9dbf6b7f6f420c6e30f51d5aa046adcfaf1ebad2"</d:getetag>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:sync-token>data:,1648736091-3748</d:sync-token>
+</d:multistatus>

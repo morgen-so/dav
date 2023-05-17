@@ -1,8 +1,15 @@
 const fs = require('fs');
-const { multistatus } = require('../lib/parser');
+const { multistatus, beautifyXML } = require('../lib/parser');
 const { getProps, mergeProps } = require('../lib/request');
 
 describe('Parser', function () {
+  test('beautifyXML should not destroy information', async function () {
+    // Read xml from file
+    let xml = fs.readFileSync('./test/unit/data/propfind_2.xml', 'utf8');
+    const clean = beautifyXML(xml);
+    expect(clean).toEqual(xml);
+  });
+
   test('should parse a proxies response from SoGO', async function () {
     // Read xml from file
     let xml = fs.readFileSync(
