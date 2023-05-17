@@ -2779,9 +2779,11 @@ var debug = require('./debug')["default"]('dav:parser');
 var DOMParser;
 if (typeof self !== 'undefined' && 'DOMParser' in self) {
   // browser main thread
+  debug('Using browser DOMParser');
   DOMParser = self.DOMParser;
 } else {
   // nodejs or web worker
+  debug('Using xmldom DOMParser');
   DOMParser = require('@xmldom/xmldom').DOMParser;
 }
 
@@ -2799,7 +2801,9 @@ function beautifyXML(xml) {
       // critical to fix issue https://github.com/morgen-so/minetime/issues/2539
       format: true
     });
-    return builder.build(jObj);
+    var clean = builder.build(jObj);
+    debug("beautify input:\n".concat(xml, "\noutput:\n").concat(JSON.stringify(clean), "\n"));
+    return clean;
   } catch (e) {
     debug("Error parsing XML: ".concat(e));
     return xml;
