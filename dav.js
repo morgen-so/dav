@@ -2598,7 +2598,7 @@ var _sandbox = require("./sandbox");
 function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
 function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
-},{"../package":112,"./accounts":2,"./calendars":3,"./client":5,"./contacts":6,"./debug":7,"./model":11,"./namespace":12,"./request":14,"./sandbox":15,"./transport":25,"@babel/runtime/helpers/interopRequireDefault":35,"@babel/runtime/helpers/typeof":42,"isomorphic-fetch":95}],11:[function(require,module,exports){
+},{"../package":113,"./accounts":2,"./calendars":3,"./client":5,"./contacts":6,"./debug":7,"./model":11,"./namespace":12,"./request":14,"./sandbox":15,"./transport":25,"@babel/runtime/helpers/interopRequireDefault":35,"@babel/runtime/helpers/typeof":42,"isomorphic-fetch":95}],11:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -2775,7 +2775,7 @@ Object.defineProperty(exports, "__esModule", {
 exports.beautifyXML = beautifyXML;
 exports.multistatus = multistatus;
 var _camelize = _interopRequireDefault(require("./camelize"));
-var _xmlBeautify = _interopRequireDefault(require("xml-beautify"));
+var _xmlFormatter = _interopRequireDefault(require("xml-formatter"));
 var debug = require('./debug')["default"]('dav:parser');
 var DOMParser;
 if (typeof self !== 'undefined' && 'DOMParser' in self) {
@@ -2796,9 +2796,11 @@ if (typeof self !== 'undefined' && 'DOMParser' in self) {
  */
 function beautifyXML(xml) {
   try {
-    var clean = new _xmlBeautify["default"]({
-      parser: DOMParser
-    }).beautify(xml);
+    var clean = (0, _xmlFormatter["default"])(xml, {
+      indentation: '  ',
+      lineSeparator: '\n',
+      collapseContent: true
+    });
     debug("beautify input:\n".concat(xml, "\noutput:\n").concat(clean, "\n"));
     return clean;
   } catch (e) {
@@ -2988,7 +2990,7 @@ function child(node, localName) {
   return children(node, localName)[0];
 }
 
-},{"./camelize":4,"./debug":7,"@babel/runtime/helpers/interopRequireDefault":35,"@xmldom/xmldom":49,"xml-beautify":111}],14:[function(require,module,exports){
+},{"./camelize":4,"./debug":7,"@babel/runtime/helpers/interopRequireDefault":35,"@xmldom/xmldom":49,"xml-formatter":111}],14:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -41615,9 +41617,431 @@ module.exports = {
 })));
 
 },{}],111:[function(require,module,exports){
-/*! For license information please see XmlBeautify.js.LICENSE.txt */
-!function(e,t){"object"==typeof exports&&"object"==typeof module?module.exports=t():"function"==typeof define&&define.amd?define([],t):"object"==typeof exports?exports.XmlBeautify=t():e.XmlBeautify=t()}(this,(()=>(()=>{"use strict";var e={d:(t,n)=>{for(var r in n)e.o(n,r)&&!e.o(t,r)&&Object.defineProperty(t,r,{enumerable:!0,get:n[r]})},o:(e,t)=>Object.prototype.hasOwnProperty.call(e,t)},t={};function n(e,t){for(var n=0;n<t.length;n++){var r=t[n];r.enumerable=r.enumerable||!1,r.configurable=!0,"value"in r&&(r.writable=!0),Object.defineProperty(e,r.key,r)}}e.d(t,{default:()=>r});var r=function(){function e(t){!function(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}(this,e);var n=t||{};this.userExternalParser=!1,n.parser?(this.userExternalParser=!0,this.parser=new n.parser):this.parser=new DOMParser}var t,r,l;return t=e,(r=[{key:"hasXmlDef",value:function(e){return e.indexOf("<?xml")>=0}},{key:"getEncoding",value:function(e){if(!this.hasXmlDef(e))return null;var t=e.toLowerCase().indexOf('encoding="')+'encoding="'.length,n=e.indexOf('"?>');return e.substr(t,n-t)}},{key:"_children",value:function(e){for(var t=[],n=e.childNodes.length,r=0;r<n;r++)1===e.childNodes[r].nodeType&&t.push(e.childNodes[r]);return t}},{key:"beautify",value:function(e,t){var n=this,r=n.parser.parseFromString(e,"text/xml"),l="  ",a=!1;t&&(t.indent&&(l=t.indent),1==t.useSelfClosingElement&&(a=t.useSelfClosingElement));var i=null;n.hasXmlDef(e)&&(i='<?xml version="1.0" encoding="'+n.getEncoding(e)+'"?>');var o={indentText:l,xmlText:"",useSelfClosingElement:a,indentLevel:0};n.userExternalParser?n._parseInternally(this._children(r)[0],o):n._parseInternally(r.children[0],o);var s="";return i&&(s+=i+"\n"),s+=o.xmlText}},{key:"_parseInternally",value:function(e,t){var n,r=this,l=e.textContent;0==l.replace(/ /g,"").replace(/\r?\n/g,"").replace(/\n/g,"").replace(/\t/g,"").length&&(l=""),n=r.userExternalParser?!(r._children(e).length>0):!(e.children.length>0);var a=l&&l.length>0,i=n&&a,o=n&&!a,s=t.useSelfClosingElement,d="";if(i){var c=r._getFirstCDATAChild(e),u=c.hasCDATAChild,h=c.content;d+=u?h:l}for(var f,x="",p=0;p<t.indentLevel;p++)x+=t.indentText;t.xmlText+=x,t.xmlText+="<"+e.tagName;for(var g=0;g<e.attributes.length;g++){var v=e.attributes[g];t.xmlText+=" "+v.name+'="'+v.textContent+'"'}t.xmlText+=o&&s?" />":">",i?t.xmlText+=d:o&&!s||(t.xmlText+="\n"),t.indentLevel++,f=r.userExternalParser?r._children(e).length:e.children.length;for(var m=0;m<f;m++){var y=void 0;y=r.userExternalParser?r._children(e)[m]:e.children[m],r._parseInternally(y,t)}if(t.indentLevel--,o)if(s);else{var T="</"+e.tagName+">";t.xmlText+=T,t.xmlText+="\n"}else{var C="</"+e.tagName+">";n&&a||(t.xmlText+=x),t.xmlText+=C,t.xmlText+="\n"}}},{key:"_getFirstCDATAChild",value:function(e){for(var t=e.childNodes.length,n="",r=!1,l=0;l<t;l++)3===e.childNodes[l].nodeType?e.childNodes[l].data.replace(/ /g,"").replace(/\r?\n/g,"").replace(/\n/g,"").replace(/\t/g,"").length>0&&(n+=e.childNodes[l].data):4===e.childNodes[l].nodeType&&(n+="<![CDATA[",n+=e.childNodes[l].data,n+="]]>",r=!0);return r?{hasCDATAChild:!0,content:n}:{hasCDATAChild:!1}}}])&&n(t.prototype,r),l&&n(t,l),Object.defineProperty(t,"prototype",{writable:!1}),e}();return t=t.default})()));
-},{}],112:[function(require,module,exports){
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const xml_parser_xo_1 = __importDefault(require("xml-parser-xo"));
+function newLine(state) {
+    if (!state.options.indentation && !state.options.lineSeparator)
+        return;
+    state.content += state.options.lineSeparator;
+    let i;
+    for (i = 0; i < state.level; i++) {
+        state.content += state.options.indentation;
+    }
+}
+function indent(state) {
+    state.content = state.content.replace(/ +$/, '');
+    let i;
+    for (i = 0; i < state.level; i++) {
+        state.content += state.options.indentation;
+    }
+}
+function appendContent(state, content) {
+    state.content += content;
+}
+function processNode(node, state, preserveSpace) {
+    if (typeof node.content === 'string') {
+        processContent(node.content, state, preserveSpace);
+    }
+    else if (node.type === 'Element') {
+        processElementNode(node, state, preserveSpace);
+    }
+    else if (node.type === 'ProcessingInstruction') {
+        processProcessingIntruction(node, state);
+    }
+    else {
+        throw new Error('Unknown node type: ' + node.type);
+    }
+}
+function processContent(content, state, preserveSpace) {
+    if (!preserveSpace) {
+        const trimmedContent = content.trim();
+        if (state.options.lineSeparator) {
+            content = trimmedContent;
+        }
+        else if (trimmedContent.length === 0) {
+            content = trimmedContent;
+        }
+    }
+    if (content.length > 0) {
+        if (!preserveSpace && state.content.length > 0) {
+            newLine(state);
+        }
+        appendContent(state, content);
+    }
+}
+function isPathMatchingIgnoredPaths(path, ignoredPaths) {
+    const fullPath = '/' + path.join('/');
+    const pathLastPart = path[path.length - 1];
+    return ignoredPaths.includes(pathLastPart) || ignoredPaths.includes(fullPath);
+}
+function processElementNode(node, state, preserveSpace) {
+    state.path.push(node.name);
+    if (!preserveSpace && state.content.length > 0) {
+        newLine(state);
+    }
+    appendContent(state, '<' + node.name);
+    processAttributes(state, node.attributes);
+    if (node.children === null) {
+        const selfClosingNodeClosingTag = state.options.whiteSpaceAtEndOfSelfclosingTag ? ' />' : '/>';
+        // self-closing node
+        appendContent(state, selfClosingNodeClosingTag);
+    }
+    else if (node.children.length === 0) {
+        // empty node
+        appendContent(state, '></' + node.name + '>');
+    }
+    else {
+        const nodeChildren = node.children;
+        appendContent(state, '>');
+        state.level++;
+        let nodePreserveSpace = node.attributes['xml:space'] === 'preserve';
+        let ignoredPath = false;
+        if (!nodePreserveSpace && state.options.ignoredPaths) {
+            ignoredPath = isPathMatchingIgnoredPaths(state.path, state.options.ignoredPaths);
+            nodePreserveSpace = ignoredPath;
+        }
+        if (!nodePreserveSpace && state.options.collapseContent) {
+            let containsTextNodes = false;
+            let containsTextNodesWithLineBreaks = false;
+            let containsNonTextNodes = false;
+            nodeChildren.forEach(function (child, index) {
+                if (child.type === 'Text') {
+                    if (child.content.includes('\n')) {
+                        containsTextNodesWithLineBreaks = true;
+                        child.content = child.content.trim();
+                    }
+                    else if (index === 0 || index === nodeChildren.length - 1) {
+                        if (child.content.trim().length === 0) {
+                            // If the text node is at the start or end and is empty, it should be ignored when formatting
+                            child.content = '';
+                        }
+                    }
+                    if (child.content.trim().length > 0) {
+                        containsTextNodes = true;
+                    }
+                }
+                else if (child.type === 'CDATA') {
+                    containsTextNodes = true;
+                }
+                else {
+                    containsNonTextNodes = true;
+                }
+            });
+            if (containsTextNodes && (!containsNonTextNodes || !containsTextNodesWithLineBreaks)) {
+                nodePreserveSpace = true;
+            }
+        }
+        nodeChildren.forEach(function (child) {
+            processNode(child, state, preserveSpace || nodePreserveSpace);
+        });
+        state.level--;
+        if (!preserveSpace && !nodePreserveSpace) {
+            newLine(state);
+        }
+        if (ignoredPath) {
+            indent(state);
+        }
+        appendContent(state, '</' + node.name + '>');
+    }
+    state.path.pop();
+}
+function processAttributes(state, attributes) {
+    Object.keys(attributes).forEach(function (attr) {
+        const escaped = attributes[attr].replace(/"/g, '&quot;');
+        appendContent(state, ' ' + attr + '="' + escaped + '"');
+    });
+}
+function processProcessingIntruction(node, state) {
+    if (state.content.length > 0) {
+        newLine(state);
+    }
+    appendContent(state, '<?' + node.name);
+    processAttributes(state, node.attributes);
+    appendContent(state, '?>');
+}
+/**
+ * Converts the given XML into human readable format.
+ */
+function formatXml(xml, options = {}) {
+    options.indentation = 'indentation' in options ? options.indentation : '    ';
+    options.collapseContent = options.collapseContent === true;
+    options.lineSeparator = 'lineSeparator' in options ? options.lineSeparator : '\r\n';
+    options.whiteSpaceAtEndOfSelfclosingTag = options.whiteSpaceAtEndOfSelfclosingTag === true;
+    options.throwOnFailure = options.throwOnFailure !== false;
+    try {
+        const parsedXml = (0, xml_parser_xo_1.default)(xml, { filter: options.filter, strictMode: options.strictMode });
+        const state = { content: '', level: 0, options: options, path: [] };
+        if (parsedXml.declaration) {
+            processProcessingIntruction(parsedXml.declaration, state);
+        }
+        parsedXml.children.forEach(function (child) {
+            processNode(child, state, false);
+        });
+        if (!options.lineSeparator) {
+            return state.content;
+        }
+        return state.content
+            .replace(/\r\n/g, '\n')
+            .replace(/\n/g, options.lineSeparator);
+    }
+    catch (err) {
+        if (options.throwOnFailure) {
+            throw err;
+        }
+        return xml;
+    }
+}
+formatXml.minify = (xml, options = {}) => {
+    return formatXml(xml, Object.assign(Object.assign({}, options), { indentation: '', lineSeparator: '' }));
+};
+if (typeof module !== 'undefined' && typeof exports === 'object') {
+    module.exports = formatXml;
+}
+exports.default = formatXml;
+
+},{"xml-parser-xo":112}],112:[function(require,module,exports){
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ParsingError = void 0;
+class ParsingError extends Error {
+    constructor(message, cause) {
+        super(message);
+        this.cause = cause;
+    }
+}
+exports.ParsingError = ParsingError;
+let parsingState;
+function nextChild() {
+    return element(false) || text() || comment() || cdata();
+}
+function nextRootChild() {
+    match(/\s*/);
+    return element(true) || comment() || doctype() || processingInstruction(false);
+}
+function parseDocument() {
+    const declaration = processingInstruction(true);
+    const children = [];
+    let documentRootNode;
+    let child = nextRootChild();
+    while (child) {
+        if (child.node.type === 'Element') {
+            if (documentRootNode) {
+                throw new Error('Found multiple root nodes');
+            }
+            documentRootNode = child.node;
+        }
+        if (!child.excluded) {
+            children.push(child.node);
+        }
+        child = nextRootChild();
+    }
+    if (!documentRootNode) {
+        throw new ParsingError('Failed to parse XML', 'Root Element not found');
+    }
+    if (parsingState.xml.length !== 0) {
+        throw new ParsingError('Failed to parse XML', 'Not Well-Formed XML');
+    }
+    return {
+        declaration: declaration ? declaration.node : null,
+        root: documentRootNode,
+        children
+    };
+}
+function processingInstruction(matchDeclaration) {
+    const m = matchDeclaration ? match(/^<\?(xml)\s*/) : match(/^<\?([\w-:.]+)\s*/);
+    if (!m)
+        return;
+    // tag
+    const node = {
+        name: m[1],
+        type: 'ProcessingInstruction',
+        attributes: {}
+    };
+    // attributes
+    while (!(eos() || is('?>'))) {
+        const attr = attribute();
+        if (attr) {
+            node.attributes[attr.name] = attr.value;
+        }
+        else {
+            return;
+        }
+    }
+    match(/\?>/);
+    return {
+        excluded: matchDeclaration ? false : parsingState.options.filter(node) === false,
+        node
+    };
+}
+function element(matchRoot) {
+    const m = match(/^<([^?!</>\s]+)\s*/);
+    if (!m)
+        return;
+    // name
+    const node = {
+        type: 'Element',
+        name: m[1],
+        attributes: {},
+        children: []
+    };
+    const excluded = matchRoot ? false : parsingState.options.filter(node) === false;
+    // attributes
+    while (!(eos() || is('>') || is('?>') || is('/>'))) {
+        const attr = attribute();
+        if (attr) {
+            node.attributes[attr.name] = attr.value;
+        }
+        else {
+            return;
+        }
+    }
+    // self closing tag
+    if (match(/^\s*\/>/)) {
+        node.children = null;
+        return {
+            excluded,
+            node
+        };
+    }
+    match(/\??>/);
+    // children
+    let child = nextChild();
+    while (child) {
+        if (!child.excluded) {
+            node.children.push(child.node);
+        }
+        child = nextChild();
+    }
+    // closing
+    if (parsingState.options.strictMode) {
+        const closingTag = `</${node.name}>`;
+        if (parsingState.xml.startsWith(closingTag)) {
+            parsingState.xml = parsingState.xml.slice(closingTag.length);
+        }
+        else {
+            throw new ParsingError('Failed to parse XML', `Closing tag not matching "${closingTag}"`);
+        }
+    }
+    else {
+        match(/^<\/\s*[\w-:.\u00C0-\u00FF]+>/);
+    }
+    return {
+        excluded,
+        node
+    };
+}
+function doctype() {
+    const m = match(/^<!DOCTYPE\s+\S+\s+SYSTEM[^>]*>/) || match(/^<!DOCTYPE\s+\S+\s+PUBLIC[^>]*>/) || match(/^<!DOCTYPE\s+\S+\s+\[[^\]]*]>/);
+    if (m) {
+        const node = {
+            type: 'DocumentType',
+            content: m[0]
+        };
+        return {
+            excluded: parsingState.options.filter(node) === false,
+            node
+        };
+    }
+}
+function cdata() {
+    if (parsingState.xml.startsWith('<![CDATA[')) {
+        const endPositionStart = parsingState.xml.indexOf(']]>');
+        if (endPositionStart > -1) {
+            const endPositionFinish = endPositionStart + 3;
+            const node = {
+                type: 'CDATA',
+                content: parsingState.xml.substring(0, endPositionFinish)
+            };
+            parsingState.xml = parsingState.xml.slice(endPositionFinish);
+            return {
+                excluded: parsingState.options.filter(node) === false,
+                node
+            };
+        }
+    }
+}
+function comment() {
+    const m = match(/^<!--[\s\S]*?-->/);
+    if (m) {
+        const node = {
+            type: 'Comment',
+            content: m[0]
+        };
+        return {
+            excluded: parsingState.options.filter(node) === false,
+            node
+        };
+    }
+}
+function text() {
+    const m = match(/^([^<]+)/);
+    if (m) {
+        const node = {
+            type: 'Text',
+            content: m[1]
+        };
+        return {
+            excluded: parsingState.options.filter(node) === false,
+            node
+        };
+    }
+}
+function attribute() {
+    const m = match(/([^=]+)\s*=\s*("[^"]*"|'[^']*'|[^>\s]+)\s*/);
+    if (m) {
+        return {
+            name: m[1].trim(),
+            value: stripQuotes(m[2].trim())
+        };
+    }
+}
+function stripQuotes(val) {
+    return val.replace(/^['"]|['"]$/g, '');
+}
+/**
+ * Match `re` and advance the string.
+ */
+function match(re) {
+    const m = parsingState.xml.match(re);
+    if (m) {
+        parsingState.xml = parsingState.xml.slice(m[0].length);
+        return m;
+    }
+}
+/**
+ * End-of-source.
+ */
+function eos() {
+    return 0 === parsingState.xml.length;
+}
+/**
+ * Check for `prefix`.
+ */
+function is(prefix) {
+    return 0 === parsingState.xml.indexOf(prefix);
+}
+/**
+ * Parse the given XML string into an object.
+ */
+function parseXml(xml, options = {}) {
+    xml = xml.trim();
+    const filter = options.filter || (() => true);
+    parsingState = {
+        xml,
+        options: Object.assign(Object.assign({}, options), { filter, strictMode: options.strictMode === true })
+    };
+    return parseDocument();
+}
+if (typeof module !== 'undefined' && typeof exports === 'object') {
+    module.exports = parseXml;
+}
+exports.default = parseXml;
+
+},{}],113:[function(require,module,exports){
 module.exports={
   "name": "dav",
   "version": "1.7.11",
@@ -41650,7 +42074,7 @@ module.exports={
     "lodash": "^4.17.21",
     "md5": "^2.3.0",
     "request": "git+https://github.com/marcoancona/request.git#01b7b6ef318fd2f08c9e56ab3f9b9526ce32024d",
-    "xml-beautify": "^1.2.3"
+    "xml-formatter": "^3.4.1"
   },
   "devDependencies": {
     "@babel/cli": "^7.8.4",

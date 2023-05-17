@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<d:multistatus xmlns:d="DAV:" xmlns:s="http://sabredav.org/ns" xmlns:card="urn:ietf:params:xml:ns:carddav" xmlns:cal="urn:ietf:params:xml:ns:caldav" xmlns:cs="http://calendarserver.org/ns/">
+  <d:response>
+    <d:href>/calendars/MA05153/3510a367-0ab4-433b-ab01-cc118ccffe50/0A3EE7DA-DEDE-4AE6-B09D-AAD4C2BBF1FC.ics</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:getetag>&quot;83a1fd33cf521c1b1da52230d29c33a3&quot;</d:getetag>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/calendars/MA05153/3510a367-0ab4-433b-ab01-cc118ccffe50/05E2CB7F-1DD1-41C0-B34E-6D9F5697F1A8.ics</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:getetag>&quot;4665830e6f53b12ec684756141b26425&quot;</d:getetag>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:response>
+    <d:href>/calendars/MA05153/3510a367-0ab4-433b-ab01-cc118ccffe50/95D5C88E-5C6E-4E34-AF67-0A7120A6921D.ics</d:href>
+    <d:propstat>
+      <d:prop>
+        <d:getetag>&quot;f47e8bdfcda09baec87370a0fbc4a18b&quot;</d:getetag>
+      </d:prop>
+      <d:status>HTTP/1.1 200 OK</d:status>
+    </d:propstat>
+  </d:response>
+  <d:sync-token>http://sabre.io/ns/sync/486</d:sync-token>
+</d:multistatus>

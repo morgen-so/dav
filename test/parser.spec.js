@@ -5,7 +5,14 @@ const { getProps, mergeProps } = require('../lib/request');
 describe('Parser', function () {
   test('beautifyXML should not destroy information', async function () {
     // Read xml from file
-    let xml = fs.readFileSync('./test/unit/data/propfind_2.xml', 'utf8');
+    let xml = fs.readFileSync('./test/unit/data/generic_xml.xml', 'utf8');
+    const clean = beautifyXML(xml);
+    expect(clean).toEqual(xml);
+  });
+
+  test('beautifyXML should not destroy information (2)', async function () {
+    // Read xml from file
+    let xml = fs.readFileSync('./test/unit/data/generic_xml_b.xml', 'utf8');
     const clean = beautifyXML(xml);
     expect(clean).toEqual(xml);
   });
