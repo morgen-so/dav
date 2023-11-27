@@ -1122,7 +1122,7 @@ var listCalendarObjectsEtags = _co["default"].wrap( /*#__PURE__*/_regenerator["d
  */
 exports.listCalendarObjectsEtags = listCalendarObjectsEtags;
 var multigetCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee8(calendar, options) {
-  var hrefs, req, responses;
+  var hrefs, responses, hrefBatches, i, hrefBatch, req;
   return _regenerator["default"].wrap(function _callee8$(_context8) {
     while (1) {
       switch (_context8.prev = _context8.next) {
@@ -1135,8 +1135,23 @@ var multigetCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["de
           }
           return _context8.abrupt("return", []);
         case 4:
+          // Ensure hrefs are valid URIs
+          hrefs = hrefs.map(function (href) {
+            return ensureEncodedPath(href);
+          });
+
+          // Retrieve elements in batches
+          responses = [];
+          hrefBatches = _lodash["default"].chunk(hrefs, 100);
+          i = 0;
+        case 8:
+          if (!(i < hrefBatches.length)) {
+            _context8.next = 22;
+            break;
+          }
+          // Construct request for a single batch
+          hrefBatch = hrefBatches[i];
           req = request.calendarMultiget({
-            depth: 1,
             props: [{
               name: 'getetag',
               namespace: ns.DAV
@@ -1144,16 +1159,25 @@ var multigetCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["de
               name: 'calendar-data',
               namespace: ns.CALDAV
             }],
-            hrefs: hrefs.map(function (href) {
-              return ensureEncodedPath(href);
-            })
-          });
-          _context8.next = 7;
+            depth: 1,
+            hrefs: hrefBatch
+          }); // Make request to retrieve calendar data
+          _context8.t0 = responses.push;
+          _context8.t1 = responses;
+          _context8.t2 = _toConsumableArray2["default"];
+          _context8.next = 16;
           return options.xhr.send(req, calendar.url, {
             sandbox: options.sandbox
           });
-        case 7:
-          responses = _context8.sent;
+        case 16:
+          _context8.t3 = _context8.sent;
+          _context8.t4 = (0, _context8.t2)(_context8.t3);
+          _context8.t0.apply.call(_context8.t0, _context8.t1, _context8.t4);
+        case 19:
+          i++;
+          _context8.next = 8;
+          break;
+        case 22:
           return _context8.abrupt("return", responses.map(function (res) {
             //debug(`Found calendar object with url ${res.href}`);
             return new _model.CalendarObject({
@@ -1164,7 +1188,7 @@ var multigetCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["de
               calendarData: res.props.calendarData
             });
           }));
-        case 9:
+        case 23:
         case "end":
           return _context8.stop();
       }
