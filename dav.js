@@ -1135,18 +1135,13 @@ var multigetCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["de
           }
           return _context8.abrupt("return", []);
         case 4:
-          // Ensure hrefs are valid URIs
-          hrefs = hrefs.map(function (href) {
-            return ensureEncodedPath(href);
-          });
-
           // Retrieve elements in batches
           responses = [];
           hrefBatches = _lodash["default"].chunk(hrefs, 100);
           i = 0;
-        case 8:
+        case 7:
           if (!(i < hrefBatches.length)) {
-            _context8.next = 22;
+            _context8.next = 21;
             break;
           }
           // Construct request for a single batch
@@ -1165,19 +1160,19 @@ var multigetCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["de
           _context8.t0 = responses.push;
           _context8.t1 = responses;
           _context8.t2 = _toConsumableArray2["default"];
-          _context8.next = 16;
+          _context8.next = 15;
           return options.xhr.send(req, calendar.url, {
             sandbox: options.sandbox
           });
-        case 16:
+        case 15:
           _context8.t3 = _context8.sent;
           _context8.t4 = (0, _context8.t2)(_context8.t3);
           _context8.t0.apply.call(_context8.t0, _context8.t1, _context8.t4);
-        case 19:
+        case 18:
           i++;
-          _context8.next = 8;
+          _context8.next = 7;
           break;
-        case 22:
+        case 21:
           return _context8.abrupt("return", responses.map(function (res) {
             //debug(`Found calendar object with url ${res.href}`);
             return new _model.CalendarObject({
@@ -1188,7 +1183,7 @@ var multigetCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["de
               calendarData: res.props.calendarData
             });
           }));
-        case 23:
+        case 22:
         case "end":
           return _context8.stop();
       }
@@ -1462,17 +1457,14 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
               return href.indexOf('.ics') > -1;
             });
           }
-          newUpdatedHrefs = newUpdatedHrefs.map(function (href) {
-            return ensureEncodedPath(href);
-          });
 
           // Retrieve elements in batches
           results = [];
           chunks = _lodash["default"].chunk(newUpdatedHrefs, 100);
           i = 0;
-        case 13:
+        case 12:
           if (!(i < chunks.length)) {
-            _context13.next = 45;
+            _context13.next = 44;
             break;
           }
           newUpdatedHrefsChunk = chunks[i];
@@ -1487,25 +1479,25 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
             depth: 1,
             hrefs: newUpdatedHrefsChunk
           });
-          _context13.prev = 16;
+          _context13.prev = 15;
           _context13.t0 = results.push;
           _context13.t1 = results;
           _context13.t2 = _toConsumableArray2["default"];
-          _context13.next = 22;
+          _context13.next = 21;
           return options.xhr.send(req, calendar.url, {
             sandbox: options.sandbox
           });
-        case 22:
+        case 21:
           _context13.t3 = _context13.sent;
           _context13.t4 = (0, _context13.t2)(_context13.t3);
           _context13.t0.apply.call(_context13.t0, _context13.t1, _context13.t4);
-          _context13.next = 42;
+          _context13.next = 41;
           break;
-        case 27:
-          _context13.prev = 27;
-          _context13.t5 = _context13["catch"](16);
+        case 26:
+          _context13.prev = 26;
+          _context13.t5 = _context13["catch"](15);
           if (!(_context13.t5.code && _context13.t5.code === 404)) {
-            _context13.next = 41;
+            _context13.next = 40;
             break;
           }
           // "404 Not Found" on an ics file
@@ -1514,21 +1506,21 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
           _context13.t6 = results.push;
           _context13.t7 = results;
           _context13.t8 = _toConsumableArray2["default"];
-          _context13.next = 36;
+          _context13.next = 35;
           return listCalendarObjectsInSeries_(newUpdatedHrefs, options, calendar);
-        case 36:
+        case 35:
           _context13.t9 = _context13.sent;
           _context13.t10 = (0, _context13.t8)(_context13.t9);
           _context13.t6.apply.call(_context13.t6, _context13.t7, _context13.t10);
-          _context13.next = 42;
+          _context13.next = 41;
           break;
-        case 41:
+        case 40:
           throw _context13.t5;
-        case 42:
+        case 41:
           i++;
-          _context13.next = 13;
+          _context13.next = 12;
           break;
-        case 45:
+        case 44:
           // Calendar objects array will contain all new, modified and deleted events
           calendar.objects = [];
           results.forEach(function (response) {
@@ -1560,18 +1552,18 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
 
           // Continue if server is paginating
           if (!shouldContinueSyncing) {
-            _context13.next = 51;
+            _context13.next = 50;
             break;
           }
           return _context13.abrupt("return", webdavSync(calendar, options));
-        case 51:
+        case 50:
           return _context13.abrupt("return", calendar);
-        case 52:
+        case 51:
         case "end":
           return _context13.stop();
       }
     }
-  }, _callee13, null, [[16, 27]]);
+  }, _callee13, null, [[15, 26]]);
 }));
 
 /**
