@@ -3313,7 +3313,7 @@ Object.defineProperty(exports, "__esModule", {
 exports["default"] = addressBookQuery;
 var _prop = _interopRequireDefault(require("./prop"));
 function addressBookQuery(object) {
-  return "<card:addressbook-query xmlns:card=\"urn:ietf:params:xml:ns:carddav\"\n                          xmlns:d=\"DAV:\">\n    <d:prop>\n      ".concat(object.props.map(_prop["default"]).join(''), "\n    </d:prop>\n    <!-- According to http://stackoverflow.com/questions/23742568/google-carddav-api-addressbook-multiget-returns-400-bad-request,\n         Google's CardDAV server requires a filter element. I don't think all addressbook-query calls need a filter in the spec though? -->\n    <card:filter>\n      <card:prop-filter name=\"FN\">\n      </card:prop-filter>\n    </card:filter>\n  </card:addressbook-query>");
+  return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n  <card:addressbook-query xmlns:card=\"urn:ietf:params:xml:ns:carddav\"\n                          xmlns:d=\"DAV:\">\n    <d:prop>\n      ".concat(object.props.map(_prop["default"]).join(''), "\n    </d:prop>\n    <!-- According to http://stackoverflow.com/questions/23742568/google-carddav-api-addressbook-multiget-returns-400-bad-request,\n         Google's CardDAV server requires a filter element. I don't think all addressbook-query calls need a filter in the spec though? -->\n    <card:filter>\n      <card:prop-filter name=\"FN\">\n      </card:prop-filter>\n    </card:filter>\n  </card:addressbook-query>");
 }
 
 },{"./prop":22,"@babel/runtime/helpers/interopRequireDefault":35}],17:[function(require,module,exports){
@@ -3327,7 +3327,7 @@ exports["default"] = calendarMultiget;
 var _prop = _interopRequireDefault(require("./prop"));
 var _href = _interopRequireDefault(require("./href"));
 function calendarMultiget(object) {
-  return "<c:calendar-multiget xmlns:d=\"DAV:\"\n                               xmlns:c=\"urn:ietf:params:xml:ns:caldav\">\n    <d:prop>\n      ".concat(object.props.map(_prop["default"]).join(''), "\n    </d:prop>\n    ").concat(object.hrefs.map(_href["default"]).join(''), "\n  </c:calendar-multiget>");
+  return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n  <c:calendar-multiget xmlns:d=\"DAV:\" xmlns:c=\"urn:ietf:params:xml:ns:caldav\">\n    <d:prop>\n      ".concat(object.props.map(_prop["default"]).join(''), "\n    </d:prop>\n    ").concat(object.hrefs.map(_href["default"]).join(''), "\n  </c:calendar-multiget>");
 }
 
 },{"./href":20,"./prop":22,"@babel/runtime/helpers/interopRequireDefault":35}],18:[function(require,module,exports){
@@ -3341,7 +3341,7 @@ exports["default"] = calendarQuery;
 var _filter = _interopRequireDefault(require("./filter"));
 var _prop = _interopRequireDefault(require("./prop"));
 function calendarQuery(object) {
-  return "<c:calendar-query xmlns:c=\"urn:ietf:params:xml:ns:caldav\"\n                    xmlns:cs=\"http://calendarserver.org/ns/\"\n                    xmlns:d=\"DAV:\">\n    <d:prop>\n      ".concat(object.props.map(_prop["default"]).join(''), "\n    </d:prop>\n    <c:filter>\n      ").concat(object.filters.map(_filter["default"]).join(''), "\n    </c:filter>\n    ").concat(object.timezone ? '<c:timezone>' + object.timezone + '</c:timezone>' : '', "\n  </c:calendar-query>");
+  return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n  <c:calendar-query xmlns:c=\"urn:ietf:params:xml:ns:caldav\" xmlns:cs=\"http://calendarserver.org/ns/\" xmlns:d=\"DAV:\">\n    <d:prop>\n      ".concat(object.props.map(_prop["default"]).join(''), "\n    </d:prop>\n    <c:filter>\n      ").concat(object.filters.map(_filter["default"]).join(''), "\n    </c:filter>\n    ").concat(object.timezone ? '<c:timezone>' + object.timezone + '</c:timezone>' : '', "\n  </c:calendar-query>");
 }
 
 },{"./filter":19,"./prop":22,"@babel/runtime/helpers/interopRequireDefault":35}],19:[function(require,module,exports){
@@ -3502,7 +3502,7 @@ Object.defineProperty(exports, "__esModule", {
 exports["default"] = propfind;
 var _prop = _interopRequireDefault(require("./prop"));
 function propfind(object) {
-  return "<d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\"\n              xmlns:card=\"urn:ietf:params:xml:ns:carddav\"\n              xmlns:cs=\"http://calendarserver.org/ns/\"\n              xmlns:x=\"http://apple.com/ns/ical/\"\n              xmlns:d=\"DAV:\">\n    <d:prop>\n      ".concat(object.props.map(_prop["default"]).join(''), "\n    </d:prop>\n  </d:propfind>");
+  return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n  <d:propfind xmlns:c=\"urn:ietf:params:xml:ns:caldav\"\n              xmlns:card=\"urn:ietf:params:xml:ns:carddav\"\n              xmlns:cs=\"http://calendarserver.org/ns/\"\n              xmlns:x=\"http://apple.com/ns/ical/\"\n              xmlns:d=\"DAV:\">\n    <d:prop>\n      ".concat(object.props.map(_prop["default"]).join(''), "\n    </d:prop>\n  </d:propfind>");
 }
 
 },{"./prop":22,"@babel/runtime/helpers/interopRequireDefault":35}],24:[function(require,module,exports){
@@ -3515,7 +3515,7 @@ Object.defineProperty(exports, "__esModule", {
 exports["default"] = syncCollection;
 var _prop = _interopRequireDefault(require("./prop"));
 function syncCollection(object) {
-  return "<d:sync-collection xmlns:c=\"urn:ietf:params:xml:ns:caldav\"\n                     xmlns:card=\"urn:ietf:params:xml:ns:carddav\"\n                     xmlns:d=\"DAV:\">\n    <d:sync-level>".concat(object.syncLevel, "</d:sync-level>\n    <d:sync-token>").concat(object.syncToken, "</d:sync-token>\n    <d:prop>\n      ").concat(object.props.map(_prop["default"]).join(''), "\n    </d:prop>\n  </d:sync-collection>");
+  return "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n  <d:sync-collection xmlns:c=\"urn:ietf:params:xml:ns:caldav\"\n                     xmlns:card=\"urn:ietf:params:xml:ns:carddav\"\n                     xmlns:d=\"DAV:\">\n    <d:sync-level>".concat(object.syncLevel, "</d:sync-level>\n    <d:sync-token>").concat(object.syncToken, "</d:sync-token>\n    <d:prop>\n      ").concat(object.props.map(_prop["default"]).join(''), "\n    </d:prop>\n  </d:sync-collection>");
 }
 
 },{"./prop":22,"@babel/runtime/helpers/interopRequireDefault":35}],25:[function(require,module,exports){
