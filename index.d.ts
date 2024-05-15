@@ -758,6 +758,7 @@ export class Account {
   calendars: Calendar[];
   addressBooks: AddressBook[];
   addresses: string[];
+  preferredEmail?: string;
 }
 
 export type AccountOptions = Partial<Account>;
