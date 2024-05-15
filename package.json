@@ -23,7 +23,7 @@
     "rfc 6578"
   ],
   "dependencies": {
-    "@xmldom/xmldom": "^0.8.7",
+    "@xmldom/xmldom": "^0.8.10",
     "co": "^4.6.0",
     "isomorphic-fetch": "^3.0.0",
     "js-base64": "^3.6.1",
