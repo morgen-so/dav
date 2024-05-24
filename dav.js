@@ -129,7 +129,7 @@ var XMLHttpRequestWrapper = /*#__PURE__*/function () {
       if (data) this._options.body = data;
       return new Promise( /*#__PURE__*/function () {
         var _ref2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(resolve, reject) {
-          var timeoutId, response, blob, responseText, error;
+          var timeoutId, response, blob, responseText, _this$_options, hostnameStr, error;
           return _regenerator["default"].wrap(function _callee$(_context) {
             while (1) {
               switch (_context.prev = _context.next) {
@@ -156,27 +156,42 @@ var XMLHttpRequestWrapper = /*#__PURE__*/function () {
                 case 12:
                   responseText = _context.sent;
                   if (!(response.status < 200 || response.status >= 400)) {
-                    _context.next = 17;
+                    _context.next = 22;
                     break;
                   }
-                  error = new Error("Bad status ".concat(response.status, ": ").concat(responseText));
+                  // Construct error object
+                  hostnameStr = '';
+                  try {
+                    hostnameStr = new URL(_this._url).hostname;
+                  } catch (err) {
+                    console.error('Error parsing hostname', err);
+                    hostnameStr = 'unknown';
+                  }
+                  error = new Error("CalDAV request failed (status code: ".concat(response.status, ", status text: ").concat(response.statusText, ", provider: ").concat(hostnameStr, ")"));
                   error.code = response.status;
+
+                  // Debug logs
+                  console.log('Request body of failed request:\n', data);
+                  console.log('Request headers of failed request:\n', (_this$_options = _this._options) === null || _this$_options === void 0 ? void 0 : _this$_options.headers);
+                  console.log('Response body of failed request:\n', responseText ? responseText : 'empty');
+
+                  // Reject promise
                   return _context.abrupt("return", reject(error));
-                case 17:
+                case 22:
                   // Ok
                   _this._responseText = responseText;
                   return _context.abrupt("return", resolve(responseText));
-                case 21:
-                  _context.prev = 21;
+                case 26:
+                  _context.prev = 26;
                   _context.t0 = _context["catch"](1);
                   clearTimeout(timeoutId);
                   return _context.abrupt("return", reject(_context.t0));
-                case 25:
+                case 30:
                 case "end":
                   return _context.stop();
               }
             }
-          }, _callee, null, [[1, 21]]);
+          }, _callee, null, [[1, 26]]);
         }));
         return function (_x, _x2) {
           return _ref2.apply(this, arguments);
