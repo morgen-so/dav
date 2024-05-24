@@ -1016,9 +1016,7 @@ var listCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["defaul
           return listCalendarObjectsEtags(calendar, options);
         case 3:
           results = _context5.sent;
-          options.hrefs = results.filter(function (res) {
-            return ensureIsUri(res.href);
-          }).map(function (res) {
+          options.hrefs = results.map(function (res) {
             return res.href;
           });
           debug('Got the following etags:');
@@ -1068,9 +1066,7 @@ var syncCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["defaul
           // Collect hrefs of all new and modified events
           hrefs = []; // Compare local calendar objects with remote calendar objects
           localEvents = calendar.objects;
-          remoteEvents = remoteCalendarObjects.filter(function (obj) {
-            return ensureIsUri(obj.href);
-          });
+          remoteEvents = remoteCalendarObjects;
           remoteEvents.forEach(function (remoteEvent) {
             // Check if remote event already exists locally
             var localEvent = localEvents.find(function (localEvent) {
@@ -1214,7 +1210,7 @@ var multigetCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["de
               namespace: ns.CALDAV
             }],
             depth: 1,
-            hrefs: hrefBatch
+            hrefs: hrefBatch.map(ensureEncodedPath)
           }); // Make request to retrieve calendar data
           _context8.t0 = responses.push;
           _context8.t1 = responses;
@@ -1381,21 +1377,6 @@ var extractPathFromSpec = function extractPathFromSpec(aSpec) {
 };
 
 /**
- * This is called to create an encoded path from a unencoded path OR
- * encoded full url
- *
- * @param aString {string} un-encoded path OR encoded uri spec.
- */
-var ensureEncodedPath = function ensureEncodedPath(aString) {
-  if (aString.charAt(0) != '/') {
-    aString = ensureDecodedPath(aString);
-  }
-  var uriComponents = aString.split('/');
-  uriComponents = uriComponents.map(encodeURIComponent);
-  return uriComponents.join('/');
-};
-
-/**
  * This is called to get a decoded path from an encoded path or uri spec.
  *
  * @param {string} aString - Represents either a path
@@ -1406,25 +1387,21 @@ var ensureDecodedPath = function ensureDecodedPath(aString) {
   if (aString.charAt(0) != '/') {
     aString = extractPathFromSpec(aString);
   }
-  var uriComponents = aString.split('/');
-  for (var i = 0; i < uriComponents.length; i++) {
-    try {
-      uriComponents[i] = decodeURIComponent(uriComponents[i]);
-    } catch (e) {
-      debug('CalDAV: Exception decoding path ' + aString + ', segment: ' + uriComponents[i]);
-    }
-  }
-  return uriComponents.join('/');
-};
-var ensureIsUri = function ensureIsUri(aString) {
   try {
-    if (!aString || !aString.length) return false;
-    decodeURIComponent(aString);
-    return true;
+    return decodeURI(aString);
   } catch (e) {
-    debug('CalDAV: Invalid URL string: ' + aString);
-    return false;
+    // This is not necessarily an error as decodeURIComponent 
+    // might throw an error if the string is already decoded.
+    return aString;
   }
+};
+
+/**
+ * This is called to get an encoded path from a path or uri spec.
+ */
+var ensureEncodedPath = function ensureEncodedPath(aString) {
+  var path = ensureDecodedPath(aString);
+  return encodeURI(path);
 };
 var basicSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee12(calendar, options) {
   var sync;
@@ -1486,9 +1463,7 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
             return res.status && res.status.indexOf('507') > -1;
           }); // Results contains new, modified or deleted objects.
           // Normalize and clean-up results
-          result.responses.filter(function (res) {
-            return ensureIsUri(res.href);
-          }).forEach(function (res) {
+          result.responses.forEach(function (res) {
             res.href = ensureDecodedPath(res.href);
 
             // Validate contenttype
@@ -1536,7 +1511,7 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
               namespace: ns.CALDAV
             }],
             depth: 1,
-            hrefs: newUpdatedHrefsChunk
+            hrefs: newUpdatedHrefsChunk.map(ensureEncodedPath)
           });
           _context13.prev = 15;
           _context13.t0 = results.push;
@@ -1583,9 +1558,7 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
           // Calendar objects array will contain all new, modified and deleted events
           calendar.objects = [];
           results.forEach(function (response) {
-            if (ensureIsUri(response.href)) {
-              response.href = ensureDecodedPath(response.href);
-            } else return;
+            response.href = ensureDecodedPath(response.href);
             if (!response.props.calendarData || !response.props.calendarData.length) return;
 
             // Push new and modified events
@@ -1658,7 +1631,7 @@ function _listCalendarObjectsInSeries_() {
                 namespace: ns.CALDAV
               }],
               depth: 1,
-              hrefs: [href]
+              hrefs: [href].map(ensureEncodedPath)
             }); // Send request
             result = void 0;
             _context14.prev = 6;
@@ -2547,7 +2520,14 @@ function fuzzyUrlEquals(one, other) {
 }
 function isEncoded(uri) {
   uri = uri || '';
-  return uri !== decodeURIComponent(uri);
+  try {
+    return uri !== decodeURIComponent(uri);
+  } catch (e) {
+    // If the URL cannot be decoded, it is probably not encoded
+    // For example if the URL is 'http://example.com/%ZZ'
+    // decodeURIComponent throws an error
+    return false;
+  }
 }
 function fullyDecodeURI(uri) {
   while (isEncoded(uri)) {
