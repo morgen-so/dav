@@ -1377,6 +1377,21 @@ var extractPathFromSpec = function extractPathFromSpec(aSpec) {
 };
 
 /**
+ * This is called to create an encoded path from a unencoded path OR
+ * encoded full url
+ *
+ * @param aString {string} un-encoded path OR encoded uri spec.
+ */
+var ensureEncodedPath = function ensureEncodedPath(aString) {
+  if (aString.charAt(0) != '/') {
+    aString = ensureDecodedPath(aString);
+  }
+  var uriComponents = aString.split('/');
+  uriComponents = uriComponents.map(encodeURIComponent);
+  return uriComponents.join('/');
+};
+
+/**
  * This is called to get a decoded path from an encoded path or uri spec.
  *
  * @param {string} aString - Represents either a path
@@ -1387,21 +1402,25 @@ var ensureDecodedPath = function ensureDecodedPath(aString) {
   if (aString.charAt(0) != '/') {
     aString = extractPathFromSpec(aString);
   }
-  try {
-    return decodeURI(aString);
-  } catch (e) {
-    // This is not necessarily an error as decodeURIComponent 
-    // might throw an error if the string is already decoded.
-    return aString;
+  var uriComponents = aString.split('/');
+  for (var i = 0; i < uriComponents.length; i++) {
+    try {
+      uriComponents[i] = decodeURIComponent(uriComponents[i]);
+    } catch (e) {
+      debug('CalDAV: Exception decoding path ' + aString + ', segment: ' + uriComponents[i]);
+    }
   }
+  return uriComponents.join('/');
 };
-
-/**
- * This is called to get an encoded path from a path or uri spec.
- */
-var ensureEncodedPath = function ensureEncodedPath(aString) {
-  var path = ensureDecodedPath(aString);
-  return encodeURI(path);
+var ensureIsUri = function ensureIsUri(aString) {
+  try {
+    if (!aString || !aString.length) return false;
+    decodeURIComponent(aString);
+    return true;
+  } catch (e) {
+    debug('CalDAV: Invalid URL string: ' + aString);
+    return false;
+  }
 };
 var basicSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee12(calendar, options) {
   var sync;
@@ -2959,7 +2978,7 @@ var traverse = {
     });
   },
   href: function href(node) {
-    return decodeURIComponent(childNodes(node)[0].nodeValue);
+    return childNodes(node)[0].nodeValue;
   },
   status: function status(node) {
     return decodeURIComponent(childNodes(node)[0].nodeValue);
@@ -2994,7 +3013,6 @@ function traverseChild(node, childNode, childspec, result) {
   }
   var localName = (0, _camelize["default"])(childNode.localName, '-');
   if (!(localName in childspec)) {
-    debug('Unexpected node of type ' + localName + ' encountered while ' + 'parsing ' + node.localName + ' node!');
     var value = childNode.textContent;
     if (localName in result) {
       if (!Array.isArray(result[localName])) {
