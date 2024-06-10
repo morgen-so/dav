@@ -1210,7 +1210,7 @@ var multigetCalendarObjects = _co["default"].wrap( /*#__PURE__*/_regenerator["de
               namespace: ns.CALDAV
             }],
             depth: 1,
-            hrefs: hrefBatch.map(ensureEncodedPath)
+            hrefs: hrefBatch
           }); // Make request to retrieve calendar data
           _context8.t0 = responses.push;
           _context8.t1 = responses;
@@ -1356,53 +1356,7 @@ var syncCaldavAccount = _co["default"].wrap( /*#__PURE__*/_regenerator["default"
     }
   }, _callee11);
 }));
-
-/**
- * Extract the path from the full spec, if the regexp failed, log
- * warning and return unaltered path.
- */
 exports.syncCaldavAccount = syncCaldavAccount;
-var extractPathFromSpec = function extractPathFromSpec(aSpec) {
-  // The parsed array should look like this:
-  // a[0] = full string
-  // a[1] = scheme
-  // a[2] = everything between the scheme and the start of the path
-  // a[3] = extracted path
-  var a = aSpec.match('(https?)(://[^/]*)([^#?]*)');
-  if (a && a[3]) {
-    return a[3];
-  }
-  debug('CalDAV: Spec could not be parsed, returning as-is: ' + aSpec);
-  return aSpec;
-};
-
-/**
- * This is called to get a decoded path from an encoded path or uri spec.
- *
- * @param {string} aString - Represents either a path
- *                           or a full uri that needs to be decoded.
- * @return {string} A decoded path.
- */
-var ensureDecodedPath = function ensureDecodedPath(aString) {
-  if (aString.charAt(0) != '/') {
-    aString = extractPathFromSpec(aString);
-  }
-  try {
-    return decodeURI(aString);
-  } catch (e) {
-    // This is not necessarily an error as decodeURIComponent 
-    // might throw an error if the string is already decoded.
-    return aString;
-  }
-};
-
-/**
- * This is called to get an encoded path from a path or uri spec.
- */
-var ensureEncodedPath = function ensureEncodedPath(aString) {
-  var path = ensureDecodedPath(aString);
-  return encodeURI(path);
-};
 var basicSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(function _callee12(calendar, options) {
   var sync;
   return _regenerator["default"].wrap(function _callee12$(_context12) {
@@ -1464,8 +1418,6 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
           }); // Results contains new, modified or deleted objects.
           // Normalize and clean-up results
           result.responses.forEach(function (res) {
-            res.href = ensureDecodedPath(res.href);
-
             // Validate contenttype
             if ((!res.getcontenttype || res.getcontenttype === 'text/plain') && res.href && res.href.endsWith('.ics')) {
               // If there is no content-type (iCloud) or text/plain was passed
@@ -1511,7 +1463,7 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
               namespace: ns.CALDAV
             }],
             depth: 1,
-            hrefs: newUpdatedHrefsChunk.map(ensureEncodedPath)
+            hrefs: newUpdatedHrefsChunk
           });
           _context13.prev = 15;
           _context13.t0 = results.push;
@@ -1558,7 +1510,6 @@ var webdavSync = _co["default"].wrap( /*#__PURE__*/_regenerator["default"].mark(
           // Calendar objects array will contain all new, modified and deleted events
           calendar.objects = [];
           results.forEach(function (response) {
-            response.href = ensureDecodedPath(response.href);
             if (!response.props.calendarData || !response.props.calendarData.length) return;
 
             // Push new and modified events
@@ -1631,7 +1582,7 @@ function _listCalendarObjectsInSeries_() {
                 namespace: ns.CALDAV
               }],
               depth: 1,
-              hrefs: [href].map(ensureEncodedPath)
+              hrefs: [href]
             }); // Send request
             result = void 0;
             _context14.prev = 6;
@@ -2959,7 +2910,7 @@ var traverse = {
     });
   },
   href: function href(node) {
-    return decodeURIComponent(childNodes(node)[0].nodeValue);
+    return childNodes(node)[0].nodeValue;
   },
   status: function status(node) {
     return decodeURIComponent(childNodes(node)[0].nodeValue);
@@ -2994,7 +2945,6 @@ function traverseChild(node, childNode, childspec, result) {
   }
   var localName = (0, _camelize["default"])(childNode.localName, '-');
   if (!(localName in childspec)) {
-    debug('Unexpected node of type ' + localName + ' encountered while ' + 'parsing ' + node.localName + ' node!');
     var value = childNode.textContent;
     if (localName in result) {
       if (!Array.isArray(result[localName])) {
